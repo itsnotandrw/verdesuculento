@@ -129,7 +129,7 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Author / CTA */}
         <div style={{ padding: '48px 0', display: 'flex', gap: 20, alignItems: 'flex-start', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--accent)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 22 }}>🌿</div>
+          <div style={{ width: 56, height: 56, background: 'var(--accent)', borderRadius: '50% 0 50% 50%', transform: 'rotate(45deg)', flexShrink: 0 }} />
           <div>
             <div style={{ fontWeight: 600, marginBottom: 4 }}>Equipo agronómico VERDE.</div>
             <p style={{ color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1.6, margin: 0 }}>

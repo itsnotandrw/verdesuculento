@@ -12,19 +12,16 @@ const STEPS = [
     n: '01',
     title: 'Compra tu planta',
     desc: 'Selecciona la variedad que mejor se adapta a tu altitud, clima y espacio disponible. El equipo agronómico valida que sea la opción correcta para ti.',
-    icon: '🌱',
   },
   {
     n: '02',
     title: 'Recibe con instrucciones',
     desc: 'Con cada pedido recibes una guía de trasplante y establecimiento específica para tu zona geográfica. No es genérica, es tuya.',
-    icon: '📦',
   },
   {
     n: '03',
     title: 'Acompañamiento directo',
     desc: 'Los primeros 6 meses tienes acceso a nuestro equipo por WhatsApp o correo. Envías una foto, te respondemos en menos de 24 horas.',
-    icon: '💬',
   },
 ];
 
@@ -112,7 +109,6 @@ export default function AsesoriaPage() {
                   position: 'absolute', top: 0, left: 0, right: 0, height: 3,
                   background: 'linear-gradient(90deg, var(--accent), var(--accent-2))',
                 }} />
-                <div style={{ fontSize: 40, marginBottom: 20 }}>{step.icon}</div>
                 <div className="mono" style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 14 }}>{step.n} ─</div>
                 <h3 className="display" style={{ fontSize: 28, marginBottom: 14 }}>{step.title}</h3>
                 <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, fontSize: 15 }}>{step.desc}</p>
@@ -177,7 +173,7 @@ export default function AsesoriaPage() {
                 Le escribí al WhatsApp de VERDE. a las 10 de la noche porque a mi arándano le salieron manchas raras. A los 20 minutos me respondió Valentina con fotos de referencia y el tratamiento exacto. Eso no lo hace ningún vivero normal.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--accent)', display: 'grid', placeItems: 'center', fontSize: 20 }}>🌿</div>
+                <div style={{ width: 48, height: 48, background: 'var(--accent)', borderRadius: '50% 0 50% 50%', transform: 'rotate(45deg)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontWeight: 600, color: '#fff', fontSize: 15 }}>María Camila Ospina</div>
                   <div className="mono" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em' }}>CLIENTE DESDE 2023 · RIONEGRO, ANT.</div>

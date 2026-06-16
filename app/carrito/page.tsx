@@ -22,7 +22,7 @@ export default function CartPage() {
   if (count === 0) {
     return (
       <div className="page-section" style={{ paddingTop: 160, textAlign: 'center' }}>
-        <div style={{ fontSize: 72, marginBottom: 24, opacity: 0.3 }}>🌱</div>
+        <div style={{ width: 64, height: 80, background: 'var(--border-strong)', borderRadius: '50% 0 50% 50%', transform: 'rotate(-15deg)', margin: '0 auto 24px', opacity: 0.25 }} />
         <h1 className="display" style={{ fontSize: 'clamp(48px, 6vw, 88px)', marginBottom: 20 }}>
           Tu carrito está <em style={{ color: 'var(--accent)' }}>vacío.</em>
         </h1>
@@ -116,12 +116,12 @@ export default function CartPage() {
             {/* Trust signals */}
             <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { icon: '🔒', text: 'Pago seguro cifrado SSL' },
-                { icon: '🌱', text: 'Garantía de planta viva' },
-                { icon: '↩️', text: 'Cambios sin preguntas' },
+                { text: 'Pago seguro cifrado SSL' },
+                { text: 'Garantía de planta viva' },
+                { text: 'Cambios sin preguntas' },
               ].map((item) => (
                 <div key={item.text} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12, color: 'var(--fg-dim)' }}>
-                  <span>{item.icon}</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--accent)', flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
                   <span>{item.text}</span>
                 </div>
               ))}

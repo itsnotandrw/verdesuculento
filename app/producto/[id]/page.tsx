@@ -141,14 +141,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
             {/* Trust signals */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 36, padding: '24px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-              {[
-                { icon: '🌱', label: 'Planta viva garantizada', sub: 'Reposición sin preguntas' },
-                { icon: '📦', label: 'Envío a Colombia', sub: '2 — 5 días hábiles' },
-                { icon: '🔬', label: 'Genética certificada', sub: 'Inspección agronómica' },
-                { icon: '💬', label: 'Asesoría gratis', sub: 'Primeros 6 meses' },
-              ].map((item) => (
+              {([
+                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 22V12"/><path d="M12 12c0 0 4-3.5 8-3.5 0 3.5-4 3.5-8 3.5"/><path d="M12 12c0 0-4-3.5-8-3.5 0 3.5 4 3.5 8 3.5"/><path d="M12 7a5 5 0 0 1 5 5"/></svg>, label: 'Planta viva garantizada', sub: 'Reposición sin preguntas' },
+                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>, label: 'Envío a Colombia', sub: '2 — 5 días hábiles' },
+                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h10a2 2 0 0 1 2 2v4"/><path d="M3 9h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 15l2 2 4-4"/></svg>, label: 'Genética certificada', sub: 'Inspección agronómica' },
+                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>, label: 'Asesoría gratis', sub: 'Primeros 6 meses' },
+              ] as { icon: JSX.Element; label: string; sub: string }[]).map((item) => (
                 <div key={item.label} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 20 }}>{item.icon}</span>
+                  <span style={{ color: 'var(--accent)', marginTop: 1, flexShrink: 0, display: 'flex' }}>{item.icon}</span>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>{item.label}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{item.sub}</div>

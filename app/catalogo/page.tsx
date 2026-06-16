@@ -6,18 +6,18 @@ import ProductCard from '@/components/ProductCard';
 import type { Product } from '@/types';
 
 const CLIMATE_OPTIONS = [
-  { id: 'calido',  icon: '☀️',  label: 'Clima cálido',  test: (c: string) => /tropical|cálido|subtropical/i.test(c) },
-  { id: 'humedo',  icon: '🌧',  label: 'Clima húmedo',  test: (c: string) => /húmedo|cafetero|tropical/i.test(c) },
-  { id: 'altura',  icon: '⛰',  label: 'Altura media',  test: (c: string) => /altura|cafetero|templado|frío/i.test(c) },
-  { id: 'frio',    icon: '❄️',  label: 'Clima frío',    test: (c: string) => /frío/i.test(c) },
+  { id: 'calido',  label: 'Clima cálido',  test: (c: string) => /tropical|cálido|subtropical/i.test(c) },
+  { id: 'humedo',  label: 'Clima húmedo',  test: (c: string) => /húmedo|cafetero|tropical/i.test(c) },
+  { id: 'altura',  label: 'Altura media',  test: (c: string) => /altura|cafetero|templado|frío/i.test(c) },
+  { id: 'frio',    label: 'Clima frío',    test: (c: string) => /frío/i.test(c) },
 ];
 
 const OBJECTIVE_OPTIONS = [
-  { id: 'fruta',        icon: '🍓', label: 'Producir fruta',      cats: ['frutales', 'citricos', 'berries'] },
-  { id: 'sombra',       icon: '🌿', label: 'Quiero sombra',        cats: ['ornamentales', 'frutales'] },
-  { id: 'interior',     icon: '🏠', label: 'Para interior',         cats: ['suculentas', 'ornamentales'] },
-  { id: 'tropical',     icon: '🌴', label: 'Jardín tropical',       cats: ['frutales', 'ornamentales'] },
-  { id: 'polinizadores',icon: '🐝', label: 'Atraer polinizadores',  cats: ['berries', 'frutales', 'ornamentales'] },
+  { id: 'fruta',        label: 'Producir fruta',      cats: ['frutales', 'citricos', 'berries'] },
+  { id: 'sombra',       label: 'Quiero sombra',        cats: ['ornamentales', 'frutales'] },
+  { id: 'interior',     label: 'Para interior',         cats: ['suculentas', 'ornamentales'] },
+  { id: 'tropical',     label: 'Jardín tropical',       cats: ['frutales', 'ornamentales'] },
+  { id: 'polinizadores',label: 'Atraer polinizadores',  cats: ['berries', 'frutales', 'ornamentales'] },
 ];
 
 const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: string; linkLabel: string }> = {
@@ -129,7 +129,7 @@ export default function CatalogPage() {
                 className={`discovery-pill ${selectedObjective.includes(o.id) ? 'active' : ''}`}
                 onClick={() => toggleObjective(o.id)}
               >
-                <span>{o.icon}</span> {o.label}
+                {o.label}
               </button>
             ))}
           </div>
@@ -145,7 +145,7 @@ export default function CatalogPage() {
                 className={`discovery-pill ${selectedClimate.includes(c.id) ? 'active' : ''}`}
                 onClick={() => toggleClimate(c.id)}
               >
-                <span>{c.icon}</span> {c.label}
+                {c.label}
               </button>
             ))}
           </div>
@@ -290,7 +290,7 @@ export default function CatalogPage() {
               {CLIMATE_OPTIONS.map((c) => (
                 <CheckboxRow
                   key={c.id}
-                  label={`${c.icon} ${c.label}`}
+                  label={c.label}
                   checked={selectedClimate.includes(c.id)}
                   onChange={() => toggleClimate(c.id)}
                 />
@@ -301,7 +301,7 @@ export default function CatalogPage() {
               {OBJECTIVE_OPTIONS.map((o) => (
                 <CheckboxRow
                   key={o.id}
-                  label={`${o.icon} ${o.label}`}
+                  label={o.label}
                   checked={selectedObjective.includes(o.id)}
                   onChange={() => toggleObjective(o.id)}
                 />
@@ -318,7 +318,7 @@ export default function CatalogPage() {
             </div>
             {filtered.length === 0 ? (
               <div style={{ padding: '80px 0', textAlign: 'center', color: 'var(--fg-dim)' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
+                <div style={{ width: 48, height: 64, background: 'var(--border-strong)', borderRadius: '50% 0 50% 50%', transform: 'rotate(-15deg)', margin: '0 auto 16px', opacity: 0.4 }} />
                 <p>Sin resultados para esta combinación de filtros.</p>
                 <button className="btn btn-ghost" style={{ marginTop: 20 }} onClick={clearAll}>Limpiar filtros</button>
               </div>

@@ -28,9 +28,10 @@
   --radius-lg: 18px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --font-display: 'Instrument Serif', 'Times New Roman', serif;
-  --font-ui: 'Inter', 'Helvetica Neue', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* next/font sirve los archivos localmente — usar sus variables CSS, no el nombre CDN */
+  --font-display: var(--font-display-next, 'Instrument Serif', 'Times New Roman', serif);
+  --font-ui: var(--font-ui-next, 'Inter', 'Helvetica Neue', sans-serif);
+  --font-mono: var(--font-mono-next, 'JetBrains Mono', monospace);
   /* Hero em — light sage en dark mode para contrastar con la hoja verde */
   --hero-em: oklch(0.86 0.09 145);
   /* Overlay de foto en dark mode */
@@ -70,12 +71,15 @@ html, body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-ui);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  font-optical-sizing: auto;
   overflow-x: hidden;
-  transition: background 0.6s var(--ease-out), color 0.6s var(--ease-out);
+  transition: background 0.5s var(--ease-out), color 0.4s;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -365,58 +369,63 @@ body { cursor: none; }
 /* Estado inicial — oculto */
 .reveal {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out);
+  transform: translateY(28px);
+  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+  will-change: opacity, transform;
 }
-/* Estado visible */
 .reveal.in {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Stagger — hijos animados en cascada */
+/* Stagger — hijos en cascada */
 .reveal-stagger > * {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+  transform: translateY(20px);
+  transition: opacity 0.48s var(--ease-out), transform 0.48s var(--ease-out);
+  will-change: opacity, transform;
 }
 .reveal-stagger.in > * { opacity: 1; transform: translateY(0); }
 .reveal-stagger.in > *:nth-child(1) { transition-delay: 0s; }
-.reveal-stagger.in > *:nth-child(2) { transition-delay: 0.09s; }
-.reveal-stagger.in > *:nth-child(3) { transition-delay: 0.18s; }
-.reveal-stagger.in > *:nth-child(4) { transition-delay: 0.27s; }
-.reveal-stagger.in > *:nth-child(5) { transition-delay: 0.36s; }
-.reveal-stagger.in > *:nth-child(6) { transition-delay: 0.45s; }
-.reveal-stagger.in > *:nth-child(7) { transition-delay: 0.54s; }
-.reveal-stagger.in > *:nth-child(8) { transition-delay: 0.60s; }
+.reveal-stagger.in > *:nth-child(2) { transition-delay: 0.06s; }
+.reveal-stagger.in > *:nth-child(3) { transition-delay: 0.12s; }
+.reveal-stagger.in > *:nth-child(4) { transition-delay: 0.18s; }
+.reveal-stagger.in > *:nth-child(5) { transition-delay: 0.24s; }
+.reveal-stagger.in > *:nth-child(6) { transition-delay: 0.30s; }
+.reveal-stagger.in > *:nth-child(7) { transition-delay: 0.36s; }
+.reveal-stagger.in > *:nth-child(8) { transition-delay: 0.40s; }
 
-/* Variante fade pura (para imágenes) */
+/* Fade pura */
 .reveal-fade {
   opacity: 0;
-  transition: opacity 1.1s var(--ease-out);
+  transition: opacity 0.65s var(--ease-out);
+  will-change: opacity;
 }
 .reveal-fade.in { opacity: 1; }
 
-/* Variante zoom-in (para stats grandes) */
+/* Zoom-in */
 .reveal-scale {
   opacity: 0;
-  transform: scale(0.90);
-  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+  transform: scale(0.94);
+  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+  will-change: opacity, transform;
 }
 .reveal-scale.in { opacity: 1; transform: scale(1); }
 
-/* Variante slide-lateral (izquierda → derecha) */
+/* Slide lateral */
 .reveal-left {
   opacity: 0;
-  transform: translateX(-48px);
-  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out);
+  transform: translateX(-36px);
+  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+  will-change: opacity, transform;
 }
 .reveal-left.in { opacity: 1; transform: translateX(0); }
 
 .reveal-right {
   opacity: 0;
-  transform: translateX(48px);
-  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out);
+  transform: translateX(36px);
+  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+  will-change: opacity, transform;
 }
 .reveal-right.in { opacity: 1; transform: translateX(0); }
 
