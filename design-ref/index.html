@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VERDE. — Vivero & Agricultura Moderna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="page-home.jsx"></script>
+<script type="text/babel" src="page-shop.jsx"></script>
+<script type="text/babel" src="page-blog.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark",
+  "accent": "#4a7a3a"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [page, setPageState] = React.useState({ name: 'home' });
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    document.documentElement.dataset.theme = t.theme;
+    document.documentElement.style.setProperty('--accent', t.accent);
+  }, [t.theme, t.accent]);
+
+  const setPage = React.useCallback((p) => {
+    setPageState(p);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.body.className = 'scroll-zone-1';
+  }, []);
+
+  let content;
+  if (page.name === 'home') content = <HomePage setPage={setPage} />;
+  else if (page.name === 'catalog') content = <CatalogPage setPage={setPage} />;
+  else if (page.name === 'category') content = <CatalogPage setPage={setPage} initialCat={page.cat} key={page.cat} />;
+  else if (page.name === 'product') content = <ProductPage setPage={setPage} productId={page.id} key={page.id} />;
+  else if (page.name === 'cart') content = <CartPage setPage={setPage} />;
+  else if (page.name === 'checkout') content = <CheckoutPage setPage={setPage} />;
+  else if (page.name === 'blog') content = <BlogPage setPage={setPage} />;
+  else if (page.name === 'article') content = <ArticlePage setPage={setPage} slug={page.slug} key={page.slug} />;
+
+  return (
+    <CartProvider>
+      <QuickViewProvider>
+        <CustomCursor />
+        <Nav page={page} setPage={setPage} />
+        <div data-screen-label={`VERDE. — ${page.name}`}>
+          {content}
+        </div>
+        <Footer setPage={setPage} />
+        <MiniCartWrapper setPage={setPage} />
+        <TweaksPanel title="Tweaks">
+          <TweakSection label="Apariencia">
+            <TweakRadio
+              label="Tema"
+              value={t.theme}
+              options={['light', 'dark']}
+              onChange={v => setTweak('theme', v)}
+            />
+            <TweakColor
+              label="Acento"
+              value={t.accent}
+              options={['#4a7a3a', '#c9742e', '#2d5a3a', '#7a9a4a', '#1a3a2a']}
+              onChange={v => setTweak('accent', v)}
+            />
+          </TweakSection>
+        </TweaksPanel>
+      </QuickViewProvider>
+    </CartProvider>
+  );
+}
+
+function MiniCartWrapper({ setPage }) {
+  return <MiniCart setPage={setPage} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
