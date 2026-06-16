@@ -22,7 +22,7 @@ const OBJECTIVE_OPTIONS = [
 
 const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: string; linkLabel: string }> = {
   6: {
-    title: 'Temporada berries colombianos.',
+    title: 'Temporada berries colombianos 2026.',
     sub: 'Arándanos, fresas y uchuvas de altura. Genética certificada, lista para plantar.',
     link: '/catalogo/berries',
     linkLabel: 'Ver berries',
