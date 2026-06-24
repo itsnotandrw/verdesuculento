@@ -54,6 +54,13 @@ const VALUES = [
 export default function NosotrosPage() {
   return (
     <div style={{ paddingTop: 80 }}>
+      <div className="container" style={{ paddingTop: 40 }}>
+        <nav style={{ marginBottom: 24, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link href="/" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Inicio</Link>
+          <span style={{ color: 'var(--fg-mute)' }}>/</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>Nosotros</span>
+        </nav>
+      </div>
 
       {/* ── HERO ─────────────────────────────────── */}
       <section style={{ position: 'relative', height: '70vh', minHeight: 560, display: 'grid', placeItems: 'center', overflow: 'hidden' }}>

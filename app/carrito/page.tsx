@@ -35,6 +35,11 @@ export default function CartPage() {
   return (
     <div className="page-section" style={{ paddingTop: 120 }}>
       <div className="container">
+        <nav style={{ marginBottom: 40, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link href="/catalogo" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</Link>
+          <span style={{ color: 'var(--fg-mute)' }}>/</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>Carrito</span>
+        </nav>
         <div className="eyebrow" style={{ marginBottom: 16 }}>CARRITO</div>
         <h1 className="display" style={{ fontSize: 'clamp(48px, 7vw, 100px)', marginBottom: 56 }}>
           {count} {count === 1 ? 'producto' : 'productos'}<em style={{ color: 'var(--accent)' }}>.</em>

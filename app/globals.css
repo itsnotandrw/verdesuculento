@@ -62,6 +62,39 @@
 }
 
 /* =============================================
+   SKIP TO CONTENT
+   ============================================= */
+
+.skip-to-content {
+  position: fixed;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  padding: 12px 24px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-radius: 0 0 8px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* =============================================
+   BODY SCROLL LOCK
+   ============================================= */
+
+body.scroll-locked {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* =============================================
    BASE
    ============================================= */
 
@@ -92,8 +125,10 @@ input, select, textarea { font: inherit; color: inherit; cursor: text; }
    ============================================= */
 
 body { cursor: none; }
+a, button, [role="button"] { cursor: none; }
+input, select, textarea { cursor: text; }
 @media (max-width: 900px) {
-  body { cursor: auto; }
+  body, a, button, [role="button"] { cursor: auto; }
   .cursor-tip, .cursor-leaf { display: none !important; }
 }
 
@@ -395,24 +430,7 @@ body { cursor: none; }
 .reveal-stagger.in > *:nth-child(7) { transition-delay: 0.36s; }
 .reveal-stagger.in > *:nth-child(8) { transition-delay: 0.40s; }
 
-/* Fade pura */
-.reveal-fade {
-  opacity: 0;
-  transition: opacity 0.65s var(--ease-out);
-  will-change: opacity;
-}
-.reveal-fade.in { opacity: 1; }
-
-/* Zoom-in */
-.reveal-scale {
-  opacity: 0;
-  transform: scale(0.94);
-  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
-  will-change: opacity, transform;
-}
-.reveal-scale.in { opacity: 1; transform: scale(1); }
-
-/* Slide lateral */
+/* Slide lateral (used via className prop on Reveal) */
 .reveal-left {
   opacity: 0;
   transform: translateX(-36px);
@@ -431,12 +449,10 @@ body { cursor: none; }
 
 /* Deshabilitar en reducción de movimiento */
 @media (prefers-reduced-motion: reduce) {
-  .reveal, .reveal-stagger > *, .reveal-fade, .reveal-scale, .reveal-left, .reveal-right {
+  .reveal, .reveal-stagger > *, .reveal-left, .reveal-right {
     opacity: 1 !important; transform: none !important; transition: none !important;
   }
 }
-
-.split-text { display: inline-block; }
 
 /* =============================================
    PRODUCT SHAPES (organic, plant-inspired)
@@ -652,14 +668,7 @@ body { cursor: none; }
 .product-card-tag { font-size: 12px; color: var(--fg-dim); margin-top: 3px; }
 .product-card-price { font-family: var(--font-mono); font-size: 13px; flex-shrink: 0; }
 .product-card-swatches { display: flex; gap: 5px; margin-top: 10px; align-items: center; }
-.swatch {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  transition: transform 0.2s, border-color 0.2s;
-}
-.swatch:hover { transform: scale(1.2); }
-.swatch.active { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+/* swatch — see bottom of file for full definition */
 .product-badge {
   position: absolute;
   top: 14px; left: 14px;
@@ -677,69 +686,6 @@ body { cursor: none; }
    HERO
    ============================================= */
 
-/* Text-shadow para legibilidad del hero sobre cualquier fondo */
-.hero-heading {
-  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.65), 0 8px 80px rgba(0, 0, 0, 0.35);
-}
-/* Foto de fondo del hero */
-.hero-photo-bg {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  z-index: 0;
-}
-.hero-photo-bg::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(13, 19, 15, 0.72) 0%,
-    rgba(13, 19, 15, 0.45) 40%,
-    rgba(13, 19, 15, 0.55) 100%
-  );
-}
-[data-theme='light'] .hero-photo-bg::after {
-  background: linear-gradient(
-    to bottom,
-    rgba(246, 243, 234, 0.65) 0%,
-    rgba(246, 243, 234, 0.30) 40%,
-    rgba(246, 243, 234, 0.55) 100%
-  );
-}
-
-/* Foto de categoría en tarjeta */
-.cat-card-photo {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  opacity: 0.22;
-  transition: opacity 0.6s var(--ease-out);
-  border-radius: var(--radius-lg);
-}
-.cat-card:hover .cat-card-photo { opacity: 0.35; }
-[data-theme='light'] .cat-card-photo { opacity: 0.18; }
-
-.hero-product { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
-.hero-product-shape {
-  width: 360px; height: 440px;
-  position: relative;
-  animation: float 7s ease-in-out infinite;
-}
-@media (max-width: 640px) { .hero-product-shape { width: 240px; height: 300px; } }
-
-.hero-product-shape::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(155deg,
-    color-mix(in oklab, var(--accent) 90%, white) 0%,
-    var(--accent) 45%,
-    color-mix(in oklab, var(--accent) 70%, black) 100%);
-  border-radius: 50% 8% 50% 8%;
-  transform: rotate(-12deg);
-  box-shadow:
-    0 60px 120px rgba(20, 40, 25, 0.35),
-    0 30px 50px rgba(20, 40, 25, 0.2),
-    inset -3px 0 0 rgba(255,255,255,0.1),
-    inset 3px 0 0 rgba(0,0,0,0.15);
-}
 .hero-product-shape::after {
   content: '';
   position: absolute; inset: 10%;
@@ -750,26 +696,8 @@ body { cursor: none; }
   border-radius: 50% 8% 50% 8%;
   transform: rotate(-12deg);
 }
-.hero-product-glow {
-  position: absolute;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 50%, transparent) 0%, transparent 60%);
-  filter: blur(80px);
-  z-index: -1;
-  animation: pulse 5s ease-in-out infinite;
-}
-@media (max-width: 640px) { .hero-product-glow { width: 320px; height: 320px; } }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-24px) rotate(-3deg); }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.12); }
-}
-
-/* Organic drift for botanical hero elements */
+/* drift-leaf and breath-glow — defined below */
 @keyframes drift-leaf {
   0%, 100% { transform: translateY(0) rotate(var(--leaf-rot, 35deg)) scale(1); opacity: var(--leaf-opacity, 0.12); }
   25%       { transform: translateY(-18px) rotate(calc(var(--leaf-rot, 35deg) + 7deg)) scale(1.03); opacity: calc(var(--leaf-opacity, 0.12) * 1.3); }
@@ -796,42 +724,11 @@ body { cursor: none; }
   animation-delay: var(--leaf-delay, 0s);
   filter: blur(0.4px);
 }
-/* Second glow pulse for hero, slower + bigger */
-.hero-product-glow-2 {
-  position: absolute;
-  width: 800px; height: 800px;
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 18%, transparent) 0%, transparent 65%);
-  filter: blur(100px);
-  z-index: -1;
-  animation: breath-glow 9s ease-in-out infinite;
-  animation-delay: -3s;
-}
-@media (max-width: 640px) { .hero-product-glow-2 { width: 400px; height: 400px; } }
-
 /* =============================================
    MARQUEE
    ============================================= */
 
-.marquee { display: flex; overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 22px 0; }
-.marquee-track {
-  display: flex;
-  gap: 64px;
-  animation: marquee 50s linear infinite;
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding-right: 64px;
-}
-@keyframes marquee { to { transform: translateX(-100%); } }
-.marquee-item {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 56px);
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  display: inline-flex;
-  align-items: center;
-  gap: 64px;
-}
-.marquee-item .dot { width: 12px; height: 12px; background: var(--accent); border-radius: 50%; display: inline-block; }
+/* marquee — see bottom of file */
 
 /* =============================================
    CATALOG SIDEBAR (responsive)
@@ -871,46 +768,9 @@ body { cursor: none; }
    SPEC TABLE (ficha técnica agronómica)
    ============================================= */
 
-.spec-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0;
-  border-top: 1px solid var(--border);
-}
-.spec-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-.spec-row:nth-child(odd) { padding-right: 14px; border-right: 1px solid var(--border); }
-.spec-row:nth-child(even) { padding-left: 14px; }
-.spec-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-dim); }
-.spec-value { font-size: 14px; font-weight: 500; text-align: right; }
-@media (max-width: 540px) {
-  .spec-grid { grid-template-columns: 1fr; }
-  .spec-row:nth-child(odd) { padding-right: 0; border-right: none; }
-  .spec-row:nth-child(even) { padding-left: 0; }
-}
+/* spec-grid — see bottom of file */
 
-/* Sticky add-to-cart bar (mobile PDP — benchmark) */
-.sticky-atc {
-  display: none;
-  position: fixed;
-  bottom: 68px;
-  left: 0; right: 0;
-  z-index: 90;
-  background: var(--bg-elev);
-  border-top: 1px solid var(--border);
-  padding: 12px 20px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 -8px 32px rgba(0,0,0,0.2);
-}
-.sticky-atc.visible { display: flex; }
-@media (min-width: 801px) { .sticky-atc { display: none !important; } }
+/* sticky-atc — see bottom of file */
 
 /* =============================================
    MINI CART
@@ -1212,10 +1072,6 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 .scroller-fade-left { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
 .scroller-fade-right { right: 0; background: linear-gradient(to left, var(--bg), transparent); }
 
-/* Drag cursor feedback */
-.scroller-track { cursor: grab; }
-.scroller-track:active { cursor: grabbing; }
-
 /* =============================================
    HERO GRAIN TEXTURE (cinematic touch)
    ============================================= */
@@ -1323,52 +1179,9 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
    HERO BOTANICAL LEAVES + ANIMATIONS
    ============================================= */
 
-@keyframes drift-leaf {
-  0%, 100% { transform: rotate(calc(var(--leaf-rot, 35deg))) translateY(0px) scale(1); }
-  33% { transform: rotate(calc(var(--leaf-rot, 35deg) + 6deg)) translateY(-14px) scale(1.02); }
-  66% { transform: rotate(calc(var(--leaf-rot, 35deg) - 4deg)) translateY(8px) scale(0.98); }
-}
+/* hero-botanical — defined earlier in Hero section */
 
-@keyframes breath-glow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(1.06); }
-}
-
-@keyframes shimmer-accent {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
-
-@keyframes float-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.hero-botanical {
-  position: absolute;
-  pointer-events: none;
-  border-radius: 50% 0 50% 50%;
-  background: linear-gradient(135deg, var(--accent), oklch(0.5 0.15 155));
-  transform-origin: center;
-  opacity: var(--leaf-opacity, 0.1);
-  animation: drift-leaf var(--leaf-dur, 8s) ease-in-out var(--leaf-delay, 0s) infinite;
-}
-
-.hero-product-glow {
-  position: absolute;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 14%, transparent) 0%, transparent 65%);
-  border-radius: 50%;
-  animation: breath-glow 6s ease-in-out infinite;
-  pointer-events: none;
-}
-.hero-product-glow-2 {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 55% 45%, color-mix(in oklab, var(--accent) 8%, transparent) 0%, transparent 55%);
-  pointer-events: none;
-  animation: breath-glow 9s ease-in-out 2s infinite;
-}
+/* hero-product-glow — see bottom of file */
 
 .hero-product { position: absolute; inset: 0; display: grid; place-items: center; }
 .hero-product-shape {
@@ -1378,14 +1191,6 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
   filter: blur(40px);
   transform: rotate(-15deg);
   animation: drift-leaf 12s ease-in-out infinite;
-}
-
-/* =============================================
-   PRODUCT CARD HOVER ENHANCEMENTS
-   ============================================= */
-
-.product-card:hover {
-  box-shadow: 0 16px 64px color-mix(in oklab, var(--accent) 14%, rgba(0,0,0,0.18));
 }
 
 /* =============================================
@@ -1428,6 +1233,10 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
   display: inline-block;
 }
 
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
 /* =============================================
    TEAM CARD HOVER
    ============================================= */
@@ -1462,11 +1271,25 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 .in .accent-line::after { width: 100%; }
 
 /* =============================================
+   DIARIO CARD SWAP RESPONSIVE
+   ============================================= */
+
+@media (max-width: 860px) {
+  .diario-swap-grid { grid-template-columns: 1fr !important; }
+  .diario-swap-grid > div:last-child { height: 420px !important; margin-top: 32px; }
+}
+
+/* =============================================
    REDUCED MOTION
    ============================================= */
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-botanical, .hero-product-glow, .hero-product-glow-2, .hero-product-shape,
+  .hero-botanical, .hero-product-shape,
   .marquee-track { animation: none !important; }
-  .cat-card-photo, .article-card-img, .team-card { transition: none !important; }
+  .cat-card-photo, .article-card-img, .team-card,
+  .product-card, .cat-card,
+  .nav-pill, .cursor-leaf, .cursor-tip { transition: none !important; animation: none !important; }
+  .product-card:hover, .cat-card:hover { transform: none !important; }
+  .btn:hover .btn-arrow { transform: none !important; }
+  .cursor-tip, .cursor-leaf { display: none !important; }
 }

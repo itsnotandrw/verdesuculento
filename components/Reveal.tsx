@@ -23,14 +23,12 @@ export default function Reveal({
     const el = ref.current;
     if (!el) return;
 
-    // Synchronous check: if already in viewport, reveal instantly
     const rect = el.getBoundingClientRect();
     if (rect.top < window.innerHeight && rect.bottom > 0) {
       el.classList.add('in');
       return;
     }
 
-    // Below the fold: use IntersectionObserver only (no scroll listener overhead)
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -45,11 +43,16 @@ export default function Reveal({
     return () => obs.disconnect();
   }, []);
 
+  // If className already contains a reveal variant, use it directly
+  // instead of prepending the base 'reveal' class to avoid conflicting transforms
+  const hasVariant = /reveal-(left|right)/.test(className);
+  const baseClass = stagger ? 'reveal-stagger' : 'reveal';
+  const finalClass = hasVariant ? className : `${baseClass} ${className}`;
+
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Tag
       ref={ref as any}
-      className={`${stagger ? 'reveal-stagger' : 'reveal'} ${className}`}
+      className={finalClass}
       {...rest}
     >
       {children}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ARTICLES } from '@/data/catalog';
+import ArticleSwapper from '@/components/ArticleSwapper';
 
 const ARTICLE_PHOTOS: Record<string, string> = {
   'cultivar-arandanos': 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=1200&q=80',
@@ -20,6 +21,12 @@ export default function BlogPage() {
   return (
     <div className="page-section" style={{ paddingTop: 120 }}>
       <div className="container">
+        <nav style={{ marginBottom: 40, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link href="/" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Inicio</Link>
+          <span style={{ color: 'var(--fg-mute)' }}>/</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>Diario</span>
+        </nav>
+
         <div style={{ marginBottom: 72 }}>
           <div className="eyebrow" style={{ marginBottom: 16 }}>DIARIO AGRONÓMICO</div>
           <h1 className="display" style={{ fontSize: 'clamp(52px, 8vw, 120px)', maxWidth: 900 }}>
@@ -67,28 +74,37 @@ export default function BlogPage() {
           </div>
         </Link>
 
-        {/* Article grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
-          {rest.map((a) => (
-            <Link key={a.slug} href={`/diario/${a.slug}`} className="article-card">
-              <div
-                className="article-card-img"
-                style={{
-                  backgroundColor: a.image,
-                  backgroundImage: ARTICLE_PHOTOS[a.slug] ? `url(${ARTICLE_PHOTOS[a.slug]})` : undefined,
-                }}
-              />
-              <div className="article-card-body">
-                <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', letterSpacing: '0.1em', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{a.category.toUpperCase()}</span>
-                  <span>{a.minutes} MIN</span>
-                </div>
-                <h3 className="article-card-title">{a.title}</h3>
-                <p style={{ color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1.6, marginTop: 10 }}>{a.excerpt}</p>
+        {/* Article grid + CardSwap showcase */}
+        <section style={{ marginBottom: 96 }}>
+          <div className="eyebrow" style={{ marginBottom: 24 }}>EXPLORA LAS GUÍAS</div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 80,
+            alignItems: 'center',
+            padding: '40px 0',
+          }} className="diario-swap-grid">
+            {/* Left: text + CTA */}
+            <div>
+              <h2 className="display" style={{ fontSize: 'clamp(32px, 4vw, 56px)', marginBottom: 20, letterSpacing: '-0.02em' }}>
+                Guías que <em style={{ color: 'var(--accent)' }}>funcionan.</em>
+              </h2>
+              <p style={{ color: 'var(--fg-dim)', fontSize: 16, lineHeight: 1.65, maxWidth: 420, marginBottom: 28 }}>
+                Cada artículo está escrito por nuestro equipo agronómico con experiencia real en campo.
+                Sin teoría vacía — solo lo que probamos en el vivero.
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {Array.from(new Set(rest.map((a) => a.category))).map((cat) => (
+                  <span key={cat} className="chip">{cat}</span>
+                ))}
               </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+            {/* Right: animated card stack */}
+            <div style={{ height: 500, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ArticleSwapper articles={rest} photos={ARTICLE_PHOTOS} />
+            </div>
+          </div>
+        </section>
 
         {/* CTA */}
         <div style={{ textAlign: 'center', marginTop: 80, padding: '64px 0', borderTop: '1px solid var(--border)' }}>

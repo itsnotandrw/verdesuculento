@@ -9,12 +9,20 @@ export default function CustomCursor() {
   useEffect(() => {
     let tipX = 0, tipY = 0, leafX = 0, leafY = 0;
     let mouseX = 0, mouseY = 0;
-    let raf: number;
-
-    const onMove = (e: MouseEvent) => { mouseX = e.clientX; mouseY = e.clientY; };
-    window.addEventListener('mousemove', onMove);
+    let targetX = 0, targetY = 0;
+    let raf = 0;
+    let running = false;
 
     const tick = () => {
+      const dx = targetX - mouseX;
+      const dy = targetY - mouseY;
+      const moved = Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05;
+
+      if (moved) {
+        mouseX += dx * 0.75;
+        mouseY += dy * 0.75;
+      }
+
       tipX += (mouseX - tipX) * 0.75;
       tipY += (mouseY - tipY) * 0.75;
       leafX += (mouseX - leafX) * 0.14;
@@ -26,20 +34,45 @@ export default function CustomCursor() {
       if (leafRef.current) {
         leafRef.current.style.transform = `translate(${leafX}px, ${leafY}px) translate(-50%, -50%) rotate(-45deg)`;
       }
+
+      const tipDelta = Math.abs(mouseX - tipX) + Math.abs(mouseY - tipY);
+      const leafDelta = Math.abs(mouseX - leafX) + Math.abs(mouseY - leafY);
+      if (!moved && tipDelta < 0.1 && leafDelta < 0.1) {
+        running = false;
+        return;
+      }
+
       raf = requestAnimationFrame(tick);
     };
-    tick();
+
+    const startLoop = () => {
+      if (running) return;
+      running = true;
+      mouseX = targetX;
+      mouseY = targetY;
+      tick();
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+      startLoop();
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
 
     const checkHover = (e: MouseEvent) => {
       const target = e.target as Element;
-      const isHover = !!target.closest('a, button, .product-card, .article-card, .chip, [data-cursor-hover]');
+      const isHover = !!target.closest(
+        'a, button, .product-card, .article-card, .chip, .swatch, .discovery-pill, [data-cursor-hover]'
+      );
       tipRef.current?.classList.toggle('hover', isHover);
       leafRef.current?.classList.toggle('hover', isHover);
     };
-    window.addEventListener('mouseover', checkHover);
+    window.addEventListener('mouseover', checkHover, { passive: true });
 
     return () => {
-      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseover', checkHover);
       cancelAnimationFrame(raf);
     };

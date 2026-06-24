@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import MiniCart from '@/components/MiniCart';
 import CustomCursor from '@/components/CustomCursor';
 import QuickView from '@/components/QuickView';
+import ScrollToTop from '@/components/ScrollToTop';
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -43,24 +44,38 @@ export const metadata: Metadata = {
     locale: 'es_CO',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VERDE. — Vivero & Agricultura Moderna',
+    description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos.',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" data-theme="dark" className={`${instrumentSerif.variable} ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
-        {/* Anti-flash: aplica el tema guardado antes de que React hidrate */}
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('verde-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}` }} />
+        <script dangerouslySetInnerHTML={{ __html: `
+          try{
+            var t=localStorage.getItem('verde-theme');
+            if(t)document.documentElement.setAttribute('data-theme',t);
+            else if(window.matchMedia('(prefers-color-scheme: light)').matches)document.documentElement.setAttribute('data-theme','light');
+          }catch(e){}
+        ` }} />
       </head>
       <body>
         <Providers>
+          <a href="#main-content" className="skip-to-content">Saltar al contenido principal</a>
           <CustomCursor />
           <Nav />
-          {children}
+          <main id="main-content">
+            {children}
+          </main>
           <Footer />
           <MobileNav />
           <MiniCart />
           <QuickView />
+          <ScrollToTop />
         </Providers>
       </body>
     </html>

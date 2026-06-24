@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
@@ -9,10 +10,30 @@ export default function MiniCart() {
   const { items, open, setOpen, updateQty, remove, subtotal, count } = useCart();
   const ship = subtotal > 150000 ? 0 : 10000;
 
+  // Escape key handler
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [open, setOpen]);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add('scroll-locked');
+    } else {
+      document.body.classList.remove('scroll-locked');
+    }
+    return () => document.body.classList.remove('scroll-locked');
+  }, [open]);
+
   return (
     <>
       <div className={`minicart-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
-      <aside className={`minicart ${open ? 'open' : ''}`} aria-hidden={!open}>
+      <aside className={`minicart ${open ? 'open' : ''}`} aria-hidden={!open} role="dialog" aria-label="Carrito de compras">
         <div className="minicart-header">
           <div>
             <div className="eyebrow" style={{ marginBottom: 4 }}>Carrito</div>
@@ -20,7 +41,7 @@ export default function MiniCart() {
               {count} {count === 1 ? 'producto' : 'productos'}
             </div>
           </div>
-          <button className="nav-icon-btn" onClick={() => setOpen(false)} aria-label="Cerrar">
+          <button className="nav-icon-btn" onClick={() => setOpen(false)} aria-label="Cerrar carrito">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
@@ -50,15 +71,16 @@ export default function MiniCart() {
                   <div className="minicart-item-name">{item.product.name}</div>
                   <div className="minicart-item-meta">{item.color.name} · {item.size}</div>
                   <div className="minicart-qty">
-                    <button onClick={() => updateQty(item.variantKey, -1)}>−</button>
+                    <button onClick={() => updateQty(item.variantKey, -1)} aria-label={`Reducir cantidad de ${item.product.name}`}>−</button>
                     <span>{item.qty}</span>
-                    <button onClick={() => updateQty(item.variantKey, 1)}>+</button>
+                    <button onClick={() => updateQty(item.variantKey, 1)} aria-label={`Aumentar cantidad de ${item.product.name}`}>+</button>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div className="minicart-item-price">{formatCOP(item.product.price * item.qty)}</div>
                   <button
                     onClick={() => remove(item.variantKey)}
+                    aria-label={`Quitar ${item.product.name} del carrito`}
                     style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}
                   >
                     Quitar

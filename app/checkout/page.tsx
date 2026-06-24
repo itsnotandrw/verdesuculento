@@ -15,10 +15,31 @@ const PAYMENT_METHODS = [
   { id: 'nequi', label: 'Nequi / Daviplata', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg> },
 ];
 
+interface FormData {
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  ciudad: string;
+  departamento: string;
+  direccion: string;
+  barrio: string;
+  codigoPostal: string;
+}
+
+const INITIAL_FORM: FormData = {
+  nombre: '', apellido: '', email: '', telefono: '',
+  ciudad: '', departamento: '', direccion: '', barrio: '', codigoPostal: '',
+};
+
 export default function CheckoutPage() {
   const { items, subtotal, count, clear } = useCart();
   const [step, setStep] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('pse');
+  const [form, setForm] = useState<FormData>(INITIAL_FORM);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [orderRef, setOrderRef] = useState<string | null>(null);
   const shipping = 10000;
 
   if (count === 0 && step < 2) {
@@ -30,16 +51,44 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleFinish = () => {
+  const updateField = (field: keyof FormData, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const validateStep0 = (): boolean => {
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
+    if (!form.nombre.trim()) newErrors.nombre = 'Requerido';
+    if (!form.apellido.trim()) newErrors.apellido = 'Requerido';
+    if (!form.email.trim()) newErrors.email = 'Requerido';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Email inválido';
+    if (!form.telefono.trim()) newErrors.telefono = 'Requerido';
+    if (!form.ciudad.trim()) newErrors.ciudad = 'Requerido';
+    if (!form.departamento.trim()) newErrors.departamento = 'Requerido';
+    if (!form.direccion.trim()) newErrors.direccion = 'Requerido';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleContinueToPayment = () => {
+    if (validateStep0()) setStep(1);
+  };
+
+  const handleFinish = async () => {
+    setIsProcessing(true);
+    // Simulate processing
+    await new Promise((r) => setTimeout(r, 1500));
+    setOrderRef(`VS-${Math.floor(10000 + Math.random() * 90000)}`);
     clear();
     setStep(2);
+    setIsProcessing(false);
   };
 
   return (
     <div className="page-section" style={{ paddingTop: 120 }}>
       <div className="container" style={{ maxWidth: 960 }}>
         {/* Steps */}
-        <div style={{ display: 'flex', gap: 0, marginBottom: 64, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 0, marginBottom: 64, alignItems: 'center' }} role="navigation" aria-label="Pasos del checkout">
           {STEPS.map((s, i) => (
             <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : undefined }}>
               <div style={{
@@ -66,28 +115,44 @@ export default function CheckoutPage() {
             <div>
               <h2 className="display" style={{ fontSize: 40, marginBottom: 32 }}>Información de envío</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                {[
-                  { label: 'Nombre', type: 'text', placeholder: 'Tu nombre' },
-                  { label: 'Apellido', type: 'text', placeholder: 'Tu apellido' },
-                  { label: 'Correo electrónico', type: 'email', placeholder: 'tu@email.com', full: true },
-                  { label: 'Teléfono', type: 'tel', placeholder: '+57 300 000 0000' },
-                  { label: 'Ciudad', type: 'text', placeholder: 'Bogotá' },
-                  { label: 'Departamento', type: 'text', placeholder: 'Cundinamarca' },
-                  { label: 'Dirección', type: 'text', placeholder: 'Calle 123 # 45-67', full: true },
-                  { label: 'Barrio / Apto', type: 'text', placeholder: 'Barrio, Apto 101' },
-                  { label: 'Código postal', type: 'text', placeholder: '110111' },
-                ].map((f) => (
-                  <div key={f.label} style={{ gridColumn: f.full ? '1 / -1' : undefined }}>
-                    <label style={{ display: 'block', fontSize: 12, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-dim)', marginBottom: 8 }}>{f.label}</label>
+                {([
+                  { field: 'nombre' as const, label: 'Nombre', type: 'text', placeholder: 'Tu nombre' },
+                  { field: 'apellido' as const, label: 'Apellido', type: 'text', placeholder: 'Tu apellido' },
+                  { field: 'email' as const, label: 'Correo electrónico', type: 'email', placeholder: 'tu@email.com', full: true },
+                  { field: 'telefono' as const, label: 'Teléfono', type: 'tel', placeholder: '+57 300 000 0000' },
+                  { field: 'ciudad' as const, label: 'Ciudad', type: 'text', placeholder: 'Bogotá' },
+                  { field: 'departamento' as const, label: 'Departamento', type: 'text', placeholder: 'Cundinamarca' },
+                  { field: 'direccion' as const, label: 'Dirección', type: 'text', placeholder: 'Calle 123 # 45-67', full: true },
+                  { field: 'barrio' as const, label: 'Barrio / Apto', type: 'text', placeholder: 'Barrio, Apto 101' },
+                  { field: 'codigoPostal' as const, label: 'Código postal', type: 'text', placeholder: '110111' },
+                ]).map((f) => (
+                  <div key={f.field} style={{ gridColumn: f.full ? '1 / -1' : undefined }}>
+                    <label htmlFor={`checkout-${f.field}`} style={{ display: 'block', fontSize: 12, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-dim)', marginBottom: 8 }}>
+                      {f.label} {errors[f.field] && <span style={{ color: '#ef4444', textTransform: 'none', letterSpacing: 0 }}>({errors[f.field]})</span>}
+                    </label>
                     <input
+                      id={`checkout-${f.field}`}
                       type={f.type}
                       placeholder={f.placeholder}
-                      style={{ width: '100%', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', color: 'var(--fg)', fontSize: 14, outline: 'none' }}
+                      value={form[f.field]}
+                      onChange={(e) => updateField(f.field, e.target.value)}
+                      aria-invalid={!!errors[f.field]}
+                      aria-describedby={errors[f.field] ? `error-${f.field}` : undefined}
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg-elev)',
+                        border: `1px solid ${errors[f.field] ? '#ef4444' : 'var(--border)'}`,
+                        borderRadius: 8,
+                        padding: '12px 16px',
+                        color: 'var(--fg)',
+                        fontSize: 14,
+                        outline: 'none',
+                      }}
                     />
                   </div>
                 ))}
               </div>
-              <button className="btn btn-primary" style={{ marginTop: 32 }} onClick={() => setStep(1)}>
+              <button className="btn btn-primary" style={{ marginTop: 32 }} onClick={handleContinueToPayment}>
                 Continuar al pago <span className="btn-arrow">→</span>
               </button>
             </div>
@@ -126,10 +191,27 @@ export default function CheckoutPage() {
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>← Volver</button>
-                <button className="btn btn-primary" onClick={handleFinish}>
-                  Confirmar pedido <span className="btn-arrow">→</span>
+                <button className="btn btn-primary" onClick={handleFinish} disabled={isProcessing}>
+                  {isProcessing ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="loading-spinner-sm" /> Procesando...
+                    </span>
+                  ) : (
+                    <>Confirmar pedido <span className="btn-arrow">→</span></>
+                  )}
                 </button>
               </div>
+              <style>{`
+                .loading-spinner-sm {
+                  width: 16px; height: 16px;
+                  border: 2px solid rgba(255,255,255,0.3);
+                  border-top-color: currentColor;
+                  border-radius: 50%;
+                  animation: spin 0.8s linear infinite;
+                  display: inline-block;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+              `}</style>
             </div>
 
             <OrderSummary items={items} subtotal={subtotal} shipping={shipping} />
@@ -146,9 +228,11 @@ export default function CheckoutPage() {
             <p style={{ color: 'var(--fg-dim)', maxWidth: 520, margin: '0 auto 16px', lineHeight: 1.6 }}>
               Tu pedido ha sido recibido. Recibirás un correo de confirmación con el número de seguimiento cuando tu planta sea despachada.
             </p>
-            <div className="mono" style={{ fontSize: 13, color: 'var(--fg-dim)', marginBottom: 48 }}>
-              Referencia: #VS-{Math.floor(Math.random() * 90000) + 10000}
-            </div>
+            {orderRef && (
+              <div className="mono" style={{ fontSize: 13, color: 'var(--fg-dim)', marginBottom: 48 }}>
+                Referencia: #{orderRef}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/" className="btn btn-primary">Volver al inicio <span className="btn-arrow">→</span></Link>
               <Link href="/diario" className="btn btn-ghost">Leer guías de cultivo</Link>

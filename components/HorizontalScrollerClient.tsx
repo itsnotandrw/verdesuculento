@@ -98,7 +98,7 @@ export default function HorizontalScrollerClient({ children }: Props) {
       <div
         ref={scrollRef}
         className="no-scrollbar"
-        style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', cursor: 'none' }}
+        style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }}
       >
         {children}
       </div>

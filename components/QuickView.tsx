@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuickView } from '@/context/QuickViewContext';
 import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
@@ -12,18 +12,63 @@ export default function QuickView() {
   const { add } = useCart();
   const [activeColor, setActiveColor] = useState<ProductColor | null>(null);
   const [activeSize, setActiveSize] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const color = activeColor ?? product?.colors[0] ?? null;
   const size = activeSize ?? product?.sizes[0] ?? null;
+
+  // Escape key handler
+  useEffect(() => {
+    if (!product) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [product, close]);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (product) {
+      document.body.classList.add('scroll-locked');
+    } else {
+      document.body.classList.remove('scroll-locked');
+    }
+    return () => document.body.classList.remove('scroll-locked');
+  }, [product]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!product || !modalRef.current) return;
+    const modal = modalRef.current;
+    const focusable = modal.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+    focusable[0].focus();
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    modal.addEventListener('keydown', handleTab);
+    return () => modal.removeEventListener('keydown', handleTab);
+  }, [product]);
 
   if (!product) return (
     <div className="modal-overlay" aria-hidden />
   );
 
   return (
-    <div className="modal-overlay open" onClick={close}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
-        <button className="modal-close" onClick={close} aria-label="Cerrar">
+    <div className="modal-overlay open" onClick={close} role="dialog" aria-modal="true" aria-label="Vista rápida del producto">
+      <div ref={modalRef} className="modal" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
+        <button className="modal-close" onClick={close} aria-label="Cerrar vista rápida">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>

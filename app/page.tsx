@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { CATALOG, CATEGORIES, TESTIMONIALS, ARTICLES, getFeaturedProducts, formatCOP } from '@/data/catalog';
 import ProductCard from '@/components/ProductCard';
 import ProductShape from '@/components/ProductShape';
@@ -21,7 +22,7 @@ export default function HomePage() {
       <HeroSection />
 
       {/* ── MARQUEE ──────────────────────────────────── */}
-      <div className="marquee">
+      <div className="marquee" aria-label="Beneficios de VERDE">
         <div className="marquee-track">
           {['Envío a toda Colombia', 'Garantía planta viva', 'Asesoría agronómica', 'Genética certificada', 'Empaque biodegradable',
             'Envío a toda Colombia', 'Garantía planta viva', 'Asesoría agronómica', 'Genética certificada', 'Empaque biodegradable'].map((t, i) => (
@@ -64,10 +65,16 @@ export default function HomePage() {
               <div style={{
                 aspectRatio: '4/5',
                 borderRadius: 'var(--radius-lg)',
-                backgroundImage: 'url(https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=85)',
-                backgroundSize: 'cover', backgroundPosition: 'center',
                 position: 'relative', overflow: 'hidden',
               }}>
+                <Image
+                  src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=85"
+                  alt="Vivero VERDE en Antioquia, Colombia"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  style={{ objectFit: 'cover' }}
+                  loading="lazy"
+                />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)' }} />
                 <div style={{ position: 'absolute', bottom: 28, left: 28, right: 28 }}>
                   <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>VIVERO · VEREDA LA CEJA</div>
@@ -255,6 +262,8 @@ export default function HomePage() {
                   style={{
                     backgroundColor: a.image,
                     backgroundImage: ARTICLE_PHOTOS[a.slug] ? `url(${ARTICLE_PHOTOS[a.slug]})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                   }}
                 />
                 <div className="article-card-body">
@@ -344,10 +353,16 @@ function HeroSection() {
   return (
     <section style={{ height: '100vh', minHeight: 720, position: 'relative', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
       {/* Foto de fondo con overlay */}
-      <div
-        className="hero-photo-bg"
-        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1920&q=70)' }}
-      />
+      <div className="hero-photo-bg">
+        <Image
+          src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1920&q=70"
+          alt="Vivero VERDE — plantas y cultivos"
+          fill
+          priority
+          sizes="100vw"
+          style={{ objectFit: 'cover' }}
+        />
+      </div>
       <FloatingBotanicals />
       <div className="container" style={{ position: 'relative', zIndex: 2, textAlign: 'center', pointerEvents: 'none' }}>
         <div className="eyebrow reveal in" style={{ marginBottom: 24 }}>COSECHA 2026 · VIVERO LA CEJA · ANTIOQUIA</div>
@@ -363,7 +378,7 @@ function HeroSection() {
             <Link href="/catalogo" className="btn btn-primary">
               Ver catálogo <span className="btn-arrow">→</span>
             </Link>
-            <button className="btn btn-ghost">Contactar asesor</button>
+            <Link href="/asesoria" className="btn btn-ghost">Contactar asesor</Link>
           </div>
         </Reveal>
       </div>
@@ -403,7 +418,11 @@ function HorizontalScroller() {
               {CAT_PHOTOS[cat.id] && (
                 <div
                   className="cat-card-photo"
-                  style={{ backgroundImage: `url(${CAT_PHOTOS[cat.id]})` }}
+                  style={{
+                    backgroundImage: `url(${CAT_PHOTOS[cat.id]})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
                 />
               )}
               <div>
