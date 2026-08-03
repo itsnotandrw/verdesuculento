@@ -13,11 +13,11 @@ const CLIMATE_OPTIONS = [
 ];
 
 const OBJECTIVE_OPTIONS = [
-  { id: 'fruta',        label: 'Producir fruta',      cats: ['frutales', 'citricos', 'berries'] },
-  { id: 'sombra',       label: 'Quiero sombra',        cats: ['frutales'] },
+  { id: 'fruta',        label: 'Producir fruta',      cats: ['frutales-calido', 'frutales-exoticos', 'frutales-frio', 'citricos', 'berries'] },
+  { id: 'sombra',       label: 'Quiero sombra',        cats: ['frutales-calido', 'frutales-exoticos', 'frutales-frio'] },
   { id: 'interior',     label: 'Para interior',         cats: ['suculentas'] },
-  { id: 'tropical',     label: 'Jardín tropical',       cats: ['frutales'] },
-  { id: 'polinizadores',label: 'Atraer polinizadores',  cats: ['berries', 'frutales'] },
+  { id: 'tropical',     label: 'Jardín tropical',       cats: ['frutales-calido', 'frutales-exoticos'] },
+  { id: 'polinizadores',label: 'Atraer polinizadores',  cats: ['berries', 'frutales-calido', 'frutales-exoticos', 'frutales-frio'] },
 ];
 
 const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: string; linkLabel: string }> = {
@@ -28,9 +28,9 @@ const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: strin
     linkLabel: 'Ver berries',
   },
   12: {
-    title: 'Fertilizantes orgánicos.',
-    sub: 'Sin químicos agresivos. Humus de lombriz, compost certificado y biofertilizantes para Colombia.',
-    link: '/catalogo/fertilizantes',
+    title: 'Agroinsumos orgánicos.',
+    sub: 'Sin químicos agresivos. Humus de lombriz, sustratos y bioestimulantes para Colombia.',
+    link: '/catalogo/agroinsumos',
     linkLabel: 'Ver insumos',
   },
 };
