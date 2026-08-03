@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useQuickView } from '@/context/QuickViewContext';
 import { formatCOP } from '@/data/catalog';
@@ -23,7 +24,17 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
       {product.badge && <span className="product-badge">{product.badge}</span>}
 
       <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
-        <ProductShape product={product} activeColorHex={activeColor.hex} />
+        {product.images.length > 0 ? (
+          <Image
+            src={product.images[0]}
+            alt={product.name}
+            fill
+            sizes="(max-width: 760px) 50vw, 25vw"
+            style={{ objectFit: 'cover' }}
+          />
+        ) : (
+          <ProductShape product={product} activeColorHex={activeColor.hex} />
+        )}
         <div className="product-card-actions">
           <button
             className="product-card-quickview"

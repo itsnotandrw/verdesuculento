@@ -5,6 +5,7 @@ import { useQuickView } from '@/context/QuickViewContext';
 import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
 import ProductShape from './ProductShape';
+import ImageCarousel from './ImageCarousel';
 import type { ProductColor } from '@/types';
 
 export default function QuickView() {
@@ -75,7 +76,11 @@ export default function QuickView() {
         </button>
 
         <div className="modal-img">
-          <ProductShape product={product} activeColorHex={color?.hex} />
+          {product.images.length > 0 ? (
+            <ImageCarousel images={product.images} alt={product.name} />
+          ) : (
+            <ProductShape product={product} activeColorHex={color?.hex} />
+          )}
         </div>
 
         <div className="modal-info">

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CATALOG, CATEGORIES, getProductById, getRelatedProducts, getCrossSellProducts, formatCOP } from '@/data/catalog';
 import { useCart } from '@/context/CartContext';
 import ProductShape from '@/components/ProductShape';
+import ImageCarousel from '@/components/ImageCarousel';
 import ProductCard from '@/components/ProductCard';
 import type { Product, ProductColor } from '@/types';
 
@@ -61,11 +62,15 @@ export default function ProductContent({ product }: { product: Product }) {
             display: 'grid', placeItems: 'center',
             overflow: 'hidden',
           }}>
-            <ProductShape product={{ ...product, colors: [activeColor] }} />
-            {product.badge && (
-              <div className="product-badge">{product.badge}</div>
+            {product.images.length > 0 ? (
+              <ImageCarousel images={product.images} alt={product.name} thumbnails priority />
+            ) : (
+              <ProductShape product={{ ...product, colors: [activeColor] }} />
             )}
-            <div style={{ position: 'absolute', bottom: 20, left: 20, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-dim)', letterSpacing: '0.1em' }}>
+            {product.badge && (
+              <div className="product-badge" style={{ zIndex: 3 }}>{product.badge}</div>
+            )}
+            <div style={{ position: 'absolute', top: 20, right: 20, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-dim)', letterSpacing: '0.1em', zIndex: 3, background: 'color-mix(in oklab, var(--bg) 75%, transparent)', padding: '3px 8px', borderRadius: 999 }}>
               {product.id.toUpperCase()}
             </div>
           </div>

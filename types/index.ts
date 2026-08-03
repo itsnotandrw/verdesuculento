@@ -24,6 +24,7 @@ export interface Product {
   badge?: string;
   accent?: string;
   specs: ProductSpecs;
+  images: string[];
 }
 
 export interface Category {

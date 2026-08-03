@@ -853,13 +853,63 @@ input, select, textarea { cursor: text; }
 }
 .modal-overlay.open .modal { opacity: 1; transform: translateY(0) scale(1); }
 .modal-img {
+  position: relative;
   background:
     radial-gradient(circle at 50% 30%, color-mix(in oklab, var(--accent) 15%, transparent), transparent 60%),
     linear-gradient(135deg, var(--bg-elev-2), var(--bg-elev));
   display: grid; place-items: center;
   min-height: 460px;
+  overflow: hidden;
 }
 .modal-img .product-shape { width: 55%; }
+
+/* =============================================
+   IMAGE CAROUSEL (product gallery)
+   ============================================= */
+.carousel-root { position: absolute; inset: 0; }
+.carousel-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--bg) 75%, transparent);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  cursor: none;
+  z-index: 2;
+  transition: transform 0.2s, background 0.2s;
+}
+.carousel-arrow:hover { background: var(--bg-elev); transform: translateY(-50%) scale(1.08); }
+.carousel-arrow-prev { left: 12px; }
+.carousel-arrow-next { right: 12px; }
+.carousel-dots {
+  position: absolute; bottom: 14px; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 6px;
+  z-index: 2;
+}
+.carousel-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: color-mix(in oklab, var(--fg) 30%, transparent);
+  cursor: none;
+  transition: transform 0.2s, background 0.2s;
+}
+.carousel-dot.active { background: var(--accent); transform: scale(1.4); }
+.carousel-thumbs {
+  position: absolute; bottom: 12px; left: 12px; right: 12px;
+  display: flex; gap: 8px; overflow-x: auto;
+  z-index: 2;
+}
+.carousel-thumb {
+  position: relative; flex-shrink: 0;
+  width: 52px; height: 52px;
+  border-radius: 8px; overflow: hidden;
+  border: 2px solid color-mix(in oklab, var(--bg) 70%, transparent);
+  cursor: none;
+  opacity: 0.7;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+.carousel-thumb:hover { opacity: 1; }
+.carousel-thumb.active { opacity: 1; border-color: var(--accent); }
 .modal-info { padding: 36px 36px 28px; overflow-y: auto; }
 .modal-close {
   position: absolute;

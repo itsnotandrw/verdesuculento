@@ -14,10 +14,10 @@ const CLIMATE_OPTIONS = [
 
 const OBJECTIVE_OPTIONS = [
   { id: 'fruta',        label: 'Producir fruta',      cats: ['frutales', 'citricos', 'berries'] },
-  { id: 'sombra',       label: 'Quiero sombra',        cats: ['ornamentales', 'frutales'] },
-  { id: 'interior',     label: 'Para interior',         cats: ['suculentas', 'ornamentales'] },
-  { id: 'tropical',     label: 'Jardín tropical',       cats: ['frutales', 'ornamentales'] },
-  { id: 'polinizadores',label: 'Atraer polinizadores',  cats: ['berries', 'frutales', 'ornamentales'] },
+  { id: 'sombra',       label: 'Quiero sombra',        cats: ['frutales'] },
+  { id: 'interior',     label: 'Para interior',         cats: ['suculentas'] },
+  { id: 'tropical',     label: 'Jardín tropical',       cats: ['frutales'] },
+  { id: 'polinizadores',label: 'Atraer polinizadores',  cats: ['berries', 'frutales'] },
 ];
 
 const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: string; linkLabel: string }> = {
