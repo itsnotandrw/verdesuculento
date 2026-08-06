@@ -695,6 +695,10 @@ input, select, textarea { cursor: text; }
   transition: opacity 0.4s, transform 0.4s var(--ease-out);
 }
 .product-card:hover .product-card-actions { opacity: 1; transform: translateY(0); }
+/* En touch no existe :hover — sin esto los botones de la tarjeta quedan invisibles */
+@media (hover: none) {
+  .product-card-actions { opacity: 1; transform: translateY(0); }
+}
 .product-card-quickview {
   background: var(--fg); color: var(--bg);
   padding: 9px 14px; border-radius: 999px;
@@ -812,7 +816,10 @@ input, select, textarea { cursor: text; }
   [data-sidebar].sidebar-open { transform: translateX(0); }
   [data-mobile-filter-btn] { display: inline-flex !important; }
 }
-@media (max-width: 720px) { [data-product-grid] { grid-template-columns: repeat(2, 1fr) !important; } }
+@media (max-width: 720px) {
+  [data-product-grid] { grid-template-columns: repeat(2, 1fr) !important; }
+  [data-density-toggle] { display: none !important; }
+}
 @media (max-width: 480px) { [data-product-grid] { grid-template-columns: 1fr !important; } }
 
 /* =============================================
@@ -1247,6 +1254,11 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 }
 .sticky-atc.visible { transform: translateY(0); }
 @media (min-width: 900px) { .sticky-atc { display: none; } }
+/* Debajo de 800px el mobile-nav (bottom:0, z-index:100) tapa esta barra —
+   se sube para que quede justo encima del tab bar en vez de detrás. */
+@media (max-width: 800px) {
+  .sticky-atc { bottom: calc(70px + env(safe-area-inset-bottom)); }
+}
 
 /* =============================================
    SPEC TABLE (PDP)
