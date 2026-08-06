@@ -112,7 +112,7 @@ export default function CheckoutPage() {
 
         {step === 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 48 }} className="checkout-layout">
-            <div>
+            <div style={{ minWidth: 0 }}>
               <h2 className="display" style={{ fontSize: 40, marginBottom: 32 }}>Información de envío</h2>
               <div className="checkout-fields-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
                 {([
@@ -163,7 +163,7 @@ export default function CheckoutPage() {
 
         {step === 1 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 48 }} className="checkout-layout">
-            <div>
+            <div style={{ minWidth: 0 }}>
               <h2 className="display" style={{ fontSize: 40, marginBottom: 32 }}>Método de pago</h2>
               <div style={{ display: 'grid', gap: 12 }}>
                 {PAYMENT_METHODS.map((m) => (
@@ -250,7 +250,7 @@ export default function CheckoutPage() {
 
 function OrderSummary({ items, subtotal, shipping }: { items: ReturnType<typeof useCart>['items']; subtotal: number; shipping: number }) {
   return (
-    <aside style={{ background: 'var(--bg-elev)', borderRadius: 'var(--radius-lg)', padding: 28, border: '1px solid var(--border)', height: 'fit-content', position: 'sticky', top: 100 }}>
+    <aside style={{ background: 'var(--bg-elev)', borderRadius: 'var(--radius-lg)', padding: 28, border: '1px solid var(--border)', height: 'fit-content', position: 'sticky', top: 100, minWidth: 0 }}>
       <div className="eyebrow" style={{ marginBottom: 20 }}>Tu pedido</div>
       <div style={{ marginBottom: 20 }}>
         {items.map((item) => (
