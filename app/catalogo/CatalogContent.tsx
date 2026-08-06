@@ -119,34 +119,13 @@ export default function CatalogContent() {
           </h1>
         </div>
 
-        {/* Discovery pills — Explorar por objetivo */}
-        <div style={{ marginBottom: 16 }}>
-          <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', letterSpacing: '0.1em', marginBottom: 10 }}>EXPLORAR POR OBJETIVO</div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {OBJECTIVE_OPTIONS.map((o) => (
-              <button
-                key={o.id}
-                className={`discovery-pill ${selectedObjective.includes(o.id) ? 'active' : ''}`}
-                onClick={() => toggleObjective(o.id)}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Discovery pills — Explorar por clima */}
-        <div style={{ marginBottom: 40 }}>
-          <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', letterSpacing: '0.1em', marginBottom: 10 }}>EXPLORAR POR CLIMA</div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {CLIMATE_OPTIONS.map((c) => (
-              <button
-                key={c.id}
-                className={`discovery-pill ${selectedClimate.includes(c.id) ? 'active' : ''}`}
-                onClick={() => toggleClimate(c.id)}
-              >
-                {c.label}
-              </button>
+        {/* Marquee — categorías reales del vivero */}
+        <div className="marquee" aria-label="Categorías del catálogo" style={{ marginBottom: 40, width: '100vw', marginLeft: 'calc(50% - 50vw)', marginRight: 'calc(50% - 50vw)' }}>
+          <div className="marquee-track">
+            {[...CATEGORIES, ...CATEGORIES].map((cat, i) => (
+              <span className="marquee-item" key={i}>
+                {cat.name}<span className="dot" />
+              </span>
             ))}
           </div>
         </div>
