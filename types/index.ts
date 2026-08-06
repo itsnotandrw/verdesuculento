@@ -66,3 +66,38 @@ export interface CartItem {
 }
 
 export type CategoryShape = 'fruit' | 'cluster' | 'leaf' | 'rosette' | 'seed' | 'bag';
+
+export interface ProductReview {
+  rating: number;
+  titulo: string;
+  contenido: string;
+  fecha: string;
+  likes: number;
+}
+
+export interface ProductQna {
+  pregunta: string;
+  respuesta: string;
+}
+
+export interface ProductRating {
+  rating: number | null;
+  reviewCount: number;
+  bestsellerRank: number | null;
+}
+
+export interface SocialProof {
+  rating: number | null;
+  reviewCount: number;
+  reviews: ProductReview[];
+  qna: ProductQna[];
+  bestsellerRank: number | null;
+}
+
+export interface SellerStats {
+  nickname: string;
+  powerSellerStatus: string;
+  positivePct: number;
+  totalTransactions: number;
+  completedTransactions: number;
+}

@@ -4,8 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuickView } from '@/context/QuickViewContext';
 import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
+import { RATINGS } from '@/data/ratings';
 import ProductShape from './ProductShape';
 import ImageCarousel from './ImageCarousel';
+import StarRating from './StarRating';
 import type { ProductColor } from '@/types';
 
 export default function QuickView() {
@@ -86,6 +88,11 @@ export default function QuickView() {
         <div className="modal-info">
           <div className="eyebrow" style={{ marginBottom: 10 }}>{product.category}</div>
           <h2 className="display" style={{ fontSize: 44, marginBottom: 8 }}>{product.name}</h2>
+          {RATINGS[product.id]?.rating != null && (
+            <div style={{ marginBottom: 10 }}>
+              <StarRating rating={RATINGS[product.id].rating!} count={RATINGS[product.id].reviewCount} size={13} showValue />
+            </div>
+          )}
           <div className="mono" style={{ fontSize: 18, marginBottom: 18 }}>{formatCOP(product.price)}</div>
           <p style={{ color: 'var(--fg-dim)', marginBottom: 24, lineHeight: 1.6 }}>{product.description}</p>
 

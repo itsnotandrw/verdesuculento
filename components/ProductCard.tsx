@@ -6,7 +6,9 @@ import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useQuickView } from '@/context/QuickViewContext';
 import { formatCOP } from '@/data/catalog';
+import { RATINGS } from '@/data/ratings';
 import ProductShape from './ProductShape';
+import StarRating from './StarRating';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -19,10 +21,12 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
   const { add } = useCart();
   const { open } = useQuickView();
   const [activeColor, setActiveColor] = useState(product.colors[0]);
+  const rating = RATINGS[product.id];
+  const badgeLabel = rating?.bestsellerRank ? 'Más vendido' : product.badge;
 
   return (
     <article className="product-card" data-compact={compact ? 'true' : 'false'}>
-      {product.badge && <span className="product-badge">{product.badge}</span>}
+      {badgeLabel && <span className="product-badge">{badgeLabel}</span>}
 
       <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
         {product.images.length > 0 ? (
@@ -60,6 +64,11 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
           <Link href={`/producto/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="product-card-title">{product.name}</div>
           </Link>
+          {rating?.rating != null && (
+            <div style={{ marginTop: 4 }}>
+              <StarRating rating={rating.rating} count={rating.reviewCount} size={11} showValue />
+            </div>
+          )}
           {!compact && <div className="product-card-tag">{product.tagline}</div>}
           {product.colors.length > 1 && (
             <div

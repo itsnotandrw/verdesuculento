@@ -3,10 +3,15 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { CATALOG, CATEGORIES, getProductById, getRelatedProducts, getCrossSellProducts, formatCOP } from '@/data/catalog';
+import { SOCIAL_PROOF, SELLER_STATS } from '@/data/socialProof';
 import { useCart } from '@/context/CartContext';
 import ProductShape from '@/components/ProductShape';
 import ImageCarousel from '@/components/ImageCarousel';
 import ProductCard from '@/components/ProductCard';
+import StarRating from '@/components/StarRating';
+import ProductReviews from '@/components/ProductReviews';
+import ProductFAQ from '@/components/ProductFAQ';
+import SellerTrust from '@/components/SellerTrust';
 import type { Product, ProductColor } from '@/types';
 
 export default function ProductContent({ product }: { product: Product }) {
@@ -21,6 +26,7 @@ export default function ProductContent({ product }: { product: Product }) {
   const crossSell = getCrossSellProducts(product);
   const category = CATEGORIES.find((c) => c.id === product.category);
   const specs = product.specs;
+  const social = SOCIAL_PROOF[product.id];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -79,6 +85,14 @@ export default function ProductContent({ product }: { product: Product }) {
           <div>
             <div className="eyebrow" style={{ marginBottom: 14 }}>{category?.name}</div>
             <h1 className="display" style={{ fontSize: 'clamp(44px, 5vw, 80px)', marginBottom: 8, letterSpacing: '-0.025em' }}>{product.name}</h1>
+            {social?.rating != null && (
+              <a href="#reviews" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 14, textDecoration: 'none' }}>
+                <StarRating rating={social.rating} size={15} />
+                <span className="mono" style={{ fontSize: 13, color: 'var(--fg-dim)' }}>
+                  {social.rating.toFixed(1)} · {social.reviewCount} {social.reviewCount === 1 ? 'reseña' : 'reseñas'}
+                </span>
+              </a>
+            )}
             <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 20 }}>{product.tagline}</p>
             <div className="mono" style={{ fontSize: 28, marginBottom: 28, letterSpacing: '-0.02em' }}>{formatCOP(product.price)}</div>
 
@@ -140,6 +154,8 @@ export default function ProductContent({ product }: { product: Product }) {
               </button>
               <Link href="/checkout" className="btn btn-ghost" style={{ justifyContent: 'center' }}>Comprar ya</Link>
             </div>
+
+            <SellerTrust seller={SELLER_STATS} />
 
             {/* Trust signals */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 36, padding: '24px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
@@ -224,6 +240,12 @@ export default function ProductContent({ product }: { product: Product }) {
           </div>
           <style>{`@media (max-width: 760px) { .story-grid { grid-template-columns: 1fr !important; } }`}</style>
         </section>
+
+        {/* Reseñas de compradores */}
+        {social && <ProductReviews data={social} />}
+
+        {/* Preguntas frecuentes */}
+        {social && <ProductFAQ items={social.qna} />}
 
         {/* Cross-sell */}
         {crossSell.length > 0 && (
