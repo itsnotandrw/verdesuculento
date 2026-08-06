@@ -1058,7 +1058,20 @@ input, select, textarea { cursor: text; }
   z-index: 2; cursor: none;
 }
 @media (max-width: 760px) {
-  .modal { grid-template-columns: 1fr; max-height: 95vh; overflow-y: auto; }
+  /* Bottom sheet: evita el centrado con 100vh, que en Safari se calcula
+     sobre el viewport "de layout" (con la barra de direcciones oculta) y
+     terminaba empujando el modal fuera del area visible real. */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal {
+    grid-template-columns: 1fr;
+    width: 100%; max-width: 100%;
+    max-height: 92vh; max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+    border-left: none; border-right: none; border-bottom: none;
+    overflow-y: auto;
+    transform: translateY(100%);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
   .modal-img { min-height: 280px; }
 }
 

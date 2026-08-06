@@ -77,7 +77,7 @@ export default function QuickView() {
 
         <div className="modal-img">
           {product.images.length > 0 ? (
-            <ImageCarousel images={product.images} alt={product.name} />
+            <ImageCarousel images={product.images} alt={product.name} sizes="(max-width: 760px) 92vw, 480px" />
           ) : (
             <ProductShape product={product} activeColorHex={color?.hex} />
           )}

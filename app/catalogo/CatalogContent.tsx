@@ -101,6 +101,10 @@ export default function CatalogContent() {
   };
 
   const cols = density;
+  // El sizes de la imagen debe reflejar el ancho real de la tarjeta segun la
+  // densidad elegida (2/3/4 columnas) — si no, el navegador pide una resolucion
+  // mas chica de la necesaria y la foto sale pixelada al ampliarla con CSS.
+  const productSizes = `(max-width: 480px) 94vw, (max-width: 720px) 47vw, ${{ 2: 54, 3: 36, 4: 27 }[cols]}vw`;
 
   return (
     <div className="page-section" style={{ paddingTop: 100 }}>
@@ -331,7 +335,7 @@ export default function CatalogContent() {
                       </div>
                     );
                   }
-                  items.push(<ProductCard key={p.id} product={p} compact={cols > 3} />);
+                  items.push(<ProductCard key={p.id} product={p} compact={cols > 3} sizes={productSizes} />);
                   return items;
                 })}
               </div>

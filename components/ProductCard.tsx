@@ -12,9 +12,10 @@ import type { Product } from '@/types';
 interface ProductCardProps {
   product: Product;
   compact?: boolean;
+  sizes?: string;
 }
 
-export default function ProductCard({ product, compact = false }: ProductCardProps) {
+export default function ProductCard({ product, compact = false, sizes = '(max-width: 480px) 94vw, (max-width: 720px) 47vw, 25vw' }: ProductCardProps) {
   const { add } = useCart();
   const { open } = useQuickView();
   const [activeColor, setActiveColor] = useState(product.colors[0]);
@@ -29,7 +30,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
             src={product.images[0]}
             alt={product.name}
             fill
-            sizes="(max-width: 760px) 50vw, 25vw"
+            sizes={sizes}
             style={{ objectFit: 'cover' }}
           />
         ) : (

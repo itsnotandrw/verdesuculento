@@ -9,9 +9,10 @@ interface ImageCarouselProps {
   alt: string;
   thumbnails?: boolean;
   priority?: boolean;
+  sizes?: string;
 }
 
-export default function ImageCarousel({ images, alt, thumbnails = false, priority = false }: ImageCarouselProps) {
+export default function ImageCarousel({ images, alt, thumbnails = false, priority = false, sizes = '(max-width: 760px) 100vw, 50vw' }: ImageCarouselProps) {
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -75,7 +76,7 @@ export default function ImageCarousel({ images, alt, thumbnails = false, priorit
               src={img}
               alt={alt}
               fill
-              sizes="(max-width: 760px) 100vw, 50vw"
+              sizes={sizes}
               style={{ objectFit: 'cover' }}
               priority={priority && i === 0}
             />
