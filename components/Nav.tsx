@@ -2,19 +2,33 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import { CATEGORIES } from '@/data/catalog';
 
 export default function Nav() {
   const pathname = usePathname();
   const { count, setOpen } = useCart();
   const navLinksRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openCatalogMenu = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setCatalogOpen(true);
+  };
+  const scheduleCloseCatalogMenu = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setCatalogOpen(false), 150);
+  };
+
+  useEffect(() => {
+    setCatalogOpen(false);
+  }, [pathname]);
 
   const links = [
-    { href: '/', label: 'Inicio' },
-    { href: '/catalogo', label: 'Catálogo' },
     { href: '/diario', label: 'Diario' },
     { href: '/asesoria', label: 'Asesoría' },
     { href: '/nosotros', label: 'Nosotros' },
@@ -73,6 +87,51 @@ export default function Nav() {
       >
         {/* Sliding pill indicator */}
         <span ref={pillRef} className="nav-pill" aria-hidden />
+
+        <Link
+          href="/"
+          className={`nav-link ${isActive('/') ? 'active' : ''}`}
+          onMouseEnter={(e) => movePill(e.currentTarget)}
+        >
+          Inicio
+        </Link>
+
+        <div
+          className="nav-dropdown"
+          onMouseEnter={openCatalogMenu}
+          onMouseLeave={scheduleCloseCatalogMenu}
+        >
+          <Link
+            href="/catalogo"
+            className={`nav-link nav-dropdown-trigger ${isActive('/catalogo') ? 'active' : ''}`}
+            onMouseEnter={(e) => movePill(e.currentTarget)}
+            onClick={() => setCatalogOpen(false)}
+            aria-haspopup="true"
+            aria-expanded={catalogOpen}
+          >
+            Catálogo
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="nav-dropdown-caret">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </Link>
+
+          <div className={`nav-dropdown-panel ${catalogOpen ? 'open' : ''}`}>
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/catalogo/${cat.id}`}
+                className="nav-dropdown-item"
+                onClick={() => setCatalogOpen(false)}
+              >
+                <span>{cat.name}</span>
+                <span className="nav-dropdown-count">{cat.count}</span>
+              </Link>
+            ))}
+            <Link href="/catalogo" className="nav-dropdown-item nav-dropdown-all" onClick={() => setCatalogOpen(false)}>
+              Ver todo el catálogo →
+            </Link>
+          </div>
+        </div>
 
         {links.map((l) => (
           <Link

@@ -188,7 +188,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas templados a fríos (desde 500 hasta 2.800 msnm)", sol: "Pleno sol", riego: "Frecuente", produccion: "8 — 18 meses", altura: "25 a 40 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO2855598586/1.jpg", "/images/productos/MCO2855598586/2.jpg", "/images/productos/MCO2855598586/3.jpg", "/images/productos/MCO2855598586/4.jpg", "/images/productos/MCO2855598586/5.jpg", "/images/productos/MCO2855598586/6.jpg"],
   },
-  // ============ ESPECIAS EXÓTICAS ============
+  // ============ ESPECIAS EXOTICAS ============
   {
     id: "MCO2837662598",
     name: "Laurel Arbustivo Planta Gran D Semilla Verde Suculento",
@@ -286,7 +286,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Todos", sol: "No aplica", riego: "No aplica", produccion: "Aplicación directa", altura: "No aplica", dificultad: "Fácil" },
     images: ["/images/productos/MCO1599811897/1.jpg", "/images/productos/MCO1599811897/2.jpg", "/images/productos/MCO1599811897/3.jpg", "/images/productos/MCO1599811897/4.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO2920119430",
     name: "Planta De Café Castillo",
@@ -381,7 +381,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Todos", sol: "No aplica", riego: "No aplica", produccion: "Aplicación directa", altura: "No aplica", dificultad: "Fácil" },
     images: ["/images/productos/MCO2983346178/1.jpg", "/images/productos/MCO2983346178/2.jpg", "/images/productos/MCO2983346178/3.jpg", "/images/productos/MCO2983346178/4.jpg", "/images/productos/MCO2983346178/5.jpg", "/images/productos/MCO2983346178/6.jpg", "/images/productos/MCO2983346178/7.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO2989263462",
     name: "Zapote Planta",
@@ -395,7 +395,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y templados, altitud ideal hasta 1.200 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "Fructificación entre 4 y 6 años en condiciones óptimas", altura: "40 a 60 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO2989263462/1.jpg", "/images/productos/MCO2989263462/2.jpg", "/images/productos/MCO2989263462/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO2988094512",
     name: "Pomarrosa Planta Manzana De Agua",
@@ -409,7 +409,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Clima tropical a subtropical, temperaturas entre 20 °C y 30 °C, altitud ideal hasta 1.600 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "2 — 4 años", altura: "3 — 8 m en adultez", dificultad: "Intermedio" },
     images: ["/images/productos/MCO2988094512/1.jpg", "/images/productos/MCO2988094512/2.jpg", "/images/productos/MCO2988094512/3.jpg", "/images/productos/MCO2988094512/4.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO2988018400",
     name: "Rambutan",
@@ -424,7 +424,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y húmedos, preferiblemente tropicales, altitud ideal entre 0 y 1.600 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "2 — 4 años", altura: "80 a 100 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO2988018400/1.jpg", "/images/productos/MCO2988018400/2.jpg", "/images/productos/MCO2988018400/3.jpg", "/images/productos/MCO2988018400/4.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO1635057067",
     name: "Plantula Cacao Ccn-51",
@@ -438,7 +438,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y húmedos, entre 0 y 1.200 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "Comienza a producir entre 2 y 3 años en condiciones óptimas", altura: "40 a 60 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1635057067/1.jpg", "/images/productos/MCO1635057067/2.jpg", "/images/productos/MCO1635057067/3.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO1634999953",
     name: "Fruta Milagrosa",
@@ -453,7 +453,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y templados, altitudes desde 0 hasta 2.200 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "Fructifica entre 2 y 3 años en condiciones óptimas", altura: "25 a 40 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1634999953/1.jpg", "/images/productos/MCO1634999953/2.jpg", "/images/productos/MCO1634999953/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO1634947031",
     name: "Tamarindo",
@@ -480,7 +480,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálido a templado (500 a 1.800 msnm)", sol: "Pleno sol", riego: "Moderado", produccion: "Alta, frutos medianos a grandes", altura: "3 — 8 m en adultez", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1634880323/1.jpg", "/images/productos/MCO1634880323/2.jpg", "/images/productos/MCO1634880323/3.jpg", "/images/productos/MCO1634880323/4.jpg", "/images/productos/MCO1634880323/5.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO2993577610",
     name: "Neem Arbol",
@@ -494,7 +494,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y secos, ideal para zonas de baja humedad", sol: "Pleno sol", riego: "Moderado", produccion: "2 — 4 años", altura: "50 a 60 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO2993577610/1.jpg", "/images/productos/MCO2993577610/2.jpg", "/images/productos/MCO2993577610/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO3052430206",
     name: "Maracuya",
@@ -508,7 +508,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos a templados (0 a 1.800 msnm)", sol: "Pleno sol", riego: "Moderado", produccion: "Alta, cosechas a partir de los 12 meses", altura: "30 a 50 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3052430206/1.jpg", "/images/productos/MCO3052430206/2.jpg", "/images/productos/MCO3052430206/3.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO3052022470",
     name: "Papayuela",
@@ -535,7 +535,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas templados a fríos (desde 1.200 hasta 2.500 msnm)", sol: "Pleno sol", riego: "Moderado", produccion: "Alta, frutos grandes y carnosos desde los 5 meses", altura: "40 a 60 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1649184215/1.jpg", "/images/productos/MCO1649184215/2.jpg", "/images/productos/MCO1649184215/3.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO3080004834",
     name: "Mangostino",
@@ -549,7 +549,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y húmedos, preferiblemente tropicales, altitud ideal entre 0 y 1.300 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "2 — 4 años", altura: "50 a 70 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3080004834/1.jpg", "/images/productos/MCO3080004834/2.jpg", "/images/productos/MCO3080004834/3.jpg", "/images/productos/MCO3080004834/4.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO1656676441",
     name: "Gulupa",
@@ -630,7 +630,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío (Biloxi también se adapta a cálido)", sol: "Pleno sol", riego: "Frecuente", produccion: "8 — 18 meses", altura: "1 — 2 m", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1662888207/1.jpg", "/images/productos/MCO1662888207/2.jpg", "/images/productos/MCO1662888207/3.jpg", "/images/productos/MCO1662888207/4.jpg", "/images/productos/MCO1662888207/5.jpg", "/images/productos/MCO1662888207/6.jpg", "/images/productos/MCO1662888207/7.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO1662851471",
     name: "Planta De Café Supremo",
@@ -658,7 +658,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío (1.500 – 3.000 msnm)", sol: "Pleno sol", riego: "Frecuente", produccion: "Alta en todas las especies", altura: "1 — 2 m", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1662737097/1.jpg", "/images/productos/MCO1662737097/2.jpg", "/images/productos/MCO1662737097/3.jpg", "/images/productos/MCO1662737097/4.jpg", "/images/productos/MCO1662737097/5.jpg", "/images/productos/MCO1662737097/6.jpg", "/images/productos/MCO1662737097/7.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO1670945229",
     name: "2 Araza Brasil",
@@ -713,7 +713,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas templado a frio (Desde los 500 msnm hasta 3.200)", sol: "Pleno sol", riego: "Frecuente", produccion: "Alta y dulces", altura: "1 — 2 m", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1395952141/1.jpg", "/images/productos/MCO1395952141/2.jpg", "/images/productos/MCO1395952141/3.jpg", "/images/productos/MCO1395952141/4.jpg", "/images/productos/MCO1395952141/5.jpg", "/images/productos/MCO1395952141/6.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO1636376249",
     name: "Acerola Brasil",
@@ -755,7 +755,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Cálido y templado", sol: "Pleno sol", riego: "Moderado", produccion: "Alta y constante", altura: "3 — 5 m en adultez", dificultad: "Fácil" },
     images: ["/images/productos/MCO3246870210/1.jpg", "/images/productos/MCO3246870210/2.jpg", "/images/productos/MCO3246870210/3.jpg", "/images/productos/MCO3246870210/4.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO1711629755",
     name: "Granadilla",
@@ -769,7 +769,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío", sol: "Pleno sol", riego: "Moderado", produccion: "Alta y constante", altura: "20 a 30 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1711629755/1.jpg", "/images/productos/MCO1711629755/2.jpg", "/images/productos/MCO1711629755/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO1711603059",
     name: "2 Plantulas De Mamoncillo",
@@ -826,7 +826,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Cálido a templado", sol: "Pleno sol", riego: "Moderado", produccion: "Alta y constante", altura: "60 a 80 centimetros al recibir (plántula)", dificultad: "Fácil" },
     images: ["/images/productos/MCO1711524477/1.jpg", "/images/productos/MCO1711524477/2.jpg", "/images/productos/MCO1711524477/3.jpg", "/images/productos/MCO1711524477/4.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO1711514317",
     name: "Uchuva",
@@ -840,7 +840,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío", sol: "Pleno sol", riego: "Moderado", produccion: "Alta y continua", altura: "20 a 30 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1711514317/1.jpg", "/images/productos/MCO1711514317/2.jpg", "/images/productos/MCO1711514317/3.jpg", "/images/productos/MCO1711514317/4.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO1711512723",
     name: "2 Plantulas Mamey Zapote",
@@ -854,7 +854,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Cálido a templado", sol: "Pleno sol", riego: "Moderado", produccion: "Alta una vez establecida", altura: "60 a 80 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1711512723/1.jpg", "/images/productos/MCO1711512723/2.jpg", "/images/productos/MCO1711512723/3.jpg", "/images/productos/MCO1711512723/4.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO1746628855",
     name: "Jabuticaba Uva De Brasil",
@@ -895,7 +895,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a cálido", sol: "Pleno sol", riego: "Moderado", produccion: "Buena y constante", altura: "60 a 70 centimetros al recibir (plántula)", dificultad: "Fácil" },
     images: ["/images/productos/MCO3493038750/1.jpg", "/images/productos/MCO3493038750/2.jpg", "/images/productos/MCO3493038750/3.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO3492896894",
     name: "Yaca O Jackfruit",
@@ -952,7 +952,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas fríos y templados de montaña, altitud ideal entre 1.800 y 3.200 msnm", sol: "Pleno sol", riego: "Frecuente", produccion: "8 — 18 meses", altura: "40 a 50 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1836152301/1.jpg", "/images/productos/MCO1836152301/2.jpg", "/images/productos/MCO1836152301/3.jpg", "/images/productos/MCO1836152301/4.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO1848560653",
     name: "Copoazu",
@@ -992,7 +992,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y húmedos, altitud ideal entre 0 y 800 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "2 — 4 años", altura: "40 a 60 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1848547905/1.jpg", "/images/productos/MCO1848547905/2.jpg", "/images/productos/MCO1848547905/3.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO3778841074",
     name: "2 Manzano",
@@ -1032,7 +1032,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío", sol: "Pleno sol", riego: "Moderado", produccion: "Buena", altura: "1 metro al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1874827195/1.jpg", "/images/productos/MCO1874827195/2.jpg", "/images/productos/MCO1874827195/3.jpg", "/images/productos/MCO1874827195/4.jpg", "/images/productos/MCO1874827195/5.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO1876262929",
     name: "Kit 6 Arbol Frutales Exóticos Clima Calido",
@@ -1046,7 +1046,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Cálido y medio", sol: "Pleno sol", riego: "Moderado", produccion: "2 — 4 años", altura: "50 – 70 cm según especie al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1876262929/1.jpg", "/images/productos/MCO1876262929/2.jpg", "/images/productos/MCO1876262929/3.jpg", "/images/productos/MCO1876262929/4.jpg", "/images/productos/MCO1876262929/5.jpg", "/images/productos/MCO1876262929/6.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO1876111841",
     name: "2 Durazno Jarillo",
@@ -1073,7 +1073,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Frío", sol: "Pleno sol", riego: "Moderado", produccion: "Alta", altura: "80 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1876011919/1.jpg", "/images/productos/MCO1876011919/2.jpg", "/images/productos/MCO1876011919/3.jpg"],
   },
-  // ============ FRUTALES EXÓTICOS ============
+  // ============ FRUTALES EXÓTICOS CLIMA CÁLIDO ============
   {
     id: "MCO3922093902",
     name: "Carambolo Brasil",
@@ -1087,7 +1087,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos a templados (ideal entre 0 y 1.200 msnm)", sol: "Pleno sol", riego: "Moderado", produccion: "Fructificación en 2 a 3 años en condiciones óptimas", altura: "60 a 70 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3922093902/1.jpg", "/images/productos/MCO3922093902/2.jpg", "/images/productos/MCO3922093902/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO3922043712",
     name: "Guanabana",
@@ -1114,7 +1114,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos a templados (ideal entre 0 y 2.000 msnm)", sol: "Pleno sol", riego: "Moderado", produccion: "Fructificación en 1 a 3 años en condiciones óptimas", altura: "60 a 90 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3922043032/1.jpg", "/images/productos/MCO3922043032/2.jpg", "/images/productos/MCO3922043032/3.jpg"],
   },
-  // ============ ESPECIAS EXÓTICAS ============
+  // ============ ESPECIAS EXOTICAS ============
   {
     id: "MCO3951307196",
     name: "Pimienta Negra",
@@ -1128,7 +1128,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Cálido y húmedo", sol: "Semisombra", riego: "Moderado", produccion: "Buena", altura: "35 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3951307196/1.jpg", "/images/productos/MCO3951307196/2.jpg", "/images/productos/MCO3951307196/3.jpg", "/images/productos/MCO3951307196/4.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO3950971162",
     name: "2 Aguacate Choquette",
@@ -1142,7 +1142,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a cálido", sol: "Pleno sol", riego: "Moderado", produccion: "Alta", altura: "80 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3950971162/1.jpg", "/images/productos/MCO3950971162/2.jpg", "/images/productos/MCO3950971162/3.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO3950868448",
     name: "2 Cereza Castilla (capulin)",
@@ -1156,7 +1156,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío", sol: "Pleno sol", riego: "Moderado", produccion: "Buena", altura: "80 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3950868448/1.jpg", "/images/productos/MCO3950868448/2.jpg", "/images/productos/MCO3950868448/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO3950868138",
     name: "2 Mango Tommy",
@@ -1170,7 +1170,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Cálido y tropical", sol: "Pleno sol", riego: "Moderado", produccion: "Alta", altura: "80 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO3950868138/1.jpg", "/images/productos/MCO3950868138/2.jpg", "/images/productos/MCO3950868138/3.jpg", "/images/productos/MCO3950868138/4.jpg"],
   },
-  // ============ ESPECIAS EXÓTICAS ============
+  // ============ ESPECIAS EXOTICAS ============
   {
     id: "MCO1949915993",
     name: "Vainilla Planta Exótica",
@@ -1198,7 +1198,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Todos", sol: "No aplica", riego: "No aplica", produccion: "Aplicación directa", altura: "No aplica", dificultad: "Fácil" },
     images: ["/images/productos/MCO1951823001/1.jpg", "/images/productos/MCO1951823001/2.jpg", "/images/productos/MCO1951823001/3.jpg", "/images/productos/MCO1951823001/4.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO1979530273",
     name: "Plantulas Cacao Ccn-51",
@@ -1212,7 +1212,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Climas cálidos y húmedos, entre 0 y 1.200 msnm", sol: "Pleno sol", riego: "Moderado", produccion: "Comienza a producir entre 2 y 3 años en condiciones óptimas", altura: "40 a 60 cm aproximadamente al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO1979530273/1.jpg", "/images/productos/MCO1979530273/2.jpg", "/images/productos/MCO1979530273/3.jpg"],
   },
-  // ============ FRUTALES CLIMA FRÍO ============
+  // ============ FRUTALES CLIMA TEMPLADO A FRIO ============
   {
     id: "MCO1996920737",
     name: "2 Pera Ecuatoriana",
@@ -1239,7 +1239,7 @@ export const CATALOG: Product[] = [
     specs: { clima: "Templado a frío", sol: "Pleno sol", riego: "Moderado", produccion: "Alta", altura: "70 a 80 cm al recibir (plántula)", dificultad: "Intermedio" },
     images: ["/images/productos/MCO2000837271/1.jpg", "/images/productos/MCO2000837271/2.jpg", "/images/productos/MCO2000837271/3.jpg"],
   },
-  // ============ FRUTALES CLIMA CÁLIDO ============
+  // ============ FRUTALES CLIMA CALIDO ============
   {
     id: "MCO4114143924",
     name: "Guayaba Pera Planta",
@@ -1258,12 +1258,12 @@ export const CATALOG: Product[] = [
 export const CATEGORIES: Category[] = [
   { id: "berries", name: "Berries", count: 13, blurb: "Arándanos, frambuesas, moras, fresas y agraz de clima frío y de altura." },
   { id: "citricos", name: "Cítricos", count: 5, blurb: "Limones, naranjas, mandarinas y kumquats injertados." },
-  { id: "frutales-calido", name: "Frutales Clima Cálido", count: 14, blurb: "Árboles frutales de trópico bajo: aguacate, mango, café, guayaba y más." },
-  { id: "frutales-exoticos", name: "Frutales Exóticos", count: 17, blurb: "Rambután, mangostino, jabuticaba y otras rarezas tropicales por semilla." },
-  { id: "frutales-frio", name: "Frutales Clima Frío", count: 16, blurb: "Manzano, pera, durazno y frutales andinos de clima templado a frío." },
-  { id: "suculentas", name: "Suculentas y Cactus", count: 14, blurb: "Kits, coleccionables y materas de bajo mantenimiento." },
+  { id: "frutales-calido", name: "Frutales clima calido", count: 14, blurb: "Árboles frutales de trópico bajo: aguacate, mango, café, guayaba y más." },
+  { id: "frutales-exoticos", name: "Frutales Exóticos Clima cálido", count: 17, blurb: "Rambután, mangostino, jabuticaba y otras rarezas tropicales por semilla." },
+  { id: "frutales-frio", name: "Frutales clima Templado a Frio", count: 16, blurb: "Manzano, pera, durazno y frutales andinos de clima templado a frío." },
+  { id: "suculentas", name: "Suculentas y cactus", count: 14, blurb: "Kits, coleccionables y materas de bajo mantenimiento." },
   { id: "agroinsumos", name: "Agroinsumos", count: 8, blurb: "Sustratos, humus de lombriz y bioestimulantes para tu cultivo." },
-  { id: "especias", name: "Especias Exóticas", count: 3, blurb: "Vainilla, pimienta negra, laurel y otras aromáticas cultivables." },
+  { id: "especias", name: "Especias Exoticas", count: 3, blurb: "Vainilla, pimienta negra, laurel y otras aromáticas cultivables." },
   { id: "otros", name: "Otros", count: 1, blurb: "Pedidos y servicios especiales del vivero." },
 ];
 
