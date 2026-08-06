@@ -414,7 +414,7 @@ input, select, textarea { cursor: text; }
 .mobile-catalog-panel {
   position: fixed;
   left: 0; right: 0;
-  bottom: calc(70px + env(safe-area-inset-bottom));
+  bottom: var(--mobile-nav-height, 70px);
   z-index: 160;
   background: var(--bg-elev);
   border: 1px solid var(--border);
@@ -424,7 +424,8 @@ input, select, textarea { cursor: text; }
   overflow-y: auto;
   padding: 8px 12px 16px;
   box-shadow: 0 -16px 40px -12px rgba(0,0,0,0.3);
-  transform: translateY(110%);
+  /* 100% + el propio offset "bottom" para que quede totalmente fuera de pantalla al cerrar */
+  transform: translateY(calc(100% + var(--mobile-nav-height, 70px) + 24px));
   transition: transform 0.4s var(--ease-out);
 }
 .mobile-catalog-panel.open { transform: translateY(0); }
@@ -959,6 +960,8 @@ input, select, textarea { cursor: text; }
    IMAGE CAROUSEL (product gallery)
    ============================================= */
 .carousel-root { position: absolute; inset: 0; }
+.carousel-track { touch-action: pan-y; }
+.carousel-slide { position: relative; flex: 0 0 100%; height: 100%; cursor: zoom-in; }
 .carousel-arrow {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 36px; height: 36px;
@@ -1002,6 +1005,47 @@ input, select, textarea { cursor: text; }
 }
 .carousel-thumb:hover { opacity: 1; }
 .carousel-thumb.active { opacity: 1; border-color: var(--accent); }
+
+/* =============================================
+   LIGHTBOX (visor de fotos pantalla completa, estilo ML)
+   ============================================= */
+.lightbox-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.94);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  animation: lightboxFade 0.25s ease;
+}
+@keyframes lightboxFade { from { opacity: 0; } to { opacity: 1; } }
+.lightbox-track { width: 100%; height: 100%; touch-action: pan-y; }
+.lightbox-slide { position: relative; flex: 0 0 100%; height: 100%; }
+.lightbox-close {
+  position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.12); color: #fff;
+  display: grid; place-items: center;
+  z-index: 2; cursor: pointer;
+  transition: background 0.2s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.22); }
+.lightbox-counter {
+  position: absolute; top: max(20px, env(safe-area-inset-top)); left: 50%;
+  transform: translateX(-50%);
+  color: #fff; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em;
+  z-index: 2;
+}
+.lightbox-arrow-prev, .lightbox-arrow-next {
+  top: 50%; width: 44px; height: 44px;
+  background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); color: #fff;
+}
+.lightbox-arrow-prev:hover, .lightbox-arrow-next:hover { background: rgba(255,255,255,0.22); }
+.lightbox-arrow-prev { left: 16px; }
+.lightbox-arrow-next { right: 16px; }
+@media (max-width: 600px) {
+  .lightbox-arrow-prev { left: 8px; }
+  .lightbox-arrow-next { right: 8px; }
+}
+
 .modal-info { padding: 36px 36px 28px; overflow-y: auto; }
 .modal-close {
   position: absolute;
@@ -1291,7 +1335,7 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 /* Debajo de 800px el mobile-nav (bottom:0, z-index:100) tapa esta barra —
    se sube para que quede justo encima del tab bar en vez de detrás. */
 @media (max-width: 800px) {
-  .sticky-atc { bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .sticky-atc { bottom: var(--mobile-nav-height, 70px); }
 }
 
 /* =============================================

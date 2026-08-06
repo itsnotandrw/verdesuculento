@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { CATEGORIES } from '@/data/catalog';
 
@@ -10,6 +10,7 @@ export default function MobileNav() {
   const pathname = usePathname();
   const { count, setOpen } = useCart();
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -25,6 +26,21 @@ export default function MobileNav() {
     else document.body.classList.remove('scroll-locked');
     return () => document.body.classList.remove('scroll-locked');
   }, [catalogOpen]);
+
+  // Mide la altura real del tab bar (varia por safe-area entre dispositivos)
+  // para que el panel de catalogo y la barra sticky de "anadir" encajen justo encima.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const setVar = () => {
+      document.documentElement.style.setProperty('--mobile-nav-height', `${el.offsetHeight}px`);
+    };
+    setVar();
+    const ro = new ResizeObserver(setVar);
+    ro.observe(el);
+    window.addEventListener('resize', setVar);
+    return () => { ro.disconnect(); window.removeEventListener('resize', setVar); };
+  }, []);
 
   return (
     <>
@@ -56,7 +72,7 @@ export default function MobileNav() {
         </div>
       </div>
 
-      <nav className="mobile-nav">
+      <nav className="mobile-nav" ref={navRef}>
       <Link href="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
