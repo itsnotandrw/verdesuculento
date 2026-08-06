@@ -114,7 +114,7 @@ export default function CheckoutPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 48 }} className="checkout-layout">
             <div>
               <h2 className="display" style={{ fontSize: 40, marginBottom: 32 }}>Información de envío</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="checkout-fields-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
                 {([
                   { field: 'nombre' as const, label: 'Nombre', type: 'text', placeholder: 'Tu nombre' },
                   { field: 'apellido' as const, label: 'Apellido', type: 'text', placeholder: 'Tu apellido' },
@@ -242,6 +242,7 @@ export default function CheckoutPage() {
       </div>
       <style>{`
         @media (max-width: 760px) { .checkout-layout { grid-template-columns: 1fr !important; } }
+        @media (max-width: 560px) { .checkout-fields-grid { grid-template-columns: 1fr !important; } }
       `}</style>
     </div>
   );
