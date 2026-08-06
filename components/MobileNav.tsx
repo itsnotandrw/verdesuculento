@@ -2,19 +2,61 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
+import { CATEGORIES } from '@/data/catalog';
 
 export default function MobileNav() {
   const pathname = usePathname();
   const { count, setOpen } = useCart();
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   };
 
+  useEffect(() => {
+    setCatalogOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (catalogOpen) document.body.classList.add('scroll-locked');
+    else document.body.classList.remove('scroll-locked');
+    return () => document.body.classList.remove('scroll-locked');
+  }, [catalogOpen]);
+
   return (
-    <nav className="mobile-nav">
+    <>
+      <div className={`mobile-catalog-overlay ${catalogOpen ? 'open' : ''}`} onClick={() => setCatalogOpen(false)} />
+      <div className={`mobile-catalog-panel ${catalogOpen ? 'open' : ''}`} aria-hidden={!catalogOpen}>
+        <div className="mobile-catalog-panel-header">
+          <span className="eyebrow">Catálogo</span>
+          <button className="nav-icon-btn" onClick={() => setCatalogOpen(false)} aria-label="Cerrar catálogo">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        <div className="mobile-catalog-panel-list">
+          {CATEGORIES.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/catalogo/${cat.id}`}
+              className="nav-dropdown-item"
+              onClick={() => setCatalogOpen(false)}
+            >
+              <span>{cat.name}</span>
+              <span className="nav-dropdown-count">{cat.count}</span>
+            </Link>
+          ))}
+          <Link href="/catalogo" className="nav-dropdown-item nav-dropdown-all" onClick={() => setCatalogOpen(false)}>
+            Ver todo el catálogo →
+          </Link>
+        </div>
+      </div>
+
+      <nav className="mobile-nav">
       <Link href="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -23,13 +65,18 @@ export default function MobileNav() {
         <span>Inicio</span>
       </Link>
 
-      <Link href="/catalogo" className={`mobile-nav-item ${isActive('/catalogo') ? 'active' : ''}`}>
+      <button
+        className={`mobile-nav-item ${isActive('/catalogo') || catalogOpen ? 'active' : ''}`}
+        onClick={() => setCatalogOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={catalogOpen}
+      >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
           <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
           <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
         </svg>
         <span>Catálogo</span>
-      </Link>
+      </button>
 
       <Link href="/catalogo" className="mobile-nav-item">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -69,6 +116,7 @@ export default function MobileNav() {
         </svg>
         <span>Cuenta</span>
       </button>
-    </nav>
+      </nav>
+    </>
   );
 }

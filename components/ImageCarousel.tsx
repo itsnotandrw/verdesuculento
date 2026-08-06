@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 
 interface ImageCarouselProps {
@@ -12,14 +12,36 @@ interface ImageCarouselProps {
 
 export default function ImageCarousel({ images, alt, thumbnails = false, priority = false }: ImageCarouselProps) {
   const [index, setIndex] = useState(0);
+  const touchStart = useRef({ x: 0, y: 0 });
+  const touchDeltaX = useRef(0);
 
   if (images.length === 0) return null;
 
   const goTo = (i: number) => setIndex((i + images.length) % images.length);
   const showThumbs = thumbnails && images.length > 1;
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    touchDeltaX.current = 0;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchDeltaX.current = e.touches[0].clientX - touchStart.current.x;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const deltaY = e.changedTouches[0].clientY - touchStart.current.y;
+    if (Math.abs(touchDeltaX.current) > 40 && Math.abs(touchDeltaX.current) > Math.abs(deltaY)) {
+      goTo(touchDeltaX.current < 0 ? index + 1 : index - 1);
+    }
+  };
+
   return (
-    <div className="carousel-root" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="carousel-root"
+      onClick={(e) => e.stopPropagation()}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <Image
         key={images[index]}
         src={images[index]}
