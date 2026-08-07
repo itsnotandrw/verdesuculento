@@ -9,6 +9,7 @@ import { formatCOP } from '@/data/catalog';
 import { RATINGS } from '@/data/ratings';
 import ProductShape from './ProductShape';
 import StarRating from './StarRating';
+import SoldCount from './SoldCount';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -64,9 +65,12 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
           <Link href={`/producto/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="product-card-title">{product.name}</div>
           </Link>
-          {rating?.rating != null && (
-            <div style={{ marginTop: 4 }}>
-              <StarRating rating={rating.rating} count={rating.reviewCount} size={11} showValue />
+          {(rating?.rating != null || (rating?.soldCount ?? 0) > 0) && (
+            <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {rating?.rating != null && (
+                <StarRating rating={rating.rating} count={rating.reviewCount} size={11} showValue />
+              )}
+              {!compact && rating && <SoldCount count={rating.soldCount} size={11} />}
             </div>
           )}
           {!compact && <div className="product-card-tag">{product.tagline}</div>}

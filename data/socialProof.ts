@@ -1,12 +1,36 @@
-// Generado por scraping/build_social_proof.js a partir de seo_metricas.json.
+// Generado por scraping/build_social_proof.js a partir de los datos de Mercado Libre.
 // No editar a mano — volver a correr el script si cambian los datos fuente.
 // Completo (resenas y preguntas con texto): usar solo en la pagina de producto.
 import type { SocialProof, SellerStats } from '@/types';
 
 export const SOCIAL_PROOF: Record<string, SocialProof> = {
   "MCO967619947": {
-    "rating": 4.7,
+    "rating": 4.6,
+    "ratingSource": "ml",
     "reviewCount": 49,
+    "soldCount": 191,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 82
+      },
+      {
+        "stars": 4,
+        "pct": 12
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 6
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -37,13 +61,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "likes": 2
       },
       {
-        "rating": 4,
-        "titulo": "Muy bueno",
-        "contenido": "",
-        "fecha": "2025-09-14T05:42:36Z",
-        "likes": 1
-      },
-      {
         "rating": 5,
         "titulo": "Excelente",
         "contenido": "Muy hermosas.",
@@ -67,13 +84,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2023-10-06T02:42:28Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Muy bueno, las plantas están creciendo hay que tener en cuanta la tierra, algunas see murieron:(.",
         "fecha": "2023-08-12T17:21:04Z",
         "likes": 1
@@ -90,6 +100,20 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Lingas como la foto.",
         "fecha": "2026-06-18T20:32:56Z",
+        "likes": 0
+      },
+      {
+        "rating": 5,
+        "titulo": "Excelente",
+        "contenido": "Excelente.",
+        "fecha": "2026-05-13T04:26:21Z",
+        "likes": 0
+      },
+      {
+        "rating": 5,
+        "titulo": "Excelente",
+        "contenido": "Gracias están hermosas.",
+        "fecha": "2025-10-24T16:36:16Z",
         "likes": 0
       }
     ],
@@ -127,11 +151,35 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenos dias, sin problema, claro que si"
       }
     ],
-    "bestsellerRank": null
+    "bestsellerRank": 4
   },
   "MCO1267117145": {
     "rating": 4.7,
+    "ratingSource": "ml",
     "reviewCount": 29,
+    "soldCount": 121,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 82
+      },
+      {
+        "stars": 4,
+        "pct": 9
+      },
+      {
+        "stars": 3,
+        "pct": 9
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -166,20 +214,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Excelente.",
         "fecha": "2026-01-09T14:39:35Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-05-14T01:32:20Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2024-09-12T18:19:38Z",
         "likes": 0
       },
       {
@@ -237,7 +271,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1274297937": {
     "rating": 4.5,
+    "ratingSource": "sample",
     "reviewCount": 5,
+    "soldCount": 20,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 4,
@@ -259,7 +296,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1298407785": {
     "rating": 1.5,
+    "ratingSource": "sample",
     "reviewCount": 5,
+    "soldCount": 26,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 2,
@@ -281,7 +321,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1298407475": {
     "rating": 4.7,
+    "ratingSource": "ml",
     "reviewCount": 15,
+    "soldCount": 133,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 73
+      },
+      {
+        "stars": 4,
+        "pct": 27
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -302,13 +366,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Muy bueno",
         "contenido": "Las matas muy pequeñitas.",
         "fecha": "2026-03-26T16:59:28Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-03-25T02:02:11Z",
         "likes": 0
       },
       {
@@ -337,13 +394,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Llegan muy bien las planticas lindas y variadas.",
         "fecha": "2025-10-23T19:57:22Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-08-14T16:16:45Z",
         "likes": 0
       },
       {
@@ -383,11 +433,14 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenos dias claro que si, con materita tenemos tambien"
       }
     ],
-    "bestsellerRank": 8
+    "bestsellerRank": 7
   },
   "MCO1714779264": {
     "rating": 3.5,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 25,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 2,
@@ -414,7 +467,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1715815664": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 12,
+    "soldCount": 28,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -460,9 +516,22 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     ],
     "bestsellerRank": null
   },
+  "MCO1336867843": {
+    "rating": null,
+    "ratingSource": "sample",
+    "reviewCount": 0,
+    "soldCount": 3,
+    "breakdown": [],
+    "reviews": [],
+    "qna": [],
+    "bestsellerRank": null
+  },
   "MCO967195951": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 8,
+    "soldCount": 47,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -486,7 +555,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2728001600": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 0,
+    "soldCount": 3,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -501,8 +573,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO2776700012": {
-    "rating": 5,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 13,
+    "soldCount": 87,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -549,13 +645,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-09-24T22:55:09Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Buenas plantas.",
         "fecha": "2025-06-12T22:38:24Z",
         "likes": 0
@@ -587,7 +676,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2802568626": {
     "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 34,
+    "soldCount": 229,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 85
+      },
+      {
+        "stars": 4,
+        "pct": 8
+      },
+      {
+        "stars": 3,
+        "pct": 8
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -708,11 +821,35 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenos dias no en el momento, roja y amarilla si contamos. Esperamos tu compra."
       }
     ],
-    "bestsellerRank": 2
+    "bestsellerRank": 3
   },
   "MCO2178557170": {
-    "rating": 4.8,
+    "rating": 4.7,
+    "ratingSource": "ml",
     "reviewCount": 95,
+    "soldCount": 467,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 81
+      },
+      {
+        "stars": 4,
+        "pct": 14
+      },
+      {
+        "stars": 3,
+        "pct": 5
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -726,13 +863,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Excelente, ¡muy feliz con mis plantitas!.\nEspero que evolucionen bien en este clima🙏🏼🙏🏼.",
         "fecha": "2025-08-04T13:24:05Z",
-        "likes": 2
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2024-10-15T23:15:38Z",
         "likes": 2
       },
       {
@@ -780,13 +910,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-09-09T22:38:16Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Muy bueno.",
         "fecha": "2025-07-30T23:56:39Z",
         "likes": 1
@@ -796,6 +919,20 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Estos están bien.",
         "fecha": "2025-07-13T14:08:12Z",
+        "likes": 1
+      },
+      {
+        "rating": 4,
+        "titulo": "Muy bueno",
+        "contenido": "El producto está bien, aunque pudo llegar mejor empacado.",
+        "fecha": "2025-06-17T00:18:38Z",
+        "likes": 1
+      },
+      {
+        "rating": 5,
+        "titulo": "Excelente",
+        "contenido": "Son más resistente de lo que pensé esperar que se desarrollen más.",
+        "fecha": "2025-06-05T18:28:17Z",
         "likes": 1
       }
     ],
@@ -836,8 +973,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": 1
   },
   "MCO2855598586": {
-    "rating": 4.8,
+    "rating": 4.4,
+    "ratingSource": "ml",
     "reviewCount": 9,
+    "soldCount": 69,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 80
+      },
+      {
+        "stars": 4,
+        "pct": 20
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 4,
@@ -900,8 +1061,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO2837662598": {
-    "rating": 4.7,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 17,
+    "soldCount": 67,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 67
+      },
+      {
+        "stars": 4,
+        "pct": 33
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -916,13 +1101,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "contenido": "Siempre será bueno para los alimentos y para la salud, lo recomiendo y el asesor, sr fabián es una persona dinámica dispuesta ayudar te hace el acompañamiento del producto,.",
         "fecha": "2025-04-17T21:30:16Z",
         "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-06-11T17:29:02Z",
-        "likes": 0
       },
       {
         "rating": 4,
@@ -956,7 +1134,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1714753104": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 4,
+    "soldCount": 93,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -979,8 +1160,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO2861914254": {
-    "rating": 4.4,
+    "rating": 4.3,
+    "ratingSource": "ml",
     "reviewCount": 16,
+    "soldCount": 152,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 80
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 20
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1004,31 +1209,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "likes": 0
       },
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-03-11T19:23:03Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-02-17T23:23:44Z",
-        "likes": 0
-      },
-      {
         "rating": 2,
         "titulo": "Malo",
         "contenido": "De 20 que he comprado solo sobreviven 8 plantas. Siempre vienen maltratadas, se siembran y las que no despegan se mueren. Incluso unas ya se ven mal antes de sembrarlas, con raíces podridas y tierra muy compactada.",
         "fecha": "2025-10-06T19:43:28Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-10-05T02:04:14Z",
         "likes": 0
       },
       {
@@ -1087,11 +1271,14 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenas tardes, si son plantas ya establecidas en bolsita para pasar o a campo o a materas mas grandes, vienen 10 en total en este pack, y claro lo enviamos a todo el pais y en bogota tenemos entrega el mismo dia"
       }
     ],
-    "bestsellerRank": 7
+    "bestsellerRank": 5
   },
   "MCO2872833538": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 23,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -1111,7 +1298,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2872764728": {
     "rating": 4.3,
+    "ratingSource": "sample",
     "reviewCount": 8,
+    "soldCount": 42,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 75
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 25
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1132,13 +1343,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Malo",
         "contenido": "Si mucho las plantas tenían 30 cm de alto con raíz y todo y obviamente ni una flor porque estan demasiado jóvenes.",
         "fecha": "2025-12-17T15:16:49Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-11-11T21:55:36Z",
         "likes": 0
       }
     ],
@@ -1164,7 +1368,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1590488713": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 19,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -1186,7 +1393,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1599811897": {
     "rating": 4.5,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 15,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 4,
@@ -1229,27 +1439,37 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2920119430": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 10,
+    "soldCount": 30,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
         "contenido": "Excelente producto. Están bonitos los cafetalitos.",
         "fecha": "2026-04-30T02:12:38Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-28T12:50:19Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-17T13:06:32Z",
         "likes": 0
       },
       {
@@ -1264,13 +1484,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Las plantas llegan en muy buen estado.",
         "fecha": "2025-09-19T01:55:49Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-08-11T20:48:13Z",
         "likes": 0
       },
       {
@@ -1319,7 +1532,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1624172447": {
     "rating": 3,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 12,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 1,
@@ -1350,7 +1566,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1628537397": {
     "rating": 4.3,
+    "ratingSource": "ml",
     "reviewCount": 9,
+    "soldCount": 52,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 50
+      },
+      {
+        "stars": 4,
+        "pct": 25
+      },
+      {
+        "stars": 3,
+        "pct": 25
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1402,8 +1642,11 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1628491841": {
-    "rating": 5,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 5,
+    "soldCount": 44,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -1433,16 +1676,33 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1628430943": {
-    "rating": 5,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 6,
-    "reviews": [
+    "soldCount": 63,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-29T22:21:36Z",
-        "likes": 0
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -1475,7 +1735,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2983405476": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 8,
+    "soldCount": 60,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1503,8 +1787,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO2983346178": {
-    "rating": 5,
+    "rating": 4.5,
+    "ratingSource": "ml",
     "reviewCount": 11,
+    "soldCount": 122,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1548,20 +1856,15 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenos dias de las dos maneras esta bien, esto va depender de la planta a la que se la vas a poner, si tienes dudas estare atento para resolverlas"
       }
     ],
-    "bestsellerRank": 5
+    "bestsellerRank": null
   },
   "MCO2989263462": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 6,
-    "reviews": [
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-09-03T20:12:29Z",
-        "likes": 1
-      }
-    ],
+    "soldCount": 36,
+    "breakdown": [],
+    "reviews": [],
     "qna": [
       {
         "pregunta": "Disculpa mi ignorancia. Este árbol de zapote no se puede reproducir por injerto? O solo es por semilla ..?",
@@ -1572,7 +1875,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2988094512": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 7,
+    "soldCount": 38,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1640,16 +1967,33 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO2988018400": {
-    "rating": 5,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 22,
-    "reviews": [
+    "soldCount": 118,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-17T19:34:24Z",
-        "likes": 1
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -1727,11 +2071,35 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Es correcto el envio es totalmente gratis, esperamos tu compra entonces"
       }
     ],
-    "bestsellerRank": 6
+    "bestsellerRank": null
   },
   "MCO1635057067": {
     "rating": 3.4,
+    "ratingSource": "sample",
     "reviewCount": 13,
+    "soldCount": 89,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 60
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 40
+      }
+    ],
     "reviews": [
       {
         "rating": 1,
@@ -1807,7 +2175,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1634999953": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 26,
+    "soldCount": 133,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -1849,13 +2241,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Excelente.",
         "fecha": "2026-05-22T11:32:44Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-29T21:55:50Z",
         "likes": 0
       },
       {
@@ -1920,11 +2305,14 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenas noches, no manejamos carnívoras."
       }
     ],
-    "bestsellerRank": 3
+    "bestsellerRank": 8
   },
   "MCO1634947031": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 19,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -1940,15 +2328,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1634880323": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 16,
-    "reviews": [
+    "soldCount": 68,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-07-30T02:03:31Z",
-        "likes": 0
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -2023,15 +2428,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2993577610": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 4,
-    "reviews": [
+    "soldCount": 22,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-08T23:14:21Z",
-        "likes": 0
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -2061,15 +2483,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3052430206": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 6,
-    "reviews": [
+    "soldCount": 28,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-06-13T16:49:19Z",
-        "likes": 0
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -2128,8 +2567,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO3052022470": {
-    "rating": 4.3,
+    "rating": 4.2,
+    "ratingSource": "ml",
     "reviewCount": 8,
+    "soldCount": 33,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 75
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 25
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 2,
@@ -2169,8 +2632,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1649184215": {
-    "rating": 4.8,
+    "rating": 4.2,
+    "ratingSource": "ml",
     "reviewCount": 6,
+    "soldCount": 35,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 75
+      },
+      {
+        "stars": 4,
+        "pct": 25
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -2184,13 +2671,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Crecen rápido , requieren buen espacio, recomendada 100%.",
         "fecha": "2026-06-13T03:39:03Z",
-        "likes": 0
-      },
-      {
-        "rating": 4,
-        "titulo": "Muy bueno",
-        "contenido": "",
-        "fecha": "2026-02-27T04:23:50Z",
         "likes": 0
       },
       {
@@ -2210,8 +2690,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO3080004834": {
-    "rating": 5,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 20,
+    "soldCount": 78,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -2232,20 +2736,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Exelente producto árboles hermosos.",
         "fecha": "2026-06-20T20:18:59Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-06-04T21:57:00Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-06-01T22:08:50Z",
         "likes": 0
       },
       {
@@ -2336,7 +2826,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1656676441": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 6,
+    "soldCount": 27,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -2381,16 +2895,33 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO3084808150": {
-    "rating": 4.7,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 6,
-    "reviews": [
+    "soldCount": 43,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-01-30T06:47:35Z",
-        "likes": 1
+        "stars": 5,
+        "pct": 67
       },
+      {
+        "stars": 4,
+        "pct": 33
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 4,
         "titulo": "Muy bueno",
@@ -2410,8 +2941,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO3084393558": {
-    "rating": 4.8,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 11,
+    "soldCount": 42,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 83
+      },
+      {
+        "stars": 4,
+        "pct": 17
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 4,
@@ -2423,22 +2978,8 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-11-30T17:08:16Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Ahí va el palito ya sembrado.\nYa compré el litro de leche para tomar jeje.",
         "fecha": "2026-06-24T22:24:09Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-06-11T17:30:40Z",
         "likes": 0
       },
       {
@@ -2459,17 +3000,44 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "qna": [],
     "bestsellerRank": null
   },
+  "MCO1583605137": {
+    "rating": null,
+    "ratingSource": "sample",
+    "reviewCount": 0,
+    "soldCount": 72,
+    "breakdown": [],
+    "reviews": [],
+    "qna": [],
+    "bestsellerRank": null
+  },
   "MCO3096691270": {
-    "rating": 4.7,
+    "rating": 4.5,
+    "ratingSource": "ml",
     "reviewCount": 11,
-    "reviews": [
+    "soldCount": 65,
+    "breakdown": [
       {
-        "rating": 4,
-        "titulo": "Muy bueno",
-        "contenido": "",
-        "fecha": "2025-10-02T01:44:41Z",
-        "likes": 1
+        "stars": 5,
+        "pct": 67
       },
+      {
+        "stars": 4,
+        "pct": 33
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -2487,22 +3055,8 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-05T00:44:56Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Ya.",
         "fecha": "2026-01-07T13:49:14Z",
-        "likes": 0
-      },
-      {
-        "rating": 4,
-        "titulo": "Muy bueno",
-        "contenido": "",
-        "fecha": "2025-11-11T21:33:14Z",
         "likes": 0
       }
     ],
@@ -2543,8 +3097,11 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1662888207": {
-    "rating": null,
+    "rating": 4,
+    "ratingSource": "ml",
     "reviewCount": 2,
+    "soldCount": 25,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -2568,7 +3125,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1662851471": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 4,
+    "soldCount": 41,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -2614,8 +3174,11 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1662737097": {
-    "rating": 5,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 11,
+    "soldCount": 75,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -2662,8 +3225,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1670945229": {
-    "rating": 5,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 8,
+    "soldCount": 40,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -2696,13 +3283,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-01-30T06:43:42Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Hermosas plantas verdes y bien organizadas para sembrar.",
         "fecha": "2025-10-16T16:45:44Z",
         "likes": 0
@@ -2718,20 +3298,37 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1679791923": {
     "rating": 4.7,
+    "ratingSource": "sample",
     "reviewCount": 5,
+    "soldCount": 16,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 67
+      },
+      {
+        "stars": 4,
+        "pct": 33
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
         "contenido": "Llegó en execelentes condiciones,muy bien vinipelado, hidratado y preparado para el viaje. Los árboles muy hermosos.",
         "fecha": "2026-04-11T23:29:25Z",
-        "likes": 0
-      },
-      {
-        "rating": 4,
-        "titulo": "Muy bueno",
-        "contenido": "",
-        "fecha": "2026-02-14T22:52:11Z",
         "likes": 0
       },
       {
@@ -2776,7 +3373,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1681439397": {
     "rating": 3,
+    "ratingSource": "sample",
     "reviewCount": 5,
+    "soldCount": 41,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 1,
@@ -2822,8 +3422,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1395952141": {
-    "rating": 4.8,
+    "rating": 4.7,
+    "ratingSource": "ml",
     "reviewCount": 47,
+    "soldCount": 264,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 81
+      },
+      {
+        "stars": 4,
+        "pct": 13
+      },
+      {
+        "stars": 3,
+        "pct": 6
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -2856,13 +3480,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-08-03T02:03:59Z",
-        "likes": 2
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Excelente, ya tienen fruto mis plantas.",
         "fecha": "2025-01-25T16:16:07Z",
         "likes": 2
@@ -2884,13 +3501,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
       {
         "rating": 5,
         "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2024-03-27T21:22:32Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
         "contenido": "Excelente.",
         "fecha": "2026-06-21T00:08:01Z",
         "likes": 0
@@ -2907,6 +3517,20 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Muy bueno",
         "contenido": "Se debe tener presente el piso termico.",
         "fecha": "2026-05-25T00:25:08Z",
+        "likes": 0
+      },
+      {
+        "rating": 5,
+        "titulo": "Excelente",
+        "contenido": "Bi irá, sana, crece bien.",
+        "fecha": "2026-04-22T11:07:58Z",
+        "likes": 0
+      },
+      {
+        "rating": 5,
+        "titulo": "Excelente",
+        "contenido": "Nacieron muy bien, y estamos esperando por nuestra primera cosecha.",
+        "fecha": "2026-02-16T15:46:13Z",
         "likes": 0
       }
     ],
@@ -2944,11 +3568,35 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Claro que si, sin problema solo déjanos un mensaje cuando realices la compra"
       }
     ],
-    "bestsellerRank": null
+    "bestsellerRank": 2
   },
   "MCO1636376249": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 16,
+    "soldCount": 83,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -2962,13 +3610,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Bien cuidado las plántulas.",
         "fecha": "2025-11-07T00:22:22Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2025-08-27T03:26:48Z",
         "likes": 0
       }
     ],
@@ -2994,7 +3635,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3246871216": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 19,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -3009,8 +3653,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO3246870210": {
-    "rating": 5,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 21,
+    "soldCount": 76,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -3121,7 +3789,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1711629755": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 4,
+    "soldCount": 38,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -3163,7 +3855,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1711603059": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 2,
+    "soldCount": 29,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -3211,7 +3906,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1711588857": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 13,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -3232,8 +3930,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1711526927": {
-    "rating": 4.4,
+    "rating": 4.7,
+    "ratingSource": "ml",
     "reviewCount": 10,
+    "soldCount": 66,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 80
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 20
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -3248,13 +3970,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "contenido": "Sobrevivieron todas el transporte.",
         "fecha": "2026-02-27T04:32:21Z",
         "likes": 2
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-08-02T19:46:32Z",
-        "likes": 0
       },
       {
         "rating": 5,
@@ -3308,21 +4023,38 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1711524477": {
-    "rating": 4.7,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 24,
+    "soldCount": 90,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 87
+      },
+      {
+        "stars": 4,
+        "pct": 7
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 7
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
         "contenido": "Muy bien injertados.",
         "fecha": "2026-07-21T23:23:50Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-07-03T16:58:58Z",
         "likes": 0
       },
       {
@@ -3394,6 +4126,13 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "contenido": "Ok.",
         "fecha": "2026-01-07T13:49:36Z",
         "likes": 0
+      },
+      {
+        "rating": 5,
+        "titulo": "Excelente",
+        "contenido": "Buen producto.",
+        "fecha": "2026-01-03T15:40:36Z",
+        "likes": 0
       }
     ],
     "qna": [
@@ -3434,7 +4173,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1711514317": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 7,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -3460,21 +4202,38 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO1711512723": {
-    "rating": 4.9,
+    "rating": 4.8,
+    "ratingSource": "ml",
     "reviewCount": 12,
+    "soldCount": 64,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 89
+      },
+      {
+        "stars": 4,
+        "pct": 11
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
         "contenido": "Lindo hermoso esperemos crezcan muy grandes, destaco el cuidado que tienen en el empaque para el envío.",
         "fecha": "2026-02-01T20:30:54Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-01-30T06:41:09Z",
         "likes": 1
       },
       {
@@ -3565,7 +4324,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1746628855": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 15,
+    "soldCount": 72,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -3655,15 +4438,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1769279063": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 12,
-    "reviews": [
+    "soldCount": 70,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-29T21:55:24Z",
-        "likes": 3
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -3677,20 +4477,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "contenido": "Hermosos arbolitos de granada, calidad, recomendadisimo….",
         "fecha": "2026-06-24T17:35:11Z",
         "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-17T19:35:33Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-07-16T22:01:43Z",
-        "likes": 0
       },
       {
         "rating": 5,
@@ -3759,27 +4545,37 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3493038750": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 6,
-    "reviews": [
+    "soldCount": 34,
+    "breakdown": [
       {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-08T23:14:46Z",
-        "likes": 1
+        "stars": 5,
+        "pct": 100
       },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
+    "reviews": [
       {
         "rating": 5,
         "titulo": "Excelente",
         "contenido": "Rápido envío y bien empacadas.",
         "fecha": "2026-04-16T02:02:59Z",
-        "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-02-05T18:19:02Z",
         "likes": 1
       }
     ],
@@ -3821,7 +4617,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3492896894": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 13,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -3882,21 +4702,38 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     "bestsellerRank": null
   },
   "MCO3510041552": {
-    "rating": 4.7,
+    "rating": 4.9,
+    "ratingSource": "ml",
     "reviewCount": 7,
+    "soldCount": 39,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 67
+      },
+      {
+        "stars": 4,
+        "pct": 33
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 4,
         "titulo": "Muy bueno",
         "contenido": "Están muy buen estado las plantas, pero todas deberían estar derechas para un proceso de formación mas fácil.",
         "fecha": "2026-07-16T15:08:26Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-07-03T16:58:21Z",
         "likes": 0
       },
       {
@@ -3945,7 +4782,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1714726464": {
     "rating": 5,
+    "ratingSource": "ml",
     "reviewCount": 14,
+    "soldCount": 139,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -3959,13 +4820,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Excelente producto!.",
         "fecha": "2026-02-22T20:17:16Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-02-08T00:42:36Z",
         "likes": 0
       },
       {
@@ -4000,18 +4854,45 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "respuesta": "Buenos dias, no las tenemos en el momento."
       }
     ],
-    "bestsellerRank": 4
+    "bestsellerRank": 6
   },
   "MCO1836152301": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 1,
+    "soldCount": 10,
+    "breakdown": [],
     "reviews": [],
     "qna": [],
     "bestsellerRank": null
   },
   "MCO1848560653": {
     "rating": 4,
+    "ratingSource": "sample",
     "reviewCount": 4,
+    "soldCount": 15,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 50
+      },
+      {
+        "stars": 4,
+        "pct": 25
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 25
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -4025,20 +4906,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Muy bueno",
         "contenido": "Fotos que la identifique.",
         "fecha": "2026-06-11T16:19:18Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-08T23:13:20Z",
-        "likes": 0
-      },
-      {
-        "rating": 2,
-        "titulo": "Malo",
-        "contenido": "",
-        "fecha": "2026-05-08T14:41:53Z",
         "likes": 0
       }
     ],
@@ -4056,7 +4923,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1848560519": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 3,
+    "soldCount": 19,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -4064,13 +4955,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "contenido": "Tamaño ideal para transplantar en sitio definitivo.",
         "fecha": "2026-04-23T13:07:58Z",
         "likes": 1
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-08T23:13:56Z",
-        "likes": 0
       },
       {
         "rating": 5,
@@ -4098,7 +4982,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1848547905": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 0,
+    "soldCount": 11,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -4110,7 +4997,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3778841074": {
     "rating": 4.8,
+    "ratingSource": "sample",
     "reviewCount": 6,
+    "soldCount": 27,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 75
+      },
+      {
+        "stars": 4,
+        "pct": 25
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 4,
@@ -4179,7 +5090,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3778461930": {
     "rating": 4.2,
+    "ratingSource": "ml",
     "reviewCount": 5,
+    "soldCount": 32,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 80
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 20
+      }
+    ],
     "reviews": [
       {
         "rating": 1,
@@ -4255,7 +5190,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1874827195": {
     "rating": 4,
+    "ratingSource": "sample",
     "reviewCount": 6,
+    "soldCount": 24,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 75
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 25
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -4276,13 +5235,6 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
         "titulo": "Excelente",
         "contenido": "Excelentes arboles.",
         "fecha": "2026-06-27T23:16:49Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-05-30T18:13:34Z",
         "likes": 0
       }
     ],
@@ -4316,16 +5268,11 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1876262929": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 1,
-    "reviews": [
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-04-27T23:52:06Z",
-        "likes": 1
-      }
-    ],
+    "soldCount": 9,
+    "breakdown": [],
+    "reviews": [],
     "qna": [
       {
         "pregunta": "Cuánto se demora en dar frutos? Tiene frutales por esqueje?",
@@ -4340,7 +5287,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1876111841": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 1,
+    "soldCount": 21,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -4384,7 +5334,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1876011919": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 4,
+    "soldCount": 13,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 5,
@@ -4420,9 +5394,22 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     ],
     "bestsellerRank": null
   },
+  "MCO3922093902": {
+    "rating": null,
+    "ratingSource": "sample",
+    "reviewCount": 0,
+    "soldCount": 3,
+    "breakdown": [],
+    "reviews": [],
+    "qna": [],
+    "bestsellerRank": null
+  },
   "MCO3922043712": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 5,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -4438,7 +5425,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3922043032": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 0,
+    "soldCount": 12,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -4462,7 +5452,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3951307196": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 0,
+    "soldCount": 4,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -4486,7 +5479,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3950971162": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 17,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -4541,7 +5537,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3950868448": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 2,
+    "soldCount": 14,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -4585,22 +5584,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO3950868138": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 4,
+    "soldCount": 20,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 100
+      },
+      {
+        "stars": 4,
+        "pct": 0
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-07-30T02:01:23Z",
-        "likes": 0
-      },
-      {
-        "rating": 5,
-        "titulo": "Excelente",
-        "contenido": "",
-        "fecha": "2026-07-24T17:53:00Z",
-        "likes": 0
-      },
       {
         "rating": 5,
         "titulo": "Excelente",
@@ -4645,9 +5654,32 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
     ],
     "bestsellerRank": null
   },
+  "MCO1949915993": {
+    "rating": null,
+    "ratingSource": "sample",
+    "reviewCount": 0,
+    "soldCount": 1,
+    "breakdown": [],
+    "reviews": [],
+    "qna": [],
+    "bestsellerRank": null
+  },
+  "MCO1951823001": {
+    "rating": null,
+    "ratingSource": "sample",
+    "reviewCount": 0,
+    "soldCount": 4,
+    "breakdown": [],
+    "reviews": [],
+    "qna": [],
+    "bestsellerRank": null
+  },
   "MCO1979530273": {
     "rating": null,
+    "ratingSource": "sample",
     "reviewCount": 0,
+    "soldCount": 9,
+    "breakdown": [],
     "reviews": [],
     "qna": [
       {
@@ -4663,7 +5695,10 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO1996920737": {
     "rating": 5,
+    "ratingSource": "sample",
     "reviewCount": 1,
+    "soldCount": 2,
+    "breakdown": [],
     "reviews": [
       {
         "rating": 5,
@@ -4678,7 +5713,31 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
   },
   "MCO2000837271": {
     "rating": 4.8,
+    "ratingSource": "sample",
     "reviewCount": 6,
+    "soldCount": 0,
+    "breakdown": [
+      {
+        "stars": 5,
+        "pct": 75
+      },
+      {
+        "stars": 4,
+        "pct": 25
+      },
+      {
+        "stars": 3,
+        "pct": 0
+      },
+      {
+        "stars": 2,
+        "pct": 0
+      },
+      {
+        "stars": 1,
+        "pct": 0
+      }
+    ],
     "reviews": [
       {
         "rating": 4,
@@ -4717,7 +5776,20 @@ export const SOCIAL_PROOF: Record<string, SocialProof> = {
 export const SELLER_STATS: SellerStats = {
   "nickname": "VIVERO VERDE_SUCULENTO",
   "powerSellerStatus": "gold",
+  "medal": "MercadoLíder Gold",
+  "motto": "¡Uno de los mejores del sitio!",
+  "level": "5_green",
+  "points": 108,
   "positivePct": 92,
+  "neutralPct": 8,
+  "negativePct": 0,
   "totalTransactions": 3224,
-  "completedTransactions": 3076
+  "completedTransactions": 3076,
+  "canceledTransactions": 148,
+  "sales60d": 733,
+  "claimsRate": 0.3,
+  "delayedRate": 0.6,
+  "cancellationRate": 0,
+  "followersLabel": "+1.000",
+  "profileUrl": "https://perfil.mercadolibre.com.co/VIVERO+VERDE_SUCULENTO"
 };

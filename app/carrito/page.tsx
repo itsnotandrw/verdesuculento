@@ -9,14 +9,56 @@ import ProductShape from '@/components/ProductShape';
 export default function CartPage() {
   const { items, subtotal, count, updateQty, remove, shipping, setShipping } = useCart();
   const [selectedCity, setSelectedCity] = useState('');
+  const [cotizando, setCotizando] = useState(false);
 
-  const ship = shipping ? shipping.cost : subtotal > 150000 ? 0 : 10000;
+  const ship = shipping?.cost ?? 0;
   const total = subtotal + ship;
 
-  const handleCityChange = (city: string) => {
+  /**
+   * El costo lo calcula el servidor con el peso y las dimensiones reales del
+   * pedido, igual que el checkout. Antes salía de una tabla fija y el cliente
+   * veía un precio aquí y otro al pagar.
+   */
+  const handleCityChange = async (city: string) => {
     setSelectedCity(city);
+
     const rate = SHIPPING_RATES.find((r) => r.city === city);
-    setShipping(rate ?? null);
+    if (!rate) {
+      setShipping(null);
+      return;
+    }
+
+    setCotizando(true);
+    try {
+      const respuesta = await fetch('/api/shipping/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          departamento: rate.dept,
+          ciudad: rate.city,
+          lines: items.map((i) => ({
+            productId: i.product.id,
+            color: i.color.name,
+            size: i.size,
+            qty: i.qty,
+          })),
+        }),
+      });
+
+      const datos = await respuesta.json();
+      const mejor = datos.quotes?.[0];
+
+      setShipping(
+        mejor
+          ? { dept: rate.dept, city: rate.city, cost: mejor.cost, days: mejor.etaLabel }
+          : rate
+      );
+    } catch {
+      // Sin conexión se muestra la tarifa de referencia del catálogo.
+      setShipping(rate);
+    } finally {
+      setCotizando(false);
+    }
   };
 
   if (count === 0) {
@@ -89,13 +131,20 @@ export default function CartPage() {
                   <option key={r.city} value={r.city}>{r.city} — {r.dept}</option>
                 ))}
               </select>
-              {shipping && (
+              {cotizando && (
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', fontSize: 12.5, color: 'var(--fg-dim)' }}>
+                  <span className="spinner-sm" /> Calculando…
+                </div>
+              )}
+              {shipping && !cotizando && (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--fg-dim)' }}>Envío a {shipping.city}</span>
-                    <span className="mono">{formatCOP(shipping.cost)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13 }}>
+                    <span style={{ color: 'var(--fg-dim)', minWidth: 0 }}>Envío a {shipping.city}</span>
+                    <span className="mono" style={{ flexShrink: 0 }}>
+                      {shipping.cost === 0 ? <span style={{ color: 'var(--accent)' }}>GRATIS</span> : formatCOP(shipping.cost)}
+                    </span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>{shipping.days} días hábiles</div>
+                  <div style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>{shipping.days}</div>
                 </div>
               )}
             </div>
@@ -104,9 +153,11 @@ export default function CartPage() {
               <span style={{ color: 'var(--fg-dim)' }}>Subtotal</span>
               <span className="mono">{formatCOP(subtotal)}</span>
             </div>
-            <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+            <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 14 }}>
               <span style={{ color: 'var(--fg-dim)' }}>Envío</span>
-              <span className="mono">{!shipping && subtotal > 150000 ? 'GRATIS' : !shipping ? 'Selecciona ciudad' : formatCOP(ship)}</span>
+              <span className="mono" style={{ flexShrink: 0 }}>
+                {!shipping ? 'Selecciona ciudad' : ship === 0 ? 'GRATIS' : formatCOP(ship)}
+              </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28, paddingTop: 20, borderTop: '1px solid var(--border)', alignItems: 'baseline' }}>

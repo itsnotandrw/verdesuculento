@@ -12,6 +12,8 @@ import StarRating from '@/components/StarRating';
 import ProductReviews from '@/components/ProductReviews';
 import ProductFAQ from '@/components/ProductFAQ';
 import SellerTrust from '@/components/SellerTrust';
+import SellerReputation from '@/components/SellerReputation';
+import SoldCount from '@/components/SoldCount';
 import type { Product, ProductColor } from '@/types';
 
 export default function ProductContent({ product }: { product: Product }) {
@@ -85,13 +87,21 @@ export default function ProductContent({ product }: { product: Product }) {
           <div>
             <div className="eyebrow" style={{ marginBottom: 14 }}>{category?.name}</div>
             <h1 className="display" style={{ fontSize: 'clamp(44px, 5vw, 80px)', marginBottom: 8, letterSpacing: '-0.025em' }}>{product.name}</h1>
-            {social?.rating != null && (
-              <a href="#reviews" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 14, textDecoration: 'none' }}>
-                <StarRating rating={social.rating} size={15} />
-                <span className="mono" style={{ fontSize: 13, color: 'var(--fg-dim)' }}>
-                  {social.rating.toFixed(1)} · {social.reviewCount} {social.reviewCount === 1 ? 'reseña' : 'reseñas'}
-                </span>
-              </a>
+            {social && (social.rating != null || social.soldCount > 0) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+                {social.rating != null && (
+                  <a href="#reviews" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                    <StarRating rating={social.rating} size={15} />
+                    <span className="mono" style={{ fontSize: 13, color: 'var(--fg-dim)' }}>
+                      {social.rating.toFixed(1)} · {social.reviewCount} {social.reviewCount === 1 ? 'calificación' : 'calificaciones'}
+                    </span>
+                  </a>
+                )}
+                {social.rating != null && social.soldCount > 0 && (
+                  <span style={{ color: 'var(--border-strong)' }} aria-hidden>·</span>
+                )}
+                <SoldCount count={social.soldCount} size={13} />
+              </div>
             )}
             <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 20 }}>{product.tagline}</p>
             <div className="mono" style={{ fontSize: 28, marginBottom: 28, letterSpacing: '-0.02em' }}>{formatCOP(product.price)}</div>
@@ -240,6 +250,9 @@ export default function ProductContent({ product }: { product: Product }) {
           </div>
           <style>{`@media (max-width: 760px) { .story-grid { grid-template-columns: 1fr !important; } }`}</style>
         </section>
+
+        {/* Reputación del vendedor */}
+        <SellerReputation seller={SELLER_STATS} />
 
         {/* Reseñas de compradores */}
         {social && <ProductReviews data={social} />}

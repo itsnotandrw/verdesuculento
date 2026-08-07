@@ -21,3 +21,9 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# datos locales de pedidos (base de datos en archivo)
+.data/
+
+# artefacto de compilacion incremental de TypeScript
+tsconfig.tsbuildinfo

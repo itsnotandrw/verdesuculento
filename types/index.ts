@@ -83,12 +83,23 @@ export interface ProductQna {
 export interface ProductRating {
   rating: number | null;
   reviewCount: number;
+  soldCount: number;
   bestsellerRank: number | null;
+}
+
+/** Distribución de calificaciones en % sobre la muestra de reseñas disponible. */
+export interface RatingBreakdown {
+  stars: number;
+  pct: number;
 }
 
 export interface SocialProof {
   rating: number | null;
+  /** 'ml' = promedio oficial del listado; 'sample' = promedio de las reseñas que tenemos. */
+  ratingSource: 'ml' | 'sample';
   reviewCount: number;
+  soldCount: number;
+  breakdown: RatingBreakdown[];
   reviews: ProductReview[];
   qna: ProductQna[];
   bestsellerRank: number | null;
@@ -97,7 +108,29 @@ export interface SocialProof {
 export interface SellerStats {
   nickname: string;
   powerSellerStatus: string;
+  medal: string;
+  motto: string;
+  /** Nivel del termómetro de reputación de ML: 1_red … 5_green. */
+  level: string;
+  points: number;
   positivePct: number;
+  neutralPct: number;
+  negativePct: number;
   totalTransactions: number;
   completedTransactions: number;
+  canceledTransactions: number;
+  sales60d: number;
+  claimsRate: number;
+  delayedRate: number;
+  cancellationRate: number;
+  followersLabel: string;
+  profileUrl: string;
+}
+
+/** Peso y dimensiones del paquete declarados en Mercado Libre. Solo servidor. */
+export interface ProductLogistics {
+  weightGrams: number;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
 }
