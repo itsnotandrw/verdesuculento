@@ -72,6 +72,12 @@ interface Resumen {
   recaudosPendientes: number;
 }
 
+interface Sistema {
+  almacenamiento: { id: string; durable: boolean; serverless: boolean; apto: boolean; motivo?: string };
+  pagos: string;
+  envios: string;
+}
+
 const TONO: Record<string, 'wait' | 'ok' | 'bad'> = {
   awaiting_payment: 'wait',
   payment_in_review: 'wait',
@@ -89,6 +95,7 @@ export default function AdminOrders() {
   const [autenticado, setAutenticado] = useState(false);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [resumen, setResumen] = useState<Resumen | null>(null);
+  const [sistema, setSistema] = useState<Sistema | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [abierto, setAbierto] = useState<string | null>(null);
@@ -122,6 +129,7 @@ export default function AdminOrders() {
 
         setPedidos(datos.orders ?? []);
         setResumen(datos.resumen ?? null);
+        setSistema(datos.sistema ?? null);
         setAutenticado(true);
         sessionStorage.setItem(CLAVE, elToken);
       } catch (e) {
@@ -204,6 +212,15 @@ export default function AdminOrders() {
           </button>
         </div>
 
+        {sistema && !sistema.almacenamiento.apto && (
+          <div className="admin-alerta" role="alert">
+            <strong style={{ display: 'block', marginBottom: 6 }}>
+              El checkout está rechazando pedidos
+            </strong>
+            {sistema.almacenamiento.motivo}
+          </div>
+        )}
+
         {resumen && (
           <div className="admin-stats">
             <Stat valor={resumen.porVerificar} etiqueta="Por verificar" destacado={resumen.porVerificar > 0} />
@@ -226,6 +243,12 @@ export default function AdminOrders() {
         </div>
 
         {error && <p style={{ fontSize: 13, color: '#ef4444', marginBottom: 20 }}>{error}</p>}
+
+        {sistema && (
+          <p className="mono" style={{ fontSize: 10.5, color: 'var(--fg-mute)', marginBottom: 20, letterSpacing: '0.05em' }}>
+            pagos: {sistema.pagos} · envíos: {sistema.envios} · pedidos: {sistema.almacenamiento.id}
+          </p>
+        )}
 
         {pedidos.length === 0 && !cargando && (
           <p style={{ color: 'var(--fg-dim)' }}>Todavía no hay pedidos.</p>

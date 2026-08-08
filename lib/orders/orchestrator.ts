@@ -27,7 +27,7 @@ import { paymentProvider, type PaymentContext } from '@/lib/payments';
 import type { PaymentIntent } from '@/lib/payments/types';
 import { armarPaquete, logisticaDe, resolverCotizacion, shippingProvider } from '@/lib/shipping';
 import type { ShippingQuote } from '@/lib/shipping/types';
-import { orders, registrar } from './store';
+import { almacenamiento, orders, pedidosVencidos, registrar } from './store';
 import {
   derivarEstado,
   type CreateOrderInput,
@@ -47,6 +47,7 @@ export class OrderError extends Error {
       | 'cod_sin_cobertura'
       | 'pedido_no_encontrado'
       | 'estado_invalido'
+      | 'almacenamiento_no_apto'
   ) {
     super(message);
     this.name = 'OrderError';
@@ -69,6 +70,20 @@ export async function crearPedido(
 ): Promise<{ order: Order; intent: PaymentIntent }> {
   if (!input.lines?.length) {
     throw new OrderError('El carrito está vacío.', 'carrito_vacio');
+  }
+
+  // Antes que nada: ¿vamos a poder recordar este pedido?
+  //
+  // Crear un pedido, mostrarle al cliente a qué llave transferir y después no
+  // encontrarlo es peor que no venderle: cobra y pierde la orden. Si el
+  // almacenamiento no es apto, se corta aquí y el checkout muestra el motivo.
+  const disco = almacenamiento();
+  if (!disco.apto) {
+    console.error(`[orchestrator] creación de pedidos bloqueada — ${disco.motivo}`);
+    throw new OrderError(
+      'No podemos recibir pedidos en este momento. Escríbenos por WhatsApp y te ayudamos a completar tu compra.',
+      'almacenamiento_no_apto'
+    );
   }
 
   // --- líneas y subtotal, siempre con el precio del catálogo del servidor
@@ -548,7 +563,7 @@ export async function conciliarRecaudo(orderId: string, quien: string): Promise<
  * peor que dejarlo abierto de más.
  */
 export async function expirarPendientes(): Promise<{ expirados: number; rescatados: number }> {
-  const vencidos = await orders.vencidos();
+  const vencidos = await pedidosVencidos();
   const proveedor = paymentProvider();
 
   let expirados = 0;

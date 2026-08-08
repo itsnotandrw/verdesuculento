@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { orders } from '@/lib/orders/store';
 import { toPublicOrder } from '@/lib/orders/types';
 import { paymentProvider } from '@/lib/payments';
@@ -17,7 +17,10 @@ export const metadata: Metadata = {
 
 export default async function PedidoPage({ params }: { params: { reference: string } }) {
   const pedido = await orders.byReference(params.reference);
-  if (!pedido) notFound();
+
+  // Un 404 genérico aquí es cruel: el cliente acaba de comprar y lo único que
+  // ve es "página no encontrada". Se le muestra su referencia y una salida.
+  if (!pedido) return <PedidoNoEncontrado referencia={params.reference} />;
 
   const proveedor = paymentProvider();
 
@@ -41,5 +44,35 @@ export default async function PedidoPage({ params }: { params: { reference: stri
       instrucciones={instrucciones}
       requiereVerificacionManual={proveedor.requiresManualVerification}
     />
+  );
+}
+
+function PedidoNoEncontrado({ referencia }: { referencia: string }) {
+  return (
+    <div className="page-section" style={{ paddingTop: 140 }}>
+      <div className="container" style={{ maxWidth: 560 }}>
+        <div className="eyebrow" style={{ marginBottom: 16 }}>PEDIDO NO ENCONTRADO</div>
+        <h1 className="display" style={{ fontSize: 'clamp(36px, 8vw, 60px)', marginBottom: 20, lineHeight: 1.05 }}>
+          No encontramos este pedido<em style={{ color: 'var(--accent)' }}>.</em>
+        </h1>
+
+        <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, marginBottom: 28 }}>
+          Revisa que la referencia esté completa. Si acabas de hacer la compra y ya transfeririste,
+          escríbenos con este código y lo resolvemos de inmediato — tu dinero está seguro.
+        </p>
+
+        <div className="pay-field" style={{ marginBottom: 32 }}>
+          <div style={{ minWidth: 0 }}>
+            <div className="pay-field-label">Referencia que buscaste</div>
+            <div className="pay-field-value">{referencia}</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <Link href="/catalogo" className="btn btn-primary">Ver catálogo <span className="btn-arrow">→</span></Link>
+          <Link href="/asesoria" className="btn btn-ghost">Contactar al vivero</Link>
+        </div>
+      </div>
+    </div>
   );
 }

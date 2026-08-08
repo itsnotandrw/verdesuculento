@@ -78,15 +78,34 @@ Las de `/api/admin/*` exigen `Authorization: Bearer $ADMIN_API_TOKEN`. Sin el
 token configurado responden **503**, no 200: un endpoint que marca pedidos como
 pagados no puede tener autenticación opcional.
 
-## Limitaciones conocidas
+## Dónde se guardan los pedidos
 
-**El repositorio de pedidos guarda en un archivo JSON** (`.data/orders.json`).
-Alcanza para el volumen actual (~320 pedidos/mes) y evita montar
-infraestructura para salir a producción, pero asume **un solo proceso**: las
-escrituras se serializan en una cola dentro del proceso. En serverless con
-varias instancias (Vercel) hay que migrar a Postgres antes de operar. El cambio
-es implementar `OrderRepository` y cambiar una línea al final de `store.ts`;
-nada más en el sistema se entera.
+Dos adaptadores, y el que se usa lo decide la configuración:
+
+| Adaptador | Cuándo | Requiere |
+|---|---|---|
+| `kv` | **Producción.** Redis por REST (Upstash / Vercel KV) | `KV_REST_API_URL` + `KV_REST_API_TOKEN` |
+| `archivo` | Desarrollo y servidor propio de un solo proceso | nada |
+
+**En serverless el archivo no sirve, y no es una preferencia de estilo.** En
+Vercel cada ruta es una función independiente: `POST /api/orders` y la página
+`/pedido/[referencia]` corren en procesos distintos, con memoria distinta y
+disco de solo lectura. El pedido se crea en una y la otra nunca lo ve. Da 404
+el 100% de las veces.
+
+Por eso `almacenamiento().apto` existe. Si el almacenamiento no puede sostener
+un pedido, `crearPedido()` **se niega a crearlo** y el checkout muestra el
+motivo. Cobrarle a alguien y perder la orden es peor que decirle que vuelva
+más tarde. El panel muestra la alerta en rojo para que el operador se entere
+antes que un cliente.
+
+El adaptador `kv` habla el protocolo REST con `fetch`, sin SDK: son dos
+endpoints y no valía la pena una dependencia. Usa un cerrojo con TTL para las
+escrituras, porque un ciclo leer-modificar-escribir no es atómico y dos
+confirmaciones simultáneas podrían generar dos guías — que se pagan las dos.
+
+Para migrar a Postgres: implementar `OrderRepository` y cambiar una línea en
+`store.ts`. Nada más se entera.
 
 **Los adaptadores `mipaquete` y `envia` están escritos contra la documentación
 pública, sin probar en sandbox.** La estructura, el manejo de errores y el
@@ -117,3 +136,9 @@ migrar:
 El checkout muestra Nequi, PSE y tarjeta solo, sin tocar una línea de UI: la
 lista de métodos sale de `metodosDisponibles()`, que la pide al proveedor
 activo.
+
+## Envíos con agregador
+
+Paso a paso completo en [`docs/integracion-envios.md`](../docs/integracion-envios.md):
+elegir agregador comparando tarifas reales, dar de alta la cuenta, confirmar
+los campos contra el sandbox, catálogo de ciudades, webhooks y contra entrega.

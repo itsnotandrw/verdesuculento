@@ -6,8 +6,10 @@
  */
 
 import { autorizarAdmin, fallo, ok } from '@/lib/api';
-import { orders } from '@/lib/orders/store';
+import { almacenamiento, orders } from '@/lib/orders/store';
 import { etiquetaEnvio, etiquetaEstado, type Order } from '@/lib/orders/types';
+import { paymentProvider } from '@/lib/payments';
+import { shippingProvider } from '@/lib/shipping';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +96,14 @@ export async function GET(request: Request) {
 
     return ok({
       resumen: { total: lista.length, porVerificar, pagadosSinGuia, recaudosPendientes },
+      // Diagnóstico: si el almacenamiento no es apto, el checkout está
+      // rechazando pedidos y el operador tiene que enterarse aquí, no por un
+      // cliente molesto.
+      sistema: {
+        almacenamiento: almacenamiento(),
+        pagos: paymentProvider().id,
+        envios: shippingProvider().id,
+      },
       orders: lista.map(resumen),
     });
   } catch (error) {

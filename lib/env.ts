@@ -100,6 +100,28 @@ export const env = {
 
   /** Ruta del archivo donde persisten los pedidos (ver lib/orders/store.ts). */
   ordersFile: str('ORDERS_FILE', '.data/orders.json'),
+
+  /**
+   * Redis por REST para guardar los pedidos. Se aceptan los dos juegos de
+   * nombres: los que inyecta la integración de Vercel (`KV_*`) y los que da
+   * Upstash directamente (`UPSTASH_*`), para no tener que renombrar nada.
+   */
+  kv: {
+    url: str('KV_REST_API_URL') || str('UPSTASH_REDIS_REST_URL'),
+    token: str('KV_REST_API_TOKEN') || str('UPSTASH_REDIS_REST_TOKEN'),
+  },
+
+  /**
+   * ¿Corremos donde el disco local no se comparte entre rutas? En serverless
+   * cada ruta es una función aparte, así que guardar pedidos en un archivo es
+   * perderlos.
+   */
+  serverless: Boolean(
+    process.env.VERCEL ||
+      process.env.NETLIFY ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.CF_PAGES
+  ),
 };
 
 export type Env = typeof env;
