@@ -1,16 +1,23 @@
 /**
  * Adaptador de Envia.com (agregador multi-transportadora, multi-país).
  *
- * ⚠️ ESCRITO CONTRA LA DOCUMENTACIÓN PÚBLICA, SIN PROBAR EN SANDBOX. Mismo
- * criterio que `mipaquete.ts`: la estructura está terminada, los nombres de
- * campos se confirman en la Fase 0. Se mantiene como segundo candidato porque
- * la decisión entre ambos debe salir de comparar tarifas reales en 3-5 rutas,
- * no de leer sus páginas de marketing.
+ * PROBADO CONTRA LA API REAL el 2026-08-07. Lo que se aprendió y corrigió:
  *
- * Autentica con Bearer token y separa sandbox (`api-test.envia.com`) de
- * producción (`api.envia.com`) por URL base, no por llave.
+ * 1. **La llave es por ambiente.** Una llave de producción da 401 contra
+ *    `api-test.envia.com` y viceversa. El 401 no dice cuál es el problema, así
+ *    que `ENVIA_BASE_URL` tiene que coincidir con el ambiente de la llave.
  *
- * Docs: envia.com/es-CO/desarrolladores
+ * 2. **`shipment.carrier` es obligatorio** y no acepta cadena vacía. Envia no
+ *    devuelve todas las transportadoras de una: hay que nombrarlas. Por eso se
+ *    cotizan las cinco de Colombia en paralelo y se juntan los resultados.
+ *
+ * 3. **`state` es el código de 2 letras, no el nombre.** Y los dos catálogos
+ *    de Envia se contradicen entre sí — ver `envia-geo.ts`, donde se explica
+ *    por qué el código se resuelve por API en vez de hardcodearse.
+ *
+ * 4. **`postalCode` es obligatorio** en origen y destino.
+ *
+ * Docs: https://docs.envia.com/docs/getting-started
  */
 
 import { env } from '@/lib/env';
@@ -29,6 +36,7 @@ import {
   type TrackingEvent,
 } from '../types';
 import { pesoFacturableKg, zonaDe } from '../zonas';
+import { resolverUbicacion } from './envia-geo';
 
 const ID = 'envia';
 
@@ -73,21 +81,57 @@ async function llamar<T>(ruta: string, body?: unknown): Promise<T> {
   return (json.data ?? json) as T;
 }
 
+/**
+ * Transportadoras de Envia en Colombia con las que tiene sentido cotizar.
+ *
+ * La lista sale de `GET queries.envia.com/carrier?country_code=CO`, quitando
+ * las de mensajería urbana inmediata (cabify, 99minutos, lastMile, welivery) y
+ * las internacionales caras (dhl, fedex). Estas cinco son las que mueven
+ * paquetes nacionales.
+ */
+const TRANSPORTADORAS = ['tcc', 'interRapidisimo', 'serviEntrega', 'coordinadora', 'envia'];
+
 /** Envia.com describe origen y destino con el mismo objeto. */
-function ubicacion(direccion: ShippingAddress, nombre: string, contacto?: { telefono: string; email: string }) {
+function ubicacion(
+  datos: {
+    calle: string;
+    numero?: string;
+    barrio?: string;
+    ciudad: string;
+    estado: string;
+    postalCode: string;
+  },
+  nombre: string,
+  contacto?: { telefono: string; email: string }
+) {
   return {
     name: nombre,
     company: 'Vivero Verde Suculento',
-    email: contacto?.email ?? '',
-    phone: contacto?.telefono ?? '',
-    street: direccion.direccion ?? '',
-    number: direccion.barrio ?? 'S/N',
-    district: direccion.barrio ?? '',
-    city: direccion.ciudad,
-    state: direccion.departamento,
+    email: contacto?.email ?? 'hola@verde.co',
+    phone: contacto?.telefono ?? '3000000000',
+    street: datos.calle,
+    number: datos.numero ?? 'S/N',
+    district: datos.barrio ?? '',
+    city: datos.ciudad,
+    state: datos.estado,
     country: 'CO',
-    postalCode: direccion.codigoPostal ?? '',
+    postalCode: datos.postalCode,
   };
+}
+
+/** Origen: la bodega. Se resuelve una vez y se reutiliza. */
+async function origenResuelto(token: string) {
+  const o = env.shipping.origin;
+  const geo = await resolverUbicacion(o.ciudad, o.postalCode, token);
+  return ubicacion(
+    {
+      calle: o.direccion,
+      ciudad: geo.ciudad || o.ciudad,
+      estado: geo.estado,
+      postalCode: geo.postalCode,
+    },
+    'Vivero Verde Suculento'
+  );
 }
 
 function paquete(request: QuoteRequest) {
@@ -126,13 +170,53 @@ export const enviaProvider: ShippingProvider = {
   },
 
   async quote(request: QuoteRequest): Promise<ShippingQuote[]> {
-    const tarifas = await llamar<TarifaEnvia[]>('/ship/rate/', {
-      origin: ubicacion(env.shipping.origin, 'Vivero Verde Suculento'),
-      destination: ubicacion(request.destination, 'Cliente'),
-      packages: paquete(request),
-      shipment: { carrier: '', type: 1 },
-      settings: { currency: 'COP' },
-    });
+    const { token } = credenciales();
+
+    const [origen, destinoGeo] = await Promise.all([
+      origenResuelto(token),
+      resolverUbicacion(request.destination.ciudad, request.destination.codigoPostal, token),
+    ]);
+
+    const destino = ubicacion(
+      {
+        calle: request.destination.direccion ?? 'Sin dirección',
+        barrio: request.destination.barrio,
+        ciudad: destinoGeo.ciudad || request.destination.ciudad,
+        estado: destinoGeo.estado,
+        postalCode: destinoGeo.postalCode,
+      },
+      'Cliente'
+    );
+
+    const bultos = paquete(request);
+
+    // Una llamada por transportadora: `carrier` es obligatorio y no acepta
+    // vacío. Se lanzan en paralelo y las que fallen no tumban al resto — es
+    // normal que alguna esté caída o sin cobertura en cierta ruta, y perder
+    // una opción es mejor que quedarse sin ninguna.
+    const respuestas = await Promise.all(
+      TRANSPORTADORAS.map(async (carrier) => {
+        try {
+          const tarifas = await llamar<TarifaEnvia[]>('/ship/rate/', {
+            origin: origen,
+            destination: destino,
+            packages: bultos,
+            shipment: { carrier, type: 1 },
+            settings: { currency: 'COP' },
+          });
+          return (tarifas ?? []).map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
+        } catch (error) {
+          console.warn(`[envia] ${carrier} no cotizó: ${(error as Error).message.slice(0, 160)}`);
+          return [];
+        }
+      })
+    );
+
+    const tarifas = respuestas.flat();
+
+    if (tarifas.length === 0) {
+      throw new Error('[envia] ninguna transportadora devolvió tarifa para esta ruta.');
+    }
 
     const envioGratis =
       env.shipping.freeShippingFrom > 0 &&
@@ -182,14 +266,27 @@ export const enviaProvider: ShippingProvider = {
   },
 
   async createShipment({ order, quote }: CreateShipmentInput): Promise<CreatedShipment> {
+    const { token } = credenciales();
+
+    const [origen, destinoGeo] = await Promise.all([
+      origenResuelto(token),
+      resolverUbicacion(order.address.ciudad, order.address.codigoPostal, token),
+    ]);
+
     const guia = await llamar<{
       trackingNumber?: string;
       label?: string;
       shipmentId?: string;
     }>('/ship/generate/', {
-      origin: ubicacion(env.shipping.origin, 'Vivero Verde Suculento'),
+      origin: origen,
       destination: ubicacion(
-        { departamento: order.address.departamento, ciudad: order.address.ciudad, direccion: order.address.direccion, barrio: order.address.barrio, codigoPostal: order.address.codigoPostal },
+        {
+          calle: order.address.direccion,
+          barrio: order.address.barrio,
+          ciudad: destinoGeo.ciudad || order.address.ciudad,
+          estado: destinoGeo.estado,
+          postalCode: destinoGeo.postalCode,
+        },
         `${order.customer.nombre} ${order.customer.apellido}`,
         { telefono: order.customer.telefono, email: order.customer.email }
       ),

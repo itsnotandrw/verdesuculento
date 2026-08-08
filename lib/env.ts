@@ -71,6 +71,8 @@ export const env = {
       departamento: str('SHIPPING_ORIGIN_DEPT', 'Cundinamarca'),
       ciudad: str('SHIPPING_ORIGIN_CITY', 'Bogotá'),
       cityCode: str('SHIPPING_ORIGIN_CITY_CODE', '11001000'),
+      /** Envia lo exige en origen y destino. 110111 = Bogotá. */
+      postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', '110111'),
       direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Vivero Verde Suculento'),
     },
 

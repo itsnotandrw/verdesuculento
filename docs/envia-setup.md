@@ -1,103 +1,169 @@
-# Integración de Envia.com — Checklist de implementación
+# Envia.com — estado de la integración
 
-El adaptador de Envia está **100% listo en el código**. Lo que falta es:
+**Probado contra la API real el 2026-08-07.** El adaptador cotiza de verdad.
+Este documento registra lo que se descubrió probando, no lo que dice la
+documentación.
 
-1. **Token válido del sandbox** que tenga acceso a `/ship/rate/`
-2. **Verificación de campos** contra la respuesta real
+## Estado
 
-## Obtener un token válido
+| | |
+|---|---|
+| Cotización (`/ship/rate/`) | ✅ Funciona. TCC devuelve tarifas reales |
+| Resolución de direcciones | ✅ Funciona vía Geocodes API |
+| Generar guía (`/ship/generate/`) | ⚠️ Implementado, **sin probar a propósito** |
+| Tracking | ⚠️ Implementado, sin probar |
+| Webhooks | ⚠️ Sin probar. Falta confirmar el esquema de firma |
+| Contra entrega | ❌ Sin verificar cobertura |
 
-1. Ve a https://docs.envia.com/docs/getting-started
-2. **Sección "Authentication"** → obtén un token de sandbox válido
-3. Confirma en el panel de desarrolladores que el token tenga permisos en:
-   - `POST /ship/rate/` — cotización
-   - `POST /ship/generate/` — crear envío
-   - `GET /ship/generalTracking` — tracking
+## ⚠️ La llave que tenemos es de PRODUCCIÓN
 
-## Probar que el token funciona
+Esto es lo primero que hay que entender:
 
-Con un curl directo, antes de configurar el `.env.local`:
+- `api-test.envia.com` (sandbox) → **401** con esta llave
+- `api.envia.com` (producción) → **200**
 
-```bash
-TOKEN="tu_token_aqui"
-curl -X POST "https://api-test.envia.com/ship/rate/" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "origin": {"city": "Bogotá", "state": "Cundinamarca", "country": "CO"},
-    "destination": {"city": "Medellín", "state": "Antioquia", "country": "CO"},
-    "packages": [{"weight": 2, "length": 40, "width": 20, "height": 12}],
-    "shipment": {"type": 1}
-  }'
-```
+La documentación lo dice: *"Each key works only in the environment where it was
+created. A sandbox key cannot authenticate production requests, and vice
+versa."* El 401 no explica cuál es el problema, así que es fácil perder tiempo
+creyendo que la llave está mala cuando lo que está mal es la URL.
 
-Si responde JSON con `data: [...]`, el token es válido.
+**Consecuencia:** `/ship/generate/` con esta llave crearía un **envío real y
+facturable**. Por eso no se probó y por eso `.env.local` quedó en
+`SHIPPING_PROVIDER=tarifa-propia`.
 
-Si responde `"Authentication error."`, está mal. Vuelve al panel y regenera.
+Para pedir una llave de sandbox: dashboard → Developer → API Keys, creándola
+desde el ambiente sandbox.
 
-## Configurar en la tienda
-
-Una vez que tengas el token válido:
+## Cómo activarlo
 
 ```bash
 # .env.local
 SHIPPING_PROVIDER=envia
-ENVIA_TOKEN=tu_token_valido_aqui
-ENVIA_BASE_URL=https://api-test.envia.com   # sandbox
-SHIPPING_WEBHOOK_SECRET=genera_uno_aleatorio
+ENVIA_TOKEN=<la llave>
+ENVIA_BASE_URL=https://api.envia.com      # producción — debe coincidir con la llave
+SHIPPING_ORIGIN_POSTAL_CODE=110111        # Bogotá. Envia lo exige
 ```
 
-Luego cotiza con curl:
+Cotizar (lectura, no factura nada):
 
 ```bash
 curl -X POST http://localhost:3000/api/shipping/quote \
   -H "Content-Type: application/json" \
-  -d '{
-    "departamento": "Antioquia",
-    "ciudad": "Medellín",
-    "lines": [{"productId": "MCO2178557170", "qty": 1}]
-  }'
+  -d '{"departamento":"Antioquia","ciudad":"Medellín","lines":[{"productId":"MCO2178557170","qty":1}]}'
 ```
 
-Debe responder con un array de quotes con carrier, service, cost, etaLabel.
+> Si pruebas desde Git Bash en Windows, los acentos se corrompen en el camino y
+> "Medellín" llega como "Medell?n", que no resuelve. No es un bug de la app: el
+> navegador y Node mandan UTF-8 correcto. Prueba desde Node o desde el sitio.
 
-## Si sigue sin funcionar
+## Tarifas reales medidas
 
-**Campo a verificar en el adaptador** (línea 130 de `lib/shipping/providers/envia.ts`):
+Paquete: 1 arándano, 40×20×12 cm, 2 kg cobrables, declarado $46.990.
+Origen Bogotá.
 
-El payload que mandamos es:
+| Destino | Transportadora | Servicio | Precio | Entrega |
+|---|---|---|---|---|
+| Medellín | TCC | Mensajería | $21.700 | Día siguiente |
+| Cali | TCC | Mensajería | $21.700 | Día siguiente |
+| Barranquilla | TCC | Mensajería | $21.700 | 1–2 días |
+| Bucaramanga | TCC | Mensajería | $21.700 | 2–4 días |
+| Sincelejo | TCC | Mensajería | $32.020 | 1–2 días |
 
-```javascript
-{
-  origin: ubicacion(...),           // objeto con city, state, country
-  destination: ubicacion(...),
-  packages: paquete(...),           // array con weight, dimensions
-  shipment: { carrier: '', type: 1 },
-  settings: { currency: 'COP' }
-}
-```
+**Comparación con la tarifa propia actual:** hoy cobramos $14.000 a Medellín y
+$19.000 a Barranquilla. TCC por Envia cuesta $21.700. Es decir, **la tarifa
+propia está por debajo del costo real en varias rutas** — se está subsidiando
+el envío sin haberlo decidido. Vale la pena revisarlo aparte de esta
+integración.
 
-Si Envia responde error, compara este JSON contra los ejemplos de https://docs.envia.com y ajusta los nombres de campos.
+## Solo TCC cotiza. Las otras cuatro fallan
 
-Busca en `envia.ts` los comentarios `// VERIFICAR:` — esos son los puntos donde el adaptador asume estructura.
+De las cinco transportadoras nacionales, únicamente TCC responde:
 
-## Una vez funcionando
+| Transportadora | Error | Qué significa |
+|---|---|---|
+| `serviEntrega` | "No se ha encontrado el Código DANE de la Ciudad Origen" | Servientrega exige el DANE del origen y no lo está recibiendo |
+| `coordinadora` | "Error in call to Coordinadora ws" / "Bad Gateway" | Falla del lado de Coordinadora o cuenta sin habilitar |
+| `interRapidisimo` | "Unknown error in InterRapidisimo" | Igual: upstream o cuenta |
+| `envia` | "Service provided not available or incorrect" | Requiere nombrar un `service` además del carrier |
 
-1. **Prueba todas las rutas** de tus destinos reales (Bogotá → Medellín, Cali, Barranquilla, municipio pequeño)
-2. **Compara tarifas** contra Mipaquete
-3. **Decide cuál usar** basado en:
-   - Precio total en tu mezcla
-   - Tiempo de tránsito real
-   - Cobertura de recaudo
-4. **Configura webhooks** para tracking automático
-5. **Prueba contra entrega** (opcional pero muy valioso)
+**Esto hay que preguntárselo a Envia**, no se arregla desde el código. La
+pregunta concreta para su soporte:
 
-## Cambiar a producción
+> Con la cuenta [tu id], cotizando Bogotá (110111) → Medellín (050021), solo
+> TCC devuelve tarifas. Servientrega pide el código DANE de la ciudad origen,
+> Coordinadora e InterRapidísimo dan error de upstream. ¿Están habilitadas
+> esas transportadoras en la cuenta? ¿Qué campo debo enviar para el DANE del
+> origen?
 
-Cuando estés listo:
+Mientras tanto el adaptador **degrada bien**: cotiza las cinco en paralelo, las
+que fallan se registran en el log y no tumban al resto. Con una sola que
+responda, el checkout funciona.
+
+## Lo que se corrigió en el adaptador
+
+Cuatro cosas que estaban mal y que solo se ven probando:
+
+1. **`shipment.carrier` es obligatorio** y no acepta cadena vacía. Envia no
+   devuelve todas las transportadoras de una: hay que nombrarlas. El adaptador
+   ahora hace cinco llamadas en paralelo y junta los resultados.
+
+2. **`state` es el código de 2 letras, no el nombre.** "Cundinamarca" da
+   `String is too long`.
+
+3. **`postalCode` es obligatorio** en origen y destino. El adaptador mandaba
+   cadena vacía.
+
+4. **Los dos catálogos de Envia se contradicen.** `GET /state?country_code=CO`
+   y la Geocodes API dan códigos distintos para el mismo departamento:
+
+   | Departamento | `/state` | geocodes |
+   |---|---|---|
+   | Cauca | CU | CA |
+   | Cundinamarca | CN | CU |
+   | Caquetá | CA | CQ |
+   | Santander | SN | ST |
+   | Quindío | QU | QD |
+
+   `CA` es Caquetá en uno y Cauca en el otro. Un mapa hardcodeado con el
+   catálogo equivocado no da error: **despacha al departamento equivocado, en
+   silencio**. Por eso `envia-geo.ts` resuelve el código por API en vez de
+   hardcodearlo.
+
+## Códigos postales
+
+`envia-geo.ts` tiene 37 ciudades porque el checkout no exige código postal y
+casi nadie lo llena. Se verificaron uno por uno contra geocodes: **de 40 que
+puse de memoria, 7 estaban mal** (680001 no es Bucaramanga sino Los Santos;
+660001 no es Pereira sino Crucero de Combia).
+
+Faltan tres por confirmar: **Manizales, Arauca y Palmira** — no aparecieron en
+el rango que escaneé. Si un cliente de esas ciudades compra, la cotización
+falla con un mensaje claro en vez de cotizar mal.
+
+Para agregar una ciudad, busca su código y verifícalo:
 
 ```bash
-ENVIA_BASE_URL=https://api.envia.com   # cambiar de sandbox a producción
+curl -s "https://geocodes.envia.com/zipcode/CO/170001" \
+  -H "Authorization: Bearer $ENVIA_TOKEN"
 ```
 
-Nada más cambia. Todo lo demás sigue igual.
+Confirma que `locality` sea la ciudad esperada antes de agregarlo.
+
+## Endpoints útiles
+
+| Para qué | Endpoint |
+|---|---|
+| Verificar que la llave sirve | `GET queries.envia.com/webhook-types` |
+| Departamentos | `GET queries.envia.com/state?country_code=CO` |
+| Transportadoras del país | `GET queries.envia.com/carrier?country_code=CO` |
+| Resolver un CP | `GET geocodes.envia.com/zipcode/CO/{cp}` |
+
+## Qué falta
+
+1. **Llave de sandbox** para poder probar `/ship/generate/` sin crear envíos
+   reales.
+2. **Preguntarle a Envia** por las cuatro transportadoras que no cotizan.
+3. **Esquema de firma de los webhooks** — hoy el adaptador compara un secreto
+   plano en el header, sin confirmar.
+4. **Contra entrega**: si hay cobertura y con qué comisión.
+5. **Revisar la tarifa propia**, que está por debajo del costo real.
