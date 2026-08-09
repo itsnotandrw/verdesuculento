@@ -1,23 +1,26 @@
 /**
  * Adaptador de Envia.com (agregador multi-transportadora, multi-país).
  *
- * PROBADO CONTRA LA API REAL el 2026-08-07. Lo que se aprendió y corrigió:
+ * PROBADO CONTRA LA API REAL el 2026-08-07. Lo que se aprendió:
  *
- * 1. **La llave es por ambiente.** Una llave de producción da 401 contra
- *    `api-test.envia.com` y viceversa. El 401 no dice cuál es el problema, así
- *    que `ENVIA_BASE_URL` tiene que coincidir con el ambiente de la llave.
+ * 1. **`city` lleva el código DANE en Colombia**, no el nombre del municipio.
+ *    Es lo que decide si las transportadoras cotizan o no — ver `envia-geo.ts`,
+ *    donde está el detalle de por qué mandar el nombre produce tres errores
+ *    distintos que parecen problemas de cuenta y son el mismo campo.
  *
- * 2. **`shipment.carrier` es obligatorio** y no acepta cadena vacía. Envia no
+ * 2. **La llave es por ambiente.** Una llave de producción da 401 contra
+ *    `api-test.envia.com` y viceversa. El 401 no distingue "llave inválida" de
+ *    "ambiente equivocado", así que `ENVIA_BASE_URL` tiene que coincidir con
+ *    el ambiente donde se creó la llave.
+ *
+ * 3. **`shipment.carrier` es obligatorio** y no acepta cadena vacía. Envia no
  *    devuelve todas las transportadoras de una: hay que nombrarlas. Por eso se
- *    cotizan las cinco de Colombia en paralelo y se juntan los resultados.
+ *    cotizan las cuatro en paralelo y se juntan los resultados.
  *
- * 3. **`state` es el código de 2 letras, no el nombre.** Y los dos catálogos
- *    de Envia se contradicen entre sí — ver `envia-geo.ts`, donde se explica
- *    por qué el código se resuelve por API en vez de hardcodearse.
+ * 4. **`postalCode` tiene que estar presente pero puede ir vacío** cuando
+ *    `city` trae el DANE. El esquema lo exige; su valor no se usa.
  *
- * 4. **`postalCode` es obligatorio** en origen y destino.
- *
- * Docs: https://docs.envia.com/docs/getting-started
+ * Docs: https://docs.envia.com/reference/shipping-rates
  */
 
 import { env } from '@/lib/env';
@@ -36,7 +39,7 @@ import {
   type TrackingEvent,
 } from '../types';
 import { pesoFacturableKg, zonaDe } from '../zonas';
-import { resolverUbicacion } from './envia-geo';
+import { resolverUbicacion, type UbicacionEnvia } from './envia-geo';
 
 const ID = 'envia';
 
@@ -89,18 +92,14 @@ async function llamar<T>(ruta: string, body?: unknown): Promise<T> {
  * las internacionales caras (dhl, fedex). Estas cinco son las que mueven
  * paquetes nacionales.
  */
-const TRANSPORTADORAS = ['tcc', 'interRapidisimo', 'serviEntrega', 'coordinadora', 'envia'];
+// Se excluye el carrier propio `envia`: sus servicios son type 3 (tractomula,
+// mula, sencillo) y rechazan cajas con "shipment type: box not supported".
+// Es transporte de carga, no paquetería.
+const TRANSPORTADORAS = ['tcc', 'interRapidisimo', 'serviEntrega', 'coordinadora'];
 
 /** Envia.com describe origen y destino con el mismo objeto. */
 function ubicacion(
-  datos: {
-    calle: string;
-    numero?: string;
-    barrio?: string;
-    ciudad: string;
-    estado: string;
-    postalCode: string;
-  },
+  datos: { calle: string; numero?: string; barrio?: string; geo: UbicacionEnvia },
   nombre: string,
   contacto?: { telefono: string; email: string }
 ) {
@@ -112,26 +111,21 @@ function ubicacion(
     street: datos.calle,
     number: datos.numero ?? 'S/N',
     district: datos.barrio ?? '',
-    city: datos.ciudad,
-    state: datos.estado,
+    // En Colombia `city` lleva el código DANE, no el nombre. Ver envia-geo.ts.
+    city: datos.geo.city,
+    state: datos.geo.state,
     country: 'CO',
-    postalCode: datos.postalCode,
+    // El esquema lo exige, pero con el DANE presente su valor no se usa:
+    // cotiza igual vacío, y así no hace falta una tabla de códigos postales.
+    postalCode: '',
   };
 }
 
 /** Origen: la bodega. Se resuelve una vez y se reutiliza. */
-async function origenResuelto(token: string) {
+async function origenResuelto() {
   const o = env.shipping.origin;
-  const geo = await resolverUbicacion(o.ciudad, o.postalCode, token);
-  return ubicacion(
-    {
-      calle: o.direccion,
-      ciudad: geo.ciudad || o.ciudad,
-      estado: geo.estado,
-      postalCode: geo.postalCode,
-    },
-    'Vivero Verde Suculento'
-  );
+  const geo = await resolverUbicacion(o.ciudad, o.departamento);
+  return ubicacion({ calle: o.direccion, geo }, 'Vivero Verde Suculento');
 }
 
 function paquete(request: QuoteRequest) {
@@ -161,6 +155,108 @@ interface TarifaEnvia {
   deliveryDate?: { date_from?: number; date_to?: number };
 }
 
+/** Cómo se escriben los nombres de las transportadoras en Colombia. */
+const NOMBRE_CARRIER: Record<string, string> = {
+  tcc: 'TCC',
+  serviEntrega: 'Servientrega',
+  interRapidisimo: 'Inter Rapidísimo',
+  coordinadora: 'Coordinadora',
+};
+
+/**
+ * El plazo real lo trae `deliveryEstimate` como texto libre en español
+ * ("Día siguiente", "1-2 días", "2-5 días"), no como fechas. Sin parsearlo,
+ * todas las opciones caen al plazo genérico de la zona y el checkout muestra
+ * "2 — 4 días hábiles" para un servicio que llega mañana.
+ */
+function plazo(tarifa: TarifaEnvia, zona: { etaMin: number; etaMax: number }) {
+  const desde = tarifa.deliveryDate?.date_from;
+  const hasta = tarifa.deliveryDate?.date_to;
+  if (typeof desde === 'number' && typeof hasta === 'number') {
+    return { min: desde, max: hasta };
+  }
+
+  const texto = (tarifa.deliveryEstimate ?? '').toLowerCase();
+
+  if (/d[ií]a siguiente|next day|24 ?h/.test(texto)) return { min: 1, max: 1 };
+  if (/mismo d[ií]a|same day/.test(texto)) return { min: 0, max: 1 };
+
+  const rango = texto.match(/(\d+)\s*[-–a]\s*(\d+)/);
+  if (rango) return { min: Number(rango[1]), max: Number(rango[2]) };
+
+  const uno = texto.match(/(\d+)/);
+  if (uno) return { min: Number(uno[1]), max: Number(uno[1]) };
+
+  return { min: zona.etaMin, max: zona.etaMax };
+}
+
+const sinTildes = (t: string) =>
+  t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, '');
+
+/**
+ * Quita el nombre de la transportadora del servicio para no repetirlo: la
+ * tarjeta ya muestra "Inter Rapidísimo", sobra "Interrapidisimo Mensajería".
+ *
+ * Se compara sin tildes ni espacios porque Envia escribe el mismo nombre de
+ * varias formas — "Interrapidisimo" en la descripción del servicio,
+ * "interRapidisimo" como código.
+ */
+function nombreServicio(descripcion: string, carrier: string): string {
+  const objetivo = sinTildes(NOMBRE_CARRIER[carrier] ?? carrier);
+  const palabras = descripcion.trim().split(/\s+/);
+
+  // Descarta las primeras palabras mientras sigan formando el nombre.
+  let acumulado = '';
+  let corte = 0;
+  for (let i = 0; i < palabras.length; i++) {
+    acumulado += sinTildes(palabras[i]);
+    if (!objetivo.startsWith(acumulado)) break;
+    if (acumulado === objetivo) {
+      corte = i + 1;
+      break;
+    }
+  }
+
+  const limpio = palabras.slice(corte).join(' ').replace(/^[-–]\s*/, '').trim();
+  const nombre = limpio || descripcion;
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}
+
+/** "1 día hábil" y no "1 días hábiles". */
+function etiquetaPlazo(min: number, max: number): string {
+  if (min === max) return max === 1 ? '1 día hábil' : `${max} días hábiles`;
+  return `${min} — ${max} días hábiles`;
+}
+
+/**
+ * Se queda solo con las opciones que valen la pena mostrar.
+ *
+ * Envia devuelve hasta siete por ruta, con duplicados al mismo precio y
+ * servicios "industriales" que cuestan el triple sin llegar antes. Una lista
+ * así no ayuda a decidir: la paraliza.
+ *
+ * Sobre la lista ordenada por precio, se conserva una opción solo si llega
+ * **estrictamente antes** que todas las más baratas. Es la frontera de Pareto:
+ * lo que queda son las que ganan en precio, en tiempo, o en el equilibrio — y
+ * lo que se descarta es siempre peor en ambas cosas que alguna que sí quedó.
+ */
+function frontera(opciones: ShippingQuote[]): ShippingQuote[] {
+  const elegidas: ShippingQuote[] = [];
+  let mejorPlazo = Infinity;
+
+  for (const opcion of opciones) {
+    if (opcion.etaMaxDays < mejorPlazo) {
+      elegidas.push(opcion);
+      mejorPlazo = opcion.etaMaxDays;
+    }
+  }
+
+  // La más barata siempre va, aunque sea la más lenta: es la que más gente elige.
+  if (elegidas.length === 0 && opciones.length > 0) elegidas.push(opciones[0]);
+
+  return elegidas.slice(0, 4);
+}
+
 export const enviaProvider: ShippingProvider = {
   id: ID,
   label: 'Envia.com',
@@ -170,20 +266,18 @@ export const enviaProvider: ShippingProvider = {
   },
 
   async quote(request: QuoteRequest): Promise<ShippingQuote[]> {
-    const { token } = credenciales();
+    credenciales();
 
     const [origen, destinoGeo] = await Promise.all([
-      origenResuelto(token),
-      resolverUbicacion(request.destination.ciudad, request.destination.codigoPostal, token),
+      origenResuelto(),
+      resolverUbicacion(request.destination.ciudad, request.destination.departamento),
     ]);
 
     const destino = ubicacion(
       {
         calle: request.destination.direccion ?? 'Sin dirección',
         barrio: request.destination.barrio,
-        ciudad: destinoGeo.ciudad || request.destination.ciudad,
-        estado: destinoGeo.estado,
-        postalCode: destinoGeo.postalCode,
+        geo: destinoGeo,
       },
       'Cliente'
     );
@@ -223,40 +317,46 @@ export const enviaProvider: ShippingProvider = {
       request.merchandiseValue >= env.shipping.freeShippingFrom;
     const zona = zonaDe(request.destination.departamento);
 
-    return tarifas
+    const opciones = tarifas
       .map((tarifa): ShippingQuote => {
         const carrier = tarifa.carrier ?? 'transportadora';
         const servicio = tarifa.service ?? 'estandar';
         const listCost = roundToHundred(tarifa.totalPrice ?? tarifa.basePrice ?? 0);
-        const min = tarifa.deliveryDate?.date_from ?? zona.etaMin;
-        const max = tarifa.deliveryDate?.date_to ?? zona.etaMax;
+        const { min, max } = plazo(tarifa, zona);
 
         return {
           id: `${ID}:${carrier}:${servicio}`,
           provider: ID,
-          carrier: carrier.charAt(0).toUpperCase() + carrier.slice(1),
+          carrier: NOMBRE_CARRIER[carrier] ?? carrier,
           carrierCode: carrier,
-          service: tarifa.serviceDescription ?? servicio,
+          service: nombreServicio(tarifa.serviceDescription ?? servicio, carrier),
           serviceCode: servicio,
           listCost,
           cost: envioGratis ? 0 : listCost,
           currency: 'COP',
           etaMinDays: min,
           etaMaxDays: max,
-          etaLabel: min === max ? `${min} días hábiles` : `${min} — ${max} días hábiles`,
-          // VERIFICAR: Envia.com maneja el recaudo por servicio, no global.
+          etaLabel: etiquetaPlazo(min, max),
           cashOnDeliveryAvailable: false,
           cashOnDeliveryFee: 0,
         };
       })
-      .sort((a, b) => a.cost - b.cost);
+      .sort((a, b) => a.cost - b.cost || a.etaMaxDays - b.etaMaxDays);
+
+    return frontera(opciones);
   },
 
   async codCoverage(destination: ShippingAddress): Promise<CodCoverage> {
-    // VERIFICAR: en Envia.com el recaudo depende de la transportadora elegida.
-    // Hasta confirmarlo en sandbox se responde "no disponible", que es el
-    // default seguro: ofrecer contra entrega sin cobertura real significa
-    // producto en la calle y dinero que no existe.
+    // El catálogo confirma que el recaudo existe: `cash_on_delivery: 1` en TCC
+    // (ambos servicios), Coordinadora (los cuatro), InterRapidísimo (los cinco)
+    // y el servicio `premier_cod` de Servientrega. La comisión sale de
+    // `additional_services`: 5% del recaudo con mínimo $4.760, más 1,3% de
+    // seguro (mínimo $650) si se asegura.
+    //
+    // Aun así se responde "no disponible" hasta probar el flujo completo con
+    // una llave de sandbox: ofrecer contra entrega y descubrir después que el
+    // recaudo no se pidió bien es despachar producto que nadie cobra. El
+    // default seguro se mantiene a propósito.
     return {
       available: false,
       fee: 0,
@@ -266,11 +366,11 @@ export const enviaProvider: ShippingProvider = {
   },
 
   async createShipment({ order, quote }: CreateShipmentInput): Promise<CreatedShipment> {
-    const { token } = credenciales();
+    credenciales();
 
     const [origen, destinoGeo] = await Promise.all([
-      origenResuelto(token),
-      resolverUbicacion(order.address.ciudad, order.address.codigoPostal, token),
+      origenResuelto(),
+      resolverUbicacion(order.address.ciudad, order.address.departamento),
     ]);
 
     const guia = await llamar<{
@@ -280,13 +380,7 @@ export const enviaProvider: ShippingProvider = {
     }>('/ship/generate/', {
       origin: origen,
       destination: ubicacion(
-        {
-          calle: order.address.direccion,
-          barrio: order.address.barrio,
-          ciudad: destinoGeo.ciudad || order.address.ciudad,
-          estado: destinoGeo.estado,
-          postalCode: destinoGeo.postalCode,
-        },
+        { calle: order.address.direccion, barrio: order.address.barrio, geo: destinoGeo },
         `${order.customer.nombre} ${order.customer.apellido}`,
         { telefono: order.customer.telefono, email: order.customer.email }
       ),

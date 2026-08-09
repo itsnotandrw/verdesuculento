@@ -1,91 +1,86 @@
 /**
- * Resolución de direcciones colombianas contra la Geocodes API de Envia.
+ * Resolución de direcciones colombianas para Envia.
  *
- * Envia no acepta el nombre del departamento: quiere su código de 2 letras. Y
- * ahí está la trampa — **Envia publica dos catálogos que se contradicen**:
+ * **Colombia es un caso especial en la API de Envia y esto es lo que decide si
+ * las transportadoras cotizan o no.** De la documentación del endpoint de
+ * tarifas:
  *
- *   departamento    /state dice   geocodes dice
- *   Cauca           CU            CA
- *   Cundinamarca    CN            CU
- *   Caquetá         CA            CQ
- *   Santander       SN            ST
- *   Quindío         QU            QD
- *   … y 4 más
+ *   > Colombia only: the `city` field must contain the 8-digit DANE municipal
+ *   > code, not a human-readable city name.
  *
- * `CA` es Caquetá en un catálogo y Cauca en el otro. Un mapa hardcodeado con
- * el catálogo equivocado no falla: despacha al departamento equivocado, en
- * silencio. Por eso el código de departamento **se resuelve por código postal
- * contra geocodes**, que es la misma fuente que consumen las transportadoras.
+ * Mandar `city: "Medellín"` en vez de `city: "05001000"` no da un error de
+ * validación: da errores confusos por transportadora. TCC lo tolera y cotiza
+ * igual; Servientrega responde "No se ha encontrado el Codigo DANE de la
+ * Ciudad Origen", Coordinadora "Error in call to Coordinadora ws" e
+ * InterRapidísimo "Unknown error". Tres mensajes que parecen problemas de
+ * cuenta o de las transportadoras, y son todos el mismo campo mal enviado.
  *
- * De paso, geocodes devuelve el código DANE del municipio, que Servientrega
- * exige y sin el cual rechaza la cotización.
+ * Con el DANE correcto cotizan las cuatro.
  *
- * Verificado el 2026-08-07 contra la API en producción.
+ * El código DANE se resuelve con `POST /locate`, que acepta cualquier
+ * municipio del país —no solo las capitales— y no requiere autenticación.
+ *
+ * OJO con los códigos de departamento: Envia publica dos catálogos que se
+ * contradicen. `GET queries/state?country_code=CO` dice que Cundinamarca es
+ * `CN` y Santander `SN`; la Geocodes API dice `CU` y `ST`. **El bueno es el de
+ * `/state`** — verificado contra `/locate`, que rechaza los otros. Usar el
+ * catálogo equivocado en un departamento donde `CA` significa Caquetá en uno y
+ * Cauca en el otro no falla: despacha al departamento equivocado, en silencio.
+ *
+ * Verificado el 2026-08-07 contra la API de producción: los 33 departamentos
+ * resuelven la capital correctamente.
  */
 
-const GEOCODES = 'https://geocodes.envia.com';
+import { DestinoNoResueltoError } from '../types';
 
-export interface UbicacionResuelta {
-  postalCode: string;
-  /** Código de 2 letras del departamento, tal como lo espera /ship/rate/. */
-  estado: string;
-  /** Municipio según Envia. */
-  ciudad: string;
-  /** Código DANE de 8 dígitos. Servientrega lo exige. */
-  dane?: string;
-}
+const LOCATE = 'https://api.envia.com/locate';
 
 /**
- * Códigos postales de las ciudades que más despachamos, para cuando el cliente
- * no escribe el suyo — el campo es opcional en el checkout y casi nadie lo
- * llena.
+ * Departamento → código de 2 letras que espera Envia.
  *
- * Verificados uno por uno contra geocodes: de 40 códigos que puse de memoria,
- * 7 estaban mal (680001 no es Bucaramanga sino Los Santos, 660001 no es
- * Pereira sino Crucero de Combia). Los de esta tabla resuelven al municipio
- * correcto, confirmado por la API.
- *
- * Solo se guarda el CP: el departamento y el DANE salen de geocodes, para no
- * volver a introducir el problema de los catálogos contradictorios.
+ * Del catálogo `GET queries.envia.com/state?country_code=CO`. Los 33 se
+ * validaron resolviendo su capital con `/locate`.
  */
-const CIUDAD_CP: Record<string, string> = {
-  bogota: '110111',
-  medellin: '050021',
-  cali: '760001',
-  barranquilla: '080001',
-  cartagena: '130001',
-  bucaramanga: '680004',
-  pereira: '660006',
-  ibague: '730004',
-  monteria: '230003',
-  armenia: '630001',
-  cucuta: '540001',
-  'santa marta': '470001',
-  villavicencio: '500001',
-  pasto: '520001',
-  neiva: '410001',
-  sincelejo: '700001',
-  valledupar: '200001',
-  popayan: '190001',
-  tunja: '150001',
-  riohacha: '440001',
-  quibdo: '270001',
-  florencia: '180001',
-  yopal: '850001',
-  leticia: '910001',
-  mocoa: '860001',
-  'san andres': '880001',
-  'puerto carreno': '990001',
-  mitu: '970001',
-  inirida: '940001',
-  'san jose del guaviare': '950001',
-  soacha: '250051',
-  bello: '051050',
-  envigado: '055422',
-  itagui: '055412',
-  soledad: '083001',
-  buenaventura: '764501',
-  tulua: '763021',
+const ESTADO: Record<string, string> = {
+  amazonas: 'AM',
+  antioquia: 'AN',
+  arauca: 'AR',
+  atlantico: 'AT',
+  bogota: 'DC',
+  'bogota dc': 'DC',
+  'bogota d c': 'DC',
+  'distrito capital': 'DC',
+  bolivar: 'BL',
+  boyaca: 'BY',
+  caldas: 'CL',
+  caqueta: 'CA',
+  casanare: 'CS',
+  cauca: 'CU',
+  cesar: 'CE',
+  choco: 'CH',
+  cordoba: 'CO',
+  cundinamarca: 'CN',
+  guainia: 'GU',
+  guaviare: 'GA',
+  huila: 'HU',
+  'la guajira': 'LG',
+  guajira: 'LG',
+  magdalena: 'MA',
+  meta: 'ME',
+  narino: 'NA',
+  'norte de santander': 'NS',
+  putumayo: 'PU',
+  quindio: 'QU',
+  risaralda: 'RI',
+  'san andres y providencia': 'SA',
+  'san andres': 'SA',
+  santander: 'SN',
+  sucre: 'SU',
+  tolima: 'TO',
+  'valle del cauca': 'VC',
+  valle: 'VC',
+  vaupes: 'VA',
+  vichada: 'VI',
 };
 
 function normalizar(texto: string): string {
@@ -93,78 +88,70 @@ function normalizar(texto: string): string {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/** Código postal conocido para una ciudad, si lo tenemos. */
-export function cpDeCiudad(ciudad: string): string | undefined {
-  return CIUDAD_CP[normalizar(ciudad)];
+export function codigoEstado(departamento: string): string | undefined {
+  return ESTADO[normalizar(departamento)];
 }
 
-// Un código postal siempre resuelve a lo mismo, así que se cachea en el proceso
-// y no se vuelve a pedir. Evita una llamada extra por cotización.
-const cache = new Map<string, UbicacionResuelta | null>();
-
-async function consultar(cp: string, token: string): Promise<UbicacionResuelta | null> {
-  const respuesta = await fetch(`${GEOCODES}/zipcode/CO/${encodeURIComponent(cp)}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-
-  if (!respuesta.ok) return null;
-
-  const datos = (await respuesta.json().catch(() => null)) as Array<{
-    zip_code?: string;
-    locality?: string;
-    state?: { code?: { '2digit'?: string } };
-    info?: { stat_8digit?: string };
-  }> | null;
-
-  const primero = Array.isArray(datos) ? datos[0] : null;
-  const estado = primero?.state?.code?.['2digit'];
-  if (!primero || !estado) return null;
-
-  return {
-    postalCode: primero.zip_code ?? cp,
-    estado,
-    ciudad: primero.locality ?? '',
-    dane: primero.info?.stat_8digit,
-  };
+export interface UbicacionEnvia {
+  /** Código DANE de 8 dígitos. Va en el campo `city` de la dirección. */
+  city: string;
+  /** Código de departamento de 2 letras. */
+  state: string;
+  /** Nombre normalizado que devolvió Envia, para la bitácora. */
+  nombre: string;
 }
+
+// Un municipio siempre resuelve al mismo DANE, así que se cachea en el proceso.
+const cache = new Map<string, UbicacionEnvia>();
 
 /**
- * Resuelve una dirección a lo que `/ship/rate/` necesita.
+ * Resuelve ciudad + departamento al código DANE que exigen las
+ * transportadoras colombianas.
  *
- * Prefiere el código postal que escribió el cliente; si no lo dio, cae a la
- * tabla de ciudades. Si no hay forma de resolverlo, lanza un error que nombra
- * el problema: es mejor que cotizar contra un departamento inventado.
+ * Si no resuelve, lanza en vez de continuar: cotizar con un municipio
+ * equivocado produce una tarifa que después no se puede honrar.
  */
 export async function resolverUbicacion(
   ciudad: string,
-  codigoPostal: string | undefined,
-  token: string
-): Promise<UbicacionResuelta> {
-  const cp = (codigoPostal ?? '').trim() || cpDeCiudad(ciudad);
+  departamento: string
+): Promise<UbicacionEnvia> {
+  const state = codigoEstado(departamento);
+  if (!state) throw new DestinoNoResueltoError(ciudad, departamento);
 
-  if (!cp) {
-    throw new Error(
-      `[envia] no conocemos el código postal de "${ciudad}". ` +
-        'Pídelo en el checkout o agrégalo a CIUDAD_CP en envia-geo.ts.'
-    );
+  const llave = `${state}:${normalizar(ciudad)}`;
+  const guardado = cache.get(llave);
+  if (guardado) return guardado;
+
+  const respuesta = await fetch(LOCATE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ city: ciudad, state, country: 'CO' }),
+    cache: 'no-store',
+  });
+
+  const datos = (await respuesta.json().catch(() => null)) as {
+    city?: string;
+    name?: string;
+    state?: string;
+  } | null;
+
+  // Devuelve 200 incluso al fallar; lo que confirma el acierto es que `city`
+  // venga con los 8 dígitos del DANE.
+  if (!datos?.city || !/^\d{8}$/.test(String(datos.city))) {
+    throw new DestinoNoResueltoError(ciudad, departamento);
   }
 
-  if (cache.has(cp)) {
-    const guardado = cache.get(cp)!;
-    if (guardado) return guardado;
-    throw new Error(`[envia] el código postal ${cp} no resuelve a ningún municipio.`);
-  }
+  const resuelto: UbicacionEnvia = {
+    city: String(datos.city),
+    state: datos.state ?? state,
+    nombre: datos.name ?? ciudad,
+  };
 
-  const resuelto = await consultar(cp, token);
-  cache.set(cp, resuelto);
-
-  if (!resuelto) {
-    throw new Error(`[envia] el código postal ${cp} no resuelve a ningún municipio.`);
-  }
+  cache.set(llave, resuelto);
   return resuelto;
 }

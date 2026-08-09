@@ -114,3 +114,21 @@ export class CodNotAvailableError extends Error {
     this.name = 'CodNotAvailableError';
   }
 }
+
+/**
+ * No se pudo identificar el municipio de destino.
+ *
+ * Es un error del cliente, no del sistema: escribió mal la ciudad o eligió un
+ * departamento que no le corresponde. Tiene su propia clase para que el
+ * checkout muestre "no encontramos ese municipio" en vez de "intenta de nuevo
+ * en un momento", que lo dejaría reintentando lo mismo para siempre.
+ */
+export class DestinoNoResueltoError extends Error {
+  constructor(ciudad: string, departamento: string) {
+    super(
+      `No encontramos el municipio "${ciudad}" en ${departamento}. ` +
+        'Revisa que el nombre esté bien escrito y que corresponda al departamento.'
+    );
+    this.name = 'DestinoNoResueltoError';
+  }
+}
