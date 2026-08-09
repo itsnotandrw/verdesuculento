@@ -61,27 +61,86 @@ function credenciales(): { token: string; baseUrl: string } {
   return { token, baseUrl: baseUrl.replace(/\/$/, '') };
 }
 
+/**
+ * Tiempo máximo por intento antes de darlo por perdido y reintentar.
+ *
+ * Coordinadora es bimodal: responde en 1-2s o en ~10s, sin término medio, y
+ * esto se midió incluso llamándola sola, una a la vez, sin ninguna carga
+ * concurrente — es una característica de su backend, no un efecto de pedir
+ * las cuatro transportadoras a la vez.
+ *
+ * Por eso el timeout es corto y no largo: un solo intento con margen para
+ * los 10s gastaría todo el presupuesto de tiempo en la posibilidad lenta. Dos
+ * intentos cortos (ver `conReintento`) dan dos oportunidades de caer en el
+ * camino rápido por el mismo presupuesto total: si el primero entra en el
+ * ciclo de ~10s, se corta a los 3.5s y el segundo intento parte de cero con
+ * las mismas chances de ser rápido.
+ */
+const TIMEOUT_MS = 3_500;
+
 async function llamar<T>(ruta: string, body?: unknown): Promise<T> {
   const { token, baseUrl } = credenciales();
 
-  const respuesta = await fetch(`${baseUrl}${ruta}`, {
-    method: body ? 'POST' : 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    cache: 'no-store',
-  });
+  const control = new AbortController();
+  const corte = setTimeout(() => control.abort(), TIMEOUT_MS);
 
-  if (!respuesta.ok) {
-    const detalle = await respuesta.text().catch(() => '');
-    throw new Error(`[envia] ${ruta} → ${respuesta.status} ${detalle.slice(0, 300)}`);
+  try {
+    const respuesta = await fetch(`${baseUrl}${ruta}`, {
+      method: body ? 'POST' : 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: 'no-store',
+      signal: control.signal,
+    });
+
+    if (!respuesta.ok) {
+      const detalle = await respuesta.text().catch(() => '');
+      throw new Error(`[envia] ${ruta} → ${respuesta.status} ${detalle.slice(0, 300)}`);
+    }
+
+    const json = (await respuesta.json()) as { meta?: string; data?: T; error?: unknown };
+    if (json.error) throw new Error(`[envia] ${ruta} → ${JSON.stringify(json.error).slice(0, 300)}`);
+    return (json.data ?? json) as T;
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      throw new Error(`[envia] ${ruta} → tiempo de espera agotado (${TIMEOUT_MS}ms).`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(corte);
+  }
+}
+
+/**
+ * Reintenta fallas transitorias.
+ *
+ * Probando la integración se vio que Coordinadora e Inter Rapidísimo fallan
+ * de forma intermitente bajo carga concurrente: "Too Many Requests", "Bad
+ * Gateway", tiempos de 9 a 18 segundos, o incluso 200 con `data: []` para una
+ * ruta que segundos antes sí tenía tarifa. Nada de eso significa que la
+ * transportadora no cubra la ruta — es la infraestructura de Envia
+ * tropezando bajo las cuatro llamadas simultáneas que dispara cada
+ * cotización. Sin reintento, cuál de las cuatro se cae es una lotería: el
+ * cliente ve un checkout distinto en cada visita a la misma dirección.
+ */
+async function conReintento<T>(fn: () => Promise<T>, intentos = 1): Promise<T> {
+  let ultimoError: unknown;
+
+  for (let intento = 0; intento <= intentos; intento++) {
+    try {
+      return await fn();
+    } catch (error) {
+      ultimoError = error;
+      if (intento < intentos) {
+        await new Promise((r) => setTimeout(r, 150 + Math.random() * 150));
+      }
+    }
   }
 
-  const json = (await respuesta.json()) as { meta?: string; data?: T; error?: unknown };
-  if (json.error) throw new Error(`[envia] ${ruta} → ${JSON.stringify(json.error).slice(0, 300)}`);
-  return (json.data ?? json) as T;
+  throw ultimoError;
 }
 
 /**
@@ -288,19 +347,28 @@ export const enviaProvider: ShippingProvider = {
     // vacío. Se lanzan en paralelo y las que fallen no tumban al resto — es
     // normal que alguna esté caída o sin cobertura en cierta ruta, y perder
     // una opción es mejor que quedarse sin ninguna.
+    //
+    // Cada llamada va con reintento: ver el comentario de `conReintento` sobre
+    // por qué Coordinadora e Inter Rapidísimo necesitan esto. Un `data: []`
+    // sin error cuenta como fallo transitorio también — es exactamente lo que
+    // se observó que devuelven bajo carga para rutas que sí tienen cobertura.
     const respuestas = await Promise.all(
       TRANSPORTADORAS.map(async (carrier) => {
         try {
-          const tarifas = await llamar<TarifaEnvia[]>('/ship/rate/', {
-            origin: origen,
-            destination: destino,
-            packages: bultos,
-            shipment: { carrier, type: 1 },
-            settings: { currency: 'COP' },
+          const tarifas = await conReintento(async () => {
+            const resultado = await llamar<TarifaEnvia[]>('/ship/rate/', {
+              origin: origen,
+              destination: destino,
+              packages: bultos,
+              shipment: { carrier, type: 1 },
+              settings: { currency: 'COP' },
+            });
+            if (!resultado?.length) throw new Error('respuesta vacía');
+            return resultado;
           });
-          return (tarifas ?? []).map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
+          return tarifas.map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
         } catch (error) {
-          console.warn(`[envia] ${carrier} no cotizó: ${(error as Error).message.slice(0, 160)}`);
+          console.warn(`[envia] ${carrier} no cotizó tras reintentos: ${(error as Error).message.slice(0, 160)}`);
           return [];
         }
       })

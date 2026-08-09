@@ -127,6 +127,46 @@ equilibrio, y lo descartado siempre es peor en ambas cosas que algo que quedó.
 plazo genérico de la zona y el checkout decía "2 — 4 días hábiles" para algo
 que llega mañana.
 
+**Dos intentos cortos por transportadora, no uno largo.** Probando en vivo se
+vio que Coordinadora responde de forma bimodal: ~1-2s o ~10s, sin término
+medio, y esto se midió incluso llamándola sola, una petición a la vez, sin
+ninguna carga concurrente de por medio — es una característica de su backend,
+no un efecto de pedir las cuatro transportadoras a la vez. Un timeout de 3.5s
+con un reintento da dos oportunidades de caer en el camino rápido por el mismo
+presupuesto de tiempo que un solo intento largo habría gastado esperando a que
+termine el lento. En una tanda de 10 pruebas contra 5 rutas distintas, esto
+bajó los fallos de "casi siempre" a 1 de 10.
+
+## Por qué a veces solo aparecen 1-2 transportadoras (no es un bug)
+
+Envia puede devolver hasta 7 combinaciones carrier+servicio por ruta. El
+checkout no las muestra todas: se queda con las que están en la **frontera de
+Pareto** — ninguna de las descartadas es mejor en precio y en tiempo que
+alguna de las que se muestran.
+
+Con las tarifas reales para Bogotá → Medellín:
+
+| Transportadora | Precio | Entrega |
+|---|---|---|
+| Servientrega Premier | $17.550 | 1–2 días |
+| TCC Mensajería | $21.700 | Día siguiente |
+| Coordinadora Ground | $26.040 | Día siguiente |
+| Coordinadora Ecommerce | $23.700 | Día siguiente |
+
+Coordinadora cuesta más que TCC para la **misma velocidad** — está dominada en
+ambos ejes, y ocultarla es correcto: mostrarla sería ofrecerle al cliente una
+opción objetivamente peor que otra que ya tiene delante. Confirmado también en
+Bogotá y Soacha: 2 opciones consistentes (la más barata y la más rápida), sea
+cual sea el número de transportadoras que realmente cotizaron por debajo.
+
+Esto se verificó reproduciendo el fallo reportado en el checkout real
+(navegador, no scripts aislados): con la mejora de reintentos, Coordinadora e
+Inter Rapidísimo pasaron de fallar la mayoría de las veces a responder casi
+siempre — y aun así casi nunca se muestran, porque genuinamente no ganan en
+nada frente a Servientrega o TCC en las rutas probadas. Las "1-2
+transportadoras" que ve el cliente no son un síntoma de que algo esté roto: es
+el filtro haciendo su trabajo.
+
 ## Contra entrega
 
 El catálogo confirma que existe: `cash_on_delivery: 1` en TCC (ambos
