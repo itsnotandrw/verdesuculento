@@ -39,19 +39,46 @@ import {
   type TrackingEvent,
 } from '../types';
 import { pesoFacturableKg, zonaDe } from '../zonas';
+import { armarPaquete } from '../paquete';
 import { resolverUbicacion, type UbicacionEnvia } from './envia-geo';
 
 const ID = 'envia';
 
 /** VERIFICAR: catálogo de estados de `GET /ship/generalTracking`. */
+/**
+ * Catálogo oficial de Envia: 28 estados, con nombre en inglés y sin guiones
+ * bajos (docs.envia.com/reference/track-shipments). Se compara en minúsculas
+ * porque la API los devuelve con mayúscula inicial ("Created", "Out for
+ * Delivery"), no en el formato `snake_case` que se había asumido antes de
+ * probar contra el sandbox.
+ */
 const ESTADOS: Record<string, ShipmentStatus> = {
   created: 'created',
-  label_created: 'created',
-  picked_up: 'picked_up',
-  in_transit: 'in_transit',
-  out_for_delivery: 'out_for_delivery',
+  pending: 'created',
+  'picked up': 'picked_up',
+  'out for pickup': 'picked_up',
+  shipped: 'in_transit',
+  information: 'in_transit',
+  redirected: 'in_transit',
+  'partially shipped': 'in_transit',
+  'out for delivery': 'out_for_delivery',
   delivered: 'delivered',
-  exception: 'incident',
+  'delivered at origin': 'delivered',
+  'partially delivered': 'delivered',
+  canceled: 'incident',
+  lost: 'incident',
+  damaged: 'incident',
+  'return problem': 'incident',
+  'address error': 'incident',
+  undeliverable: 'incident',
+  delayed: 'incident',
+  rejected: 'incident',
+  '1 delivery attempt': 'incident',
+  '2 delivery attempts': 'incident',
+  '3 delivery attempts': 'incident',
+  '1 pickup attempt': 'incident',
+  'delivery attempt': 'incident',
+  'pickup at office': 'incident',
   returned: 'returned',
 };
 
@@ -441,11 +468,19 @@ export const enviaProvider: ShippingProvider = {
       resolverUbicacion(order.address.ciudad, order.address.departamento),
     ]);
 
-    const guia = await llamar<{
-      trackingNumber?: string;
-      label?: string;
-      shipmentId?: string;
-    }>('/ship/generate/', {
+    // El mismo cálculo que se usó para cotizar, no una caja genérica: si la
+    // guía sale con otras dimensiones, la transportadora puede recalcular el
+    // cobro y ya no coincide con lo que se le mostró al cliente.
+    const paquete = armarPaquete(order.lines, order.subtotal);
+
+    // La respuesta de /ship/generate/ trae `data` como ARRAY —igual que
+    // /ship/rate/—, no como objeto plano. Probado en sandbox: sin esto, la
+    // guía se generaba y se cobraba en la cuenta de Envia, pero el pedido
+    // quedaba marcado como fallido porque `guia.trackingNumber` leía el campo
+    // en el array en vez de en data[0].
+    const [guia] = await llamar<
+      Array<{ trackingNumber?: string; label?: string; shipmentId?: number | string }>
+    >('/ship/generate/', {
       origin: origen,
       destination: ubicacion(
         { calle: order.address.direccion, barrio: order.address.barrio, geo: destinoGeo },
@@ -457,8 +492,8 @@ export const enviaProvider: ShippingProvider = {
           content: 'Plantas vivas',
           amount: 1,
           type: 'box',
-          dimensions: { length: 30, width: 20, height: 20 },
-          weight: Math.max(1, order.lines.reduce((s, l) => s + (l.weightGrams * l.qty) / 1000, 0)),
+          dimensions: { length: paquete.lengthCm, width: paquete.widthCm, height: paquete.heightCm },
+          weight: Math.max(1, pesoFacturableKg(paquete.weightGrams, paquete.lengthCm, paquete.widthCm, paquete.heightCm)),
           insurance: 0,
           declaredValue: order.subtotal,
           weightUnit: 'KG',
@@ -469,7 +504,9 @@ export const enviaProvider: ShippingProvider = {
       settings: { printFormat: 'PDF', printSize: 'STOCK_4X6', comments: `Pedido ${order.reference}. PLANTAS VIVAS.` },
     });
 
-    if (!guia.trackingNumber) throw new Error('[envia] la respuesta no trajo número de guía.');
+    if (!guia?.trackingNumber) {
+      throw new Error('[envia] la respuesta no trajo número de guía.');
+    }
 
     return {
       provider: ID,
@@ -479,16 +516,41 @@ export const enviaProvider: ShippingProvider = {
       labelUrl: guia.label,
       cost: quote.cost,
       status: 'created',
-      externalId: guia.shipmentId ?? guia.trackingNumber,
+      externalId: String(guia.shipmentId ?? guia.trackingNumber),
     };
   },
 
   async track(trackingNumber: string): Promise<TrackingEvent[]> {
-    const eventos = await llamar<Array<{ status?: string; date?: string; description?: string; location?: string }>>(
-      `/ship/generalTracking/${encodeURIComponent(trackingNumber)}`
-    );
+    // POST /ship/generaltrack/ (minúsculas, no /generalTracking/{numero} como
+    // GET) con un array de guías en el body — probado en sandbox. Acepta
+    // varias guías a la vez, aunque aquí siempre se manda una.
+    const [envio] = await llamar<
+      Array<{
+        status?: string;
+        estimatedDelivery?: string;
+        createdAt?: string;
+        shippedAt?: string;
+        deliveredAt?: string;
+        eventHistory?: Array<{ status?: string; date?: string; description?: string; location?: string }>;
+      }>
+    >('/ship/generaltrack/', { trackingNumbers: [trackingNumber] });
 
-    return eventos.map((evento) => ({
+    if (!envio) return [];
+
+    // Recién creada, `eventHistory` viene vacío: la transportadora todavía no
+    // ha escaneado el paquete. Se sintetiza al menos el evento de creación con
+    // el estado actual, para que el cliente no vea la guía como si no existiera.
+    if (!envio.eventHistory?.length) {
+      return [
+        {
+          status: ESTADOS[(envio.status ?? '').toLowerCase()] ?? 'created',
+          description: envio.status ?? 'Guía generada',
+          occurredAt: envio.shippedAt ?? envio.createdAt ?? new Date().toISOString(),
+        },
+      ];
+    }
+
+    return envio.eventHistory.map((evento) => ({
       status: ESTADOS[(evento.status ?? '').toLowerCase()] ?? 'in_transit',
       description: evento.description ?? evento.status ?? 'Actualización de la transportadora',
       occurredAt: evento.date ?? new Date().toISOString(),

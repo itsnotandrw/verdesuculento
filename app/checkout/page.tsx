@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
 import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
+import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
 import ProductShape from '@/components/ProductShape';
 
 const STEPS = ['Envío', 'Pago'];
@@ -32,7 +33,10 @@ interface FormData {
   apellido: string;
   email: string;
   telefono: string;
+  /** Valor del desplegable: un municipio de la lista, o el centinela OTRO_MUNICIPIO. */
   ciudad: string;
+  /** Solo se usa cuando `ciudad === OTRO_MUNICIPIO`: el nombre que el cliente escribe a mano. */
+  ciudadOtra: string;
   departamento: string;
   direccion: string;
   barrio: string;
@@ -41,7 +45,7 @@ interface FormData {
 
 const INITIAL_FORM: FormData = {
   nombre: '', apellido: '', email: '', telefono: '',
-  ciudad: '', departamento: '', direccion: '', barrio: '', codigoPostal: '',
+  ciudad: '', ciudadOtra: '', departamento: '', direccion: '', barrio: '', codigoPostal: '',
 };
 
 const CAMPOS_REQUERIDOS: Array<keyof FormData> = [
@@ -72,9 +76,15 @@ export default function CheckoutPage() {
   const envio = quote?.cost ?? 0;
   const total = subtotal + envio;
 
+  // El desplegable guarda el municipio elegido, o el centinela "Otro
+  // municipio…" si el cliente no lo encontró en la lista. La ciudad real a
+  // cotizar/enviar sale de aquí, nunca del valor crudo del select.
+  const eligiendoOtro = form.ciudad === OTRO_MUNICIPIO;
+  const ciudadEfectiva = eligiendoOtro ? form.ciudadOtra.trim() : form.ciudad;
+
   // --- cotización: se dispara cuando ya hay destino y algo en el carrito
   const cotizar = useCallback(async () => {
-    if (!form.departamento.trim() || !form.ciudad.trim() || items.length === 0) {
+    if (!form.departamento.trim() || !ciudadEfectiva.trim() || items.length === 0) {
       setQuotes([]);
       return;
     }
@@ -88,7 +98,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           departamento: form.departamento,
-          ciudad: form.ciudad,
+          ciudad: ciudadEfectiva,
           codigoPostal: form.codigoPostal,
           lines: items.map((i) => ({
             productId: i.product.id,
@@ -115,9 +125,11 @@ export default function CheckoutPage() {
     } finally {
       setCotizando(false);
     }
-  }, [form.departamento, form.ciudad, form.codigoPostal, items]);
+  }, [form.departamento, ciudadEfectiva, form.codigoPostal, items]);
 
-  // Se espera a que el cliente termine de escribir la ciudad antes de cotizar.
+  // Se espera a que el cliente termine de escribir "Otro municipio" antes de
+  // cotizar; elegir de la lista ya no necesita esperar nada, pero el mismo
+  // temporizador no hace daño en ese caso.
   const temporizador = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
     clearTimeout(temporizador.current);
@@ -152,7 +164,15 @@ export default function CheckoutPage() {
   }
 
   const updateField = (field: keyof FormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      // Cambiar de departamento invalida la ciudad elegida: la lista de
+      // municipios depende del departamento, y un municipio de Antioquia
+      // seleccionado antes de cambiar a Cundinamarca ya no tiene sentido.
+      if (field === 'departamento' && value !== prev.departamento) {
+        return { ...prev, departamento: value, ciudad: '', ciudadOtra: '' };
+      }
+      return { ...prev, [field]: value };
+    });
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
@@ -160,6 +180,11 @@ export default function CheckoutPage() {
     const nuevos: Partial<Record<keyof FormData, string>> = {};
     for (const campo of CAMPOS_REQUERIDOS) {
       if (!form[campo].trim()) nuevos[campo] = 'Requerido';
+    }
+    // El municipio manual solo es obligatorio cuando se eligió "Otro
+    // municipio…"; el resto del tiempo el campo no se muestra siquiera.
+    if (eligiendoOtro && !form.ciudadOtra.trim()) {
+      nuevos.ciudadOtra = 'Requerido';
     }
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       nuevos.email = 'Email inválido';
@@ -187,11 +212,16 @@ export default function CheckoutPage() {
     setErrorPedido(null);
 
     try {
+      // `ciudadOtra` es un campo solo de este formulario, para el caso "Otro
+      // municipio…"; la API espera `ciudad` con el nombre real ya resuelto.
+      const { ciudadOtra: _ciudadOtra, ...datosEnvio } = form;
+
       const respuesta = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
+          ...datosEnvio,
+          ciudad: ciudadEfectiva,
           method: metodo,
           quoteId,
           lines: items.map((i) => ({
@@ -268,6 +298,28 @@ export default function CheckoutPage() {
                           <option key={d} value={d}>{d}</option>
                         ))}
                       </select>
+                    ) : f.field === 'ciudad' ? (
+                      // Desplegable, no texto libre: así nadie llega a "Bogota"
+                      // sin tilde o "Medellin" mal escrito y se topa con un
+                      // rechazo de cotización que no entiende. Depende del
+                      // departamento — sin uno elegido, solo hay un aviso.
+                      <select
+                        id="checkout-ciudad"
+                        className="checkout-input"
+                        value={form.ciudad}
+                        onChange={(e) => updateField('ciudad', e.target.value)}
+                        disabled={!form.departamento}
+                        aria-invalid={!!errors.ciudad}
+                        style={{ borderColor: errors.ciudad ? '#ef4444' : undefined }}
+                      >
+                        <option value="">
+                          {form.departamento ? 'Selecciona…' : 'Elige primero el departamento'}
+                        </option>
+                        {form.departamento &&
+                          ciudadesDe(form.departamento).map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                      </select>
                     ) : (
                       <input
                         id={`checkout-${f.field}`}
@@ -284,13 +336,35 @@ export default function CheckoutPage() {
                     )}
                   </div>
                 ))}
+
+                {eligiendoOtro && (
+                  <div style={{ gridColumn: '1 / -1', minWidth: 0 }}>
+                    <label htmlFor="checkout-ciudad-otra" className="checkout-label">
+                      Nombre del municipio{' '}
+                      {errors.ciudadOtra && (
+                        <span style={{ color: '#ef4444', textTransform: 'none', letterSpacing: 0 }}>({errors.ciudadOtra})</span>
+                      )}
+                    </label>
+                    <input
+                      id="checkout-ciudad-otra"
+                      type="text"
+                      autoComplete="address-level2"
+                      placeholder="Escribe el nombre de tu municipio"
+                      value={form.ciudadOtra}
+                      onChange={(e) => updateField('ciudadOtra', e.target.value)}
+                      aria-invalid={!!errors.ciudadOtra}
+                      className="checkout-input"
+                      style={{ borderColor: errors.ciudadOtra ? '#ef4444' : undefined }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* --- opciones de envío --- */}
               <div style={{ marginTop: 40 }}>
                 <div className="eyebrow" style={{ marginBottom: 16 }}>Opciones de envío</div>
 
-                {!form.departamento || !form.ciudad ? (
+                {!form.departamento || !ciudadEfectiva ? (
                   <p className="checkout-hint">Elige departamento y ciudad para ver el costo del envío.</p>
                 ) : cotizando ? (
                   <p className="checkout-hint"><span className="spinner-sm" /> Cotizando con las transportadoras…</p>
