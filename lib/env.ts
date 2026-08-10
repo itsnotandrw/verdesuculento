@@ -100,6 +100,15 @@ export const env = {
    */
   adminToken: str('ADMIN_API_TOKEN'),
 
+  /**
+   * Secreto que Vercel Cron manda solo en el header `Authorization` cuando
+   * este mismo valor está configurado como variable de entorno del proyecto
+   * — no hay que generarlo ni copiarlo a mano, Vercel lo inyecta él mismo en
+   * cada llamada programada. Separado de `adminToken` porque uno lo escribe
+   * un humano en el panel y el otro lo manda una máquina en automático.
+   */
+  cronSecret: str('CRON_SECRET'),
+
   /** Ruta del archivo donde persisten los pedidos (ver lib/orders/store.ts). */
   ordersFile: str('ORDERS_FILE', '.data/orders.json'),
 
