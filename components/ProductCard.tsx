@@ -50,7 +50,19 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
           </button>
           <button
             className="product-card-add"
-            onClick={(e) => { e.preventDefault(); add(product, { color: activeColor }); }}
+            onClick={(e) => {
+              e.preventDefault();
+              add(product, { color: activeColor });
+              // Se reinicia la clase a mano (con reflow forzado de por medio)
+              // en vez de confiar en un solo toggle de estado: un segundo
+              // click antes de que termine la animación no la reiniciaría, y
+              // el feedback de "sí se añadió" es justo lo que importa cuando
+              // el cliente hace click varias veces seguido.
+              const btn = e.currentTarget;
+              btn.classList.remove('pulse');
+              void btn.offsetWidth;
+              btn.classList.add('pulse');
+            }}
             aria-label="Añadir al carrito"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -66,7 +78,7 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
             <div className="product-card-title">{product.name}</div>
           </Link>
           {(rating?.rating != null || (rating?.soldCount ?? 0) > 0) && (
-            <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {rating?.rating != null && (
                 <StarRating rating={rating.rating} count={rating.reviewCount} size={11} showValue />
               )}

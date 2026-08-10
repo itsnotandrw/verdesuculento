@@ -4,10 +4,12 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { formatCOP, FREE_SHIPPING_FROM } from '@/data/catalog';
+import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from './ProductShape';
 
 export default function MiniCart() {
   const { items, open, setOpen, updateQty, remove, subtotal, count } = useCart();
+  const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
   // Sin destino todavía no hay forma de saber el costo real de envío — se
   // calcula en el checkout con las dimensiones exactas del pedido. Aquí solo
   // se muestra el umbral de envío gratis, que sí es un dato cierto sin
@@ -69,7 +71,11 @@ export default function MiniCart() {
             </div>
           ) : (
             items.map((item) => (
-              <div className="minicart-item" key={item.variantKey}>
+              <div
+                className={`minicart-item ${removingKeys.has(item.variantKey) ? 'removing' : ''}`}
+                key={item.variantKey}
+                ref={registrarFila(item.variantKey)}
+              >
                 <div className="minicart-item-img">
                   <ProductShape product={item.product} activeColorHex={item.color.hex} />
                 </div>
@@ -85,7 +91,7 @@ export default function MiniCart() {
                 <div style={{ textAlign: 'right' }}>
                   <div className="minicart-item-price">{formatCOP(item.product.price * item.qty)}</div>
                   <button
-                    onClick={() => remove(item.variantKey)}
+                    onClick={() => handleRemove(item.variantKey)}
                     aria-label={`Quitar ${item.product.name} del carrito`}
                     style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}
                   >

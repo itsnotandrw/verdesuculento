@@ -89,7 +89,7 @@ export default function Lightbox({ images, alt, index, onIndexChange, onClose }:
       >
         {images.map((img) => (
           <div key={img} className="lightbox-slide">
-            <Image src={img} alt={alt} fill sizes="100vw" style={{ objectFit: 'contain' }} />
+            <Image src={img} alt={alt} fill sizes="100vw" className="lightbox-img" style={{ objectFit: 'contain' }} />
           </div>
         ))}
       </div>

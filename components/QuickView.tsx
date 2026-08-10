@@ -85,61 +85,84 @@ export default function QuickView() {
           )}
         </div>
 
+        {/*
+          modal-info se parte en dos: una zona que hace scroll (descripción,
+          variedades) y una barra de acción que no se mueve. Antes todo era un
+          solo bloque sin altura acotada dentro del grid —el hijo crecía más
+          allá del modal y el overflow:hidden del padre recortaba el botón
+          Añadir en vez de dejarlo alcanzable con scroll. Ahora la altura
+          disponible se reparte explícitamente entre las dos zonas.
+        */}
         <div className="modal-info">
-          <div className="eyebrow" style={{ marginBottom: 10 }}>{product.category}</div>
-          <h2 className="display" style={{ fontSize: 44, marginBottom: 8 }}>{product.name}</h2>
-          {RATINGS[product.id]?.rating != null && (
-            <div style={{ marginBottom: 10 }}>
-              <StarRating rating={RATINGS[product.id].rating!} count={RATINGS[product.id].reviewCount} size={13} showValue />
-            </div>
-          )}
-          <div className="mono" style={{ fontSize: 18, marginBottom: 18 }}>{formatCOP(product.price)}</div>
-          <p style={{ color: 'var(--fg-dim)', marginBottom: 24, lineHeight: 1.6 }}>{product.description}</p>
-
-          {product.colors.length > 1 && (
-            <div style={{ marginBottom: 18 }}>
-              <div className="eyebrow" style={{ marginBottom: 10 }}>
-                Variedad: <span style={{ color: 'var(--fg)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--font-ui)' }}>{color?.name}</span>
+          <div className="modal-info-scroll">
+            <div className="eyebrow" style={{ marginBottom: 10 }}>{product.category}</div>
+            <h2 className="display" style={{ fontSize: 44, marginBottom: 8 }}>{product.name}</h2>
+            {RATINGS[product.id]?.rating != null && (
+              <div style={{ marginBottom: 10 }}>
+                <StarRating rating={RATINGS[product.id].rating!} count={RATINGS[product.id].reviewCount} size={13} showValue />
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {product.colors.map((c) => (
-                  <button
-                    key={c.hex}
-                    onClick={() => setActiveColor(c)}
-                    className={`swatch ${color?.hex === c.hex ? 'active' : ''}`}
-                    style={{ width: 32, height: 32, background: c.hex, padding: 2, backgroundClip: 'content-box' }}
-                    aria-label={c.name}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+            <div className="mono" style={{ fontSize: 18, marginBottom: 18 }}>{formatCOP(product.price)}</div>
+            {/* white-space: pre-line respeta los \n\n que ya trae la descripción
+                (viene del scraping de ML) — sin esto el HTML los colapsa y todo
+                el texto se ve como un solo párrafo amontonado. */}
+            <p style={{ color: 'var(--fg-dim)', marginBottom: 24, lineHeight: 1.65, whiteSpace: 'pre-line' }}>{product.description}</p>
 
-          <div style={{ marginBottom: 24 }}>
-            <div className="eyebrow" style={{ marginBottom: 10 }}>Presentación</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {product.sizes.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setActiveSize(s)}
-                  className={`chip ${size === s ? 'active' : ''}`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            {product.colors.length > 1 && (
+              <div style={{ marginBottom: 4 }}>
+                <div className="eyebrow" style={{ marginBottom: 10 }}>
+                  Variedad: <span style={{ color: 'var(--fg)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--font-ui)' }}>{color?.name}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {product.colors.map((c) => (
+                    <button
+                      key={c.hex}
+                      onClick={() => setActiveColor(c)}
+                      className={`swatch ${color?.hex === c.hex ? 'active' : ''}`}
+                      style={{ width: 32, height: 32, background: c.hex, padding: 2, backgroundClip: 'content-box' }}
+                      aria-label={c.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          <button
-            className="btn btn-primary"
-            style={{ width: '100%', justifyContent: 'center' }}
-            onClick={() => {
-              if (color && size) add(product, { color, size });
-              close();
-            }}
-          >
-            Añadir — {formatCOP(product.price)}
-          </button>
+          {/* Barra flotante: el selector de presentación y "Añadir" quedan
+              siempre visibles, sin depender de hasta dónde se haya scrolleado
+              la descripción. */}
+          <div className="modal-info-actions">
+            {product.sizes.length > 1 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {product.sizes.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setActiveSize(s)}
+                      className={`chip ${size === s ? 'active' : ''}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sin pulso de feedback aquí a propósito: el modal se cierra en
+                el mismo click, así que cualquier animación en este botón se
+                desmonta antes de llegar a verse. El carrito lateral que se
+                abre al instante ya cumple ese rol. */}
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                if (color && size) add(product, { color, size });
+                close();
+              }}
+            >
+              Añadir — {formatCOP(product.price)}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -743,6 +743,7 @@ input, select, textarea { cursor: text; }
 }
 .product-card-quickview:hover { transform: scale(1.04); }
 .product-card-add {
+  position: relative;
   width: 36px; height: 36px;
   border-radius: 50%;
   background: var(--accent); color: var(--accent-fg);
@@ -750,12 +751,54 @@ input, select, textarea { cursor: text; }
   flex-shrink: 0; transition: transform 0.2s; cursor: none;
 }
 .product-card-add:hover { transform: scale(1.1) rotate(90deg); }
+/* Feedback de "sí se añadió": un pop de escala en el botón más un anillo que
+   se expande y desvanece desde su borde — la variante circular de la misma
+   idea que .btn.pulse usa en los botones rectangulares. */
+.product-card-add.pulse { animation: addPop 0.4s var(--ease-out); }
+.product-card-add.pulse::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: addRipple 0.5s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes addPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes addRipple {
+  from { opacity: 0.6; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.8); }
+}
+/* Misma idea para botones rectangulares (Añadir al carrito, barra sticky de
+   producto): un pop de escala sutil, sin el anillo —que en una píldora ancha
+   se ve raro en vez de premium. */
+@keyframes btnPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.045); }
+  100% { transform: scale(1); }
+}
+.btn.pulse { animation: btnPop 0.32s var(--ease-out); }
 .product-card-info {
   padding: 16px 18px 18px;
   display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
 }
-.product-card-title { font-size: 16px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; }
-.product-card-tag { font-size: 12px; color: var(--fg-dim); margin-top: 3px; }
+/* Se acota a 2 líneas con altura fija: sin esto, un título largo como "Kit 12
+   Suculentas En Bandeja Recordatorio Plantas Interior" ocupa 3 líneas y hace
+   esa tarjeta más alta que sus vecinas — el grid del catálogo pierde el
+   ritmo y todo se ve amontonado por la inconsistencia, no por falta de
+   espacio real. */
+.product-card-title {
+  font-size: 16px; font-weight: 500; line-height: 1.35; letter-spacing: -0.01em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-card-tag {
+  font-size: 12px; color: var(--fg-dim); margin-top: 6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .product-card-price { font-family: var(--font-mono); font-size: 13px; flex-shrink: 0; }
 .product-card-swatches { display: flex; gap: 5px; margin-top: 10px; align-items: center; }
 /* swatch — see bottom of file for full definition */
@@ -900,6 +943,34 @@ input, select, textarea { cursor: text; }
   border-bottom: 1px solid var(--border);
   align-items: center;
 }
+/*
+ * Animación de salida al eliminar un producto. El max-height que anima lo
+ * pone JS por inline style (mide el alto real con scrollHeight antes de
+ * colapsar) — aquí solo se declara la transición y el estado final de las
+ * demás propiedades, para no competir en especificidad con el inline style.
+ * .cart-row-exit es la misma animación reutilizada en /carrito.
+ */
+.minicart-item,
+.cart-row-exit {
+  overflow: hidden;
+  transition: max-height 0.36s var(--ease-out), opacity 0.3s ease,
+    transform 0.32s var(--ease-out), padding 0.36s var(--ease-out), border-color 0.36s;
+}
+/* Caja propia de .cart-row-exit (en /carrito): con padding/border inline —
+   como tenía antes— el inline le gana en especificidad a .removing y la
+   animación de colapso nunca se vería. */
+.cart-row-exit {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.minicart-item.removing,
+.cart-row-exit.removing {
+  opacity: 0;
+  transform: translateX(28px) scale(0.96);
+  padding-top: 0; padding-bottom: 0;
+  border-bottom-color: transparent;
+  pointer-events: none;
+}
 .minicart-item-img { width: 70px; height: 70px; background: var(--bg-elev-2); border-radius: 10px; display: grid; place-items: center; }
 .minicart-item-img .product-shape { width: 60%; filter: none; }
 .minicart-item-name { font-size: 14px; font-weight: 500; }
@@ -939,6 +1010,13 @@ input, select, textarea { cursor: text; }
   max-width: 1000px; width: 100%;
   max-height: 90vh; overflow: hidden;
   display: grid; grid-template-columns: 1fr 1fr;
+  /* Sin esto, .modal-info (hijo del grid) no hereda ningún límite de altura
+     real: por defecto un item de grid puede crecer más allá de su fila
+     (min-height: auto), así que con una descripción larga la columna entera
+     empujaba más allá de los 90vh del modal, y el overflow:hidden de arriba
+     recortaba el botón Añadir en vez de dejarlo alcanzable con scroll.
+     minmax(0, 1fr) fuerza a la fila a quedarse dentro del alto disponible. */
+  grid-template-rows: minmax(0, 1fr);
   transform: translateY(20px) scale(0.98);
   opacity: 0;
   transition: opacity 0.4s, transform 0.5s var(--ease-out);
@@ -1014,11 +1092,25 @@ input, select, textarea { cursor: text; }
   background: rgba(0,0,0,0.94);
   z-index: 300;
   display: flex; align-items: center; justify-content: center;
-  animation: lightboxFade 0.25s ease;
+  animation: lightboxFade 0.22s ease;
 }
 @keyframes lightboxFade { from { opacity: 0; } to { opacity: 1; } }
 .lightbox-track { width: 100%; height: 100%; touch-action: pan-y; }
 .lightbox-slide { position: relative; flex: 0 0 100%; height: 100%; }
+/*
+ * Zoom de entrada en la foto misma, separado del fade del fondo: el fondo
+ * aparece rápido (se siente instantáneo al hacer click), la foto entra con
+ * un leve zoom que da la sensación de "acercarse" a la imagen. Va en la
+ * imagen y no en .lightbox-track a propósito: el track ya usa `transform`
+ * inline para el deslizamiento horizontal entre fotos, y una animación de
+ * CSS sobre esa misma propiedad se lo pisaría al terminar, dejando un salto
+ * visible de vuelta a la posición de deslizamiento.
+ */
+.lightbox-img { animation: lightboxZoomIn 0.42s var(--ease-out); }
+@keyframes lightboxZoomIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
 .lightbox-close {
   position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px;
   width: 40px; height: 40px; border-radius: 50%;
@@ -1046,7 +1138,30 @@ input, select, textarea { cursor: text; }
   .lightbox-arrow-next { right: 8px; }
 }
 
-.modal-info { padding: 36px 36px 28px; overflow-y: auto; }
+/*
+ * .modal-info ya no es un solo bloque: es una columna flex con una zona que
+ * hace scroll (descripción, variedades) y una barra de acción que se queda
+ * fija abajo (presentación + Añadir), siempre visible sin importar cuánto se
+ * haya scrolleado. Antes "Añadir" solo aparecía si el cliente llegaba al
+ * final del texto — en descripciones largas, nunca.
+ */
+.modal-info {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* deja que modal-info-scroll pueda encogerse y scrollear */
+}
+.modal-info-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 36px 36px 8px;
+}
+.modal-info-actions {
+  flex-shrink: 0;
+  padding: 16px 36px calc(20px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev);
+}
 .modal-close {
   position: absolute;
   top: 14px; right: 14px;
@@ -1064,15 +1179,26 @@ input, select, textarea { cursor: text; }
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal {
     grid-template-columns: 1fr;
+    /* La fila de la imagen se queda en su alto natural (min-height de
+       .modal-img); modal-info ocupa el resto y es la única zona que scrollea
+       — antes el modal completo tenía overflow-y:auto Y modal-info también,
+       dos contenedores con scroll anidados compitiendo por el mismo gesto de
+       touch, que es la raíz del "no existe un scrolleo" que se reportó: el
+       gesto se lo comía el contenedor equivocado o ninguno de los dos.
+       Ahora solo hay un scroll real, dentro de modal-info-scroll, y la
+       imagen jamás se mueve. */
+    grid-template-rows: auto minmax(0, 1fr);
     width: 100%; max-width: 100%;
     max-height: 92vh; max-height: 92dvh;
     border-radius: 20px 20px 0 0;
     border-left: none; border-right: none; border-bottom: none;
-    overflow-y: auto;
+    overflow: hidden;
     transform: translateY(100%);
   }
   .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-img { min-height: 280px; }
+  .modal-img { min-height: 280px; max-height: 38vh; }
+  .modal-info-scroll { padding: 22px 20px 8px; }
+  .modal-info-actions { padding: 14px 20px calc(16px + env(safe-area-inset-bottom)); }
 }
 
 /* =============================================
@@ -1969,4 +2095,8 @@ select.checkout-input {
   /* El spinner conserva el giro: es el unico indicio de que algo esta pasando
      mientras se cotiza o se crea el pedido. Se ralentiza en vez de quitarse. */
   .spinner-sm { animation-duration: 2s; }
+  .lightbox-img { animation: none !important; }
+  .modal-overlay.open .modal { transition-duration: 0.01s; }
+  .product-card-add.pulse, .btn.pulse { animation: none !important; }
+  .product-card-add.pulse::after { display: none; }
 }

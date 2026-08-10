@@ -41,6 +41,14 @@ export default function ProductContent({ product }: { product: Product }) {
 
   const handleAdd = () => add(product, { color: activeColor, size: activeSize, qty });
 
+  // Mismo patrón que en ProductCard: reinicia la animación a mano con un
+  // reflow forzado, para que clicks repetidos siempre muestren el pulso.
+  const pulse = (btn: HTMLElement) => {
+    btn.classList.remove('pulse');
+    void btn.offsetWidth;
+    btn.classList.add('pulse');
+  };
+
   return (
     <div className="page-section" style={{ paddingTop: 100 }}>
       <div className="container">
@@ -106,7 +114,10 @@ export default function ProductContent({ product }: { product: Product }) {
             <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 20 }}>{product.tagline}</p>
             <div className="mono" style={{ fontSize: 28, marginBottom: 28, letterSpacing: '-0.02em' }}>{formatCOP(product.price)}</div>
 
-            <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, marginBottom: 32, fontSize: 16 }}>{product.description}</p>
+            {/* whiteSpace: pre-line respeta los \n\n que ya trae la
+                descripción (del scraping de ML); sin esto el HTML los
+                colapsa y todo se ve como un solo párrafo amontonado. */}
+            <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, marginBottom: 32, fontSize: 16, whiteSpace: 'pre-line' }}>{product.description}</p>
 
             {/* Variety selector */}
             {product.colors.length > 1 && (
@@ -159,7 +170,7 @@ export default function ProductContent({ product }: { product: Product }) {
 
             {/* Main CTA */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 36, flexWrap: 'wrap' }}>
-              <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={handleAdd}>
+              <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
                 Añadir al carrito — {formatCOP(product.price * qty)} <span className="btn-arrow">→</span>
               </button>
               <Link href="/checkout" className="btn btn-ghost" style={{ justifyContent: 'center' }}>Comprar ya</Link>
@@ -235,7 +246,7 @@ export default function ProductContent({ product }: { product: Product }) {
             {/* Story text */}
             <div>
               <div className="eyebrow" style={{ marginBottom: 16 }}>HISTORIA DEL CULTIVO</div>
-              <p style={{ fontSize: 16, lineHeight: 1.75, color: 'var(--fg-dim)', marginBottom: 20 }}>
+              <p style={{ fontSize: 16, lineHeight: 1.75, color: 'var(--fg-dim)', marginBottom: 20, whiteSpace: 'pre-line' }}>
                 {product.description}
               </p>
               <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--fg-dim)' }}>
@@ -300,7 +311,7 @@ export default function ProductContent({ product }: { product: Product }) {
           <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</div>
           <div className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)' }}>{formatCOP(product.price)}</div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={handleAdd}>
+        <button className="btn btn-primary btn-sm" onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
           Añadir <span className="btn-arrow">→</span>
         </button>
       </div>

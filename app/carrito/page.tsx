@@ -6,10 +6,12 @@ import { useCart } from '@/context/CartContext';
 import { formatCOP, FREE_SHIPPING_FROM } from '@/data/catalog';
 import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
 import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
+import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from '@/components/ProductShape';
 
 export default function CartPage() {
   const { items, subtotal, count, updateQty, remove, shipping, setShipping } = useCart();
+  const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
   const [departamento, setDepartamento] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [ciudadOtra, setCiudadOtra] = useState('');
@@ -110,7 +112,12 @@ export default function CartPage() {
           {/* Items */}
           <div>
             {items.map((item) => (
-              <div key={item.variantKey} style={{ display: 'grid', gridTemplateColumns: '88px 1fr', gap: 20, padding: '24px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+              <div
+                key={item.variantKey}
+                ref={registrarFila(item.variantKey)}
+                className={`cart-row-exit ${removingKeys.has(item.variantKey) ? 'removing' : ''}`}
+                style={{ display: 'grid', gridTemplateColumns: '88px 1fr', gap: 20, alignItems: 'center' }}
+              >
                 <Link href={`/producto/${item.product.id}`} style={{ width: 88, height: 88, background: 'var(--bg-elev)', borderRadius: 12, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                   <ProductShape product={item.product} activeColorHex={item.color.hex} />
                 </Link>
@@ -126,7 +133,7 @@ export default function CartPage() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div className="mono" style={{ fontSize: 18, marginBottom: 8 }}>{formatCOP(item.product.price * item.qty)}</div>
-                    <button onClick={() => remove(item.variantKey)} style={{ fontSize: 11, color: 'var(--fg-mute)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quitar</button>
+                    <button onClick={() => handleRemove(item.variantKey)} style={{ fontSize: 11, color: 'var(--fg-mute)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quitar</button>
                   </div>
                 </div>
               </div>
