@@ -264,7 +264,7 @@ export const mipaqueteProvider: ShippingProvider = {
     }));
   },
 
-  parseWebhook(payload, headers): ShippingWebhookEvent | null {
+  parseWebhook(payload, headers, _rawBody): ShippingWebhookEvent | null {
     const secreto = env.shipping.mipaquete.webhookSecret;
 
     // Sin secreto configurado el webhook se descarta. Un endpoint que actualiza

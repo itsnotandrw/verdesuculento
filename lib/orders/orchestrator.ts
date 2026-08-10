@@ -283,6 +283,19 @@ export async function crearGuia(orderId: string, cashOnDelivery?: number): Promi
       cashOnDelivery,
     });
 
+    // Envia no reserva tarifa entre cotizar y generar (confirmado en su
+    // propia guía de integración): el precio pudo moverse en las horas que
+    // pasan entre que el cliente ve el total en el checkout y que alguien
+    // aprueba el pago a mano. `actualCost` es lo que la transportadora
+    // facturó de verdad al generar; se compara contra lo cotizado para que
+    // una diferencia de margen quede visible en la bitácora del pedido en
+    // vez de perderse — nunca se le cobra otra cosa al cliente por esto.
+    if (guia.providerBalance != null) {
+      console.log(`[orchestrator] saldo en ${guia.provider} tras esta guía: ${guia.providerBalance}`);
+    }
+    const diferenciaCosto =
+      guia.actualCost != null ? Math.round(guia.actualCost - guia.cost) : 0;
+
     return orders.update(orderId, (order) => {
       // Segunda verificación dentro de la escritura serializada: dos webhooks
       // simultáneos podrían haber pasado juntos la comprobación de arriba.
@@ -299,6 +312,7 @@ export async function crearGuia(orderId: string, cashOnDelivery?: number): Promi
         codAmount: guia.codAmount,
         createdAt: new Date().toISOString(),
         externalId: guia.externalId,
+        actualCost: guia.actualCost,
       };
       order.tracking.push({
         status: 'created',
@@ -313,6 +327,22 @@ export async function crearGuia(orderId: string, cashOnDelivery?: number): Promi
         message: `Guía ${guia.trackingNumber} · ${guia.carrier} ${guia.service}.`,
         meta: { trackingNumber: guia.trackingNumber },
       });
+
+      // Umbral de $100 COP: filtra el redondeo de centavos, no una
+      // diferencia real. Se registra tanto si cobraron de más (se pierde
+      // margen) como de menos (barato, pero vale la pena saber por qué).
+      if (Math.abs(diferenciaCosto) > 100) {
+        registrar(order, {
+          type: 'costo_envio_distinto',
+          actor: 'sistema',
+          message:
+            diferenciaCosto > 0
+              ? `La transportadora cobró ${diferenciaCosto} COP más de lo cotizado ($${guia.cost} → $${guia.actualCost}).`
+              : `La transportadora cobró ${Math.abs(diferenciaCosto)} COP menos de lo cotizado ($${guia.cost} → $${guia.actualCost}).`,
+          meta: { cotizado: guia.cost, cobrado: guia.actualCost },
+        });
+      }
+
       return order;
     });
   } catch (error) {

@@ -57,6 +57,13 @@ function resumen(order: Order) {
           codAmount: order.shipment.codAmount,
           codSettledAt: order.shipment.codSettledAt,
           labelUrl: order.shipment.labelUrl,
+          cost: order.shipment.cost,
+          // Solo se manda si de verdad difiere de lo cotizado — evita que el
+          // panel muestre un número "distinto" cuando en realidad coincide.
+          actualCost:
+            order.shipment.actualCost != null && order.shipment.actualCost !== order.shipment.cost
+              ? order.shipment.actualCost
+              : undefined,
         }
       : null,
     lineas: order.lines.map((l) => ({

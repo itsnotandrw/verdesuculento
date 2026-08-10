@@ -60,6 +60,8 @@ interface Pedido {
     codAmount?: number;
     codSettledAt?: string;
     labelUrl?: string;
+    cost?: number;
+    actualCost?: number;
   } | null;
   lineas: Linea[];
   timeline: Evento[];
@@ -294,6 +296,24 @@ export default function AdminOrders() {
                         </>
                       )}
                     </div>
+
+                    {/* Solo aparece si la transportadora cobró distinto de lo
+                        cotizado al cliente — Envia no reserva tarifa entre
+                        cotizar y generar, así que el precio pudo moverse. */}
+                    {pedido.envio?.actualCost != null && (
+                      <div
+                        style={{
+                          marginTop: 16, padding: '12px 14px', borderRadius: 10,
+                          background: 'color-mix(in oklab, #f0b429 12%, var(--bg-elev))',
+                          border: '1px solid color-mix(in oklab, #f0b429 35%, transparent)',
+                          fontSize: 12.5, lineHeight: 1.5,
+                        }}
+                      >
+                        <strong>Costo de envío distinto al cotizado:</strong> se le mostró{' '}
+                        {formatCOP(pedido.envio.cost ?? 0)} al cliente, la transportadora cobró{' '}
+                        {formatCOP(pedido.envio.actualCost)}.
+                      </div>
+                    )}
 
                     <div style={{ marginTop: 20 }}>
                       <div className="pay-field-label" style={{ marginBottom: 8 }}>Productos</div>

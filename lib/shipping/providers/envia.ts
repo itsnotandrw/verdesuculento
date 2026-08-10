@@ -23,6 +23,7 @@
  * Docs: https://docs.envia.com/reference/shipping-rates
  */
 
+import { createHmac, timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
 import { roundToHundred } from '@/lib/money';
 import type { ShippingProvider } from '../provider';
@@ -520,7 +521,13 @@ export const enviaProvider: ShippingProvider = {
     // quedaba marcado como fallido porque `guia.trackingNumber` leía el campo
     // en el array en vez de en data[0].
     const [guia] = await llamar<
-      Array<{ trackingNumber?: string; label?: string; shipmentId?: number | string }>
+      Array<{
+        trackingNumber?: string;
+        label?: string;
+        shipmentId?: number | string;
+        totalPrice?: number;
+        currentBalance?: number;
+      }>
     >('/ship/generate/', {
       origin: origen,
       destination: ubicacion(
@@ -564,6 +571,8 @@ export const enviaProvider: ShippingProvider = {
       cost: quote.cost,
       status: 'created',
       externalId: String(guia.shipmentId ?? guia.trackingNumber),
+      actualCost: guia.totalPrice,
+      providerBalance: guia.currentBalance,
     };
   },
 
@@ -605,37 +614,75 @@ export const enviaProvider: ShippingProvider = {
     }));
   },
 
-  parseWebhook(payload, headers): ShippingWebhookEvent | null {
+  /**
+   * Esquema confirmado contra docs.envia.com/reference/webhooks:
+   *
+   *   Headers:  X-Webhook-Signature: v1=<hex>
+   *             X-Webhook-Timestamp: <unix seconds>
+   *             X-Webhook-Id:        identificador único del evento
+   *   Body:     { type: "tracking.simple", created_at, data: { shipment_id,
+   *               tracking_number, status, carrier_name } }
+   *
+   * Lo que NO está confirmado: el algoritmo exacto del HMAC. La documentación
+   * dice "HMAC-SHA256" pero no dice sobre qué se calcula —¿el body crudo
+   * solo, o `${timestamp}.${body}` como Stripe/GitHub, que es lo que sugiere
+   * el prefijo "v1="— ni de dónde sale el secreto (crear el webhook con
+   * POST /webhooks no devuelve ninguno; probablemente vive en el dashboard,
+   * no en la API, como el saldo de la cuenta).
+   *
+   * Se implementa la variante `timestamp.body` por ser el patrón más común
+   * en webhooks versionados así, pero es una hipótesis, no un hecho
+   * verificado. Para confirmarla de verdad: registrar un webhook apuntando a
+   * un túnel (cloudflared/ngrok), generar un evento real, y comparar la
+   * firma recibida contra este cálculo. Hasta entonces, un secreto mal
+   * configurado hace que TODOS los webhooks se descarten —fallo seguro, el
+   * tracking se degrada a lo que ya se ve consultando /ship/generaltrack/
+   * manualmente— nunca que se acepte uno falso.
+   */
+  parseWebhook(payload, headers, rawBody): ShippingWebhookEvent | null {
     const secreto = env.shipping.envia.webhookSecret;
     if (!secreto) {
       console.error('[envia] webhook recibido sin SHIPPING_WEBHOOK_SECRET configurado. Descartado.');
       return null;
     }
 
-    // VERIFICAR: header y esquema de firma.
-    if ((headers['x-envia-signature'] ?? headers['x-signature'] ?? '') !== secreto) {
-      console.error('[envia] firma de webhook inválida. Descartado.');
+    const firmaRecibida = (headers['x-webhook-signature'] ?? '').replace(/^v1=/, '');
+    const timestamp = headers['x-webhook-timestamp'] ?? '';
+
+    if (!firmaRecibida || !timestamp) {
+      console.error('[envia] webhook sin X-Webhook-Signature o X-Webhook-Timestamp. Descartado.');
+      return null;
+    }
+
+    const firmaCalculada = createHmac('sha256', secreto).update(`${timestamp}.${rawBody}`).digest('hex');
+
+    const a = Buffer.from(firmaRecibida, 'utf-8');
+    const b = Buffer.from(firmaCalculada, 'utf-8');
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      console.error('[envia] firma de webhook inválida. Descartado (ver comentario sobre el algoritmo sin confirmar).');
       return null;
     }
 
     const cuerpo = payload as {
-      id?: string;
-      trackingNumber?: string;
-      status?: string;
-      date?: string;
-      description?: string;
-      location?: string;
+      type?: string;
+      created_at?: string;
+      data?: {
+        shipment_id?: number | string;
+        tracking_number?: string;
+        status?: string;
+        carrier_name?: string;
+      };
     };
 
-    if (!cuerpo.trackingNumber || !cuerpo.status) return null;
+    const datos = cuerpo.data;
+    if (!datos?.tracking_number || !datos.status) return null;
 
     return {
-      eventId: cuerpo.id ?? `${cuerpo.trackingNumber}:${cuerpo.status}:${cuerpo.date}`,
-      trackingNumber: cuerpo.trackingNumber,
-      status: ESTADOS[cuerpo.status.toLowerCase()] ?? 'in_transit',
-      description: cuerpo.description ?? cuerpo.status,
-      occurredAt: cuerpo.date ?? new Date().toISOString(),
-      location: cuerpo.location,
+      eventId: headers['x-webhook-id'] || `${datos.tracking_number}:${datos.status}:${cuerpo.created_at ?? ''}`,
+      trackingNumber: datos.tracking_number,
+      status: ESTADOS[datos.status.toLowerCase()] ?? 'in_transit',
+      description: `${datos.status}${datos.carrier_name ? ` · ${datos.carrier_name}` : ''}`,
+      occurredAt: cuerpo.created_at ?? new Date().toISOString(),
     };
   },
 };

@@ -78,10 +78,22 @@ export interface CreatedShipment {
   service: string;
   trackingNumber: string;
   labelUrl?: string;
+  /** Lo que se le cotizó al cliente — nunca cambia por lo que cobre la transportadora después. */
   cost: number;
   codAmount?: number;
   status: ShipmentStatus;
   externalId?: string;
+  /**
+   * Lo que la transportadora facturó de verdad al generar la guía, si el
+   * proveedor lo informa (Envia lo trae en `/ship/generate/`). No hay
+   * reserva de tarifa entre cotizar y generar —confirmado en su propia
+   * documentación—, así que el precio pudo moverse en el tiempo que pasó
+   * entre que el cliente vio el total y que se aprobó el pago. Sirve para
+   * detectar esa diferencia, no para cobrarle otra cosa al cliente.
+   */
+  actualCost?: number;
+  /** Saldo restante en la cuenta del proveedor tras esta guía, si lo informa. */
+  providerBalance?: number;
 }
 
 export interface ShippingWebhookEvent {

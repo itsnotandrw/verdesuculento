@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return ok({ received: true, processed: false, reason: 'json inválido' });
   }
 
-  const evento = shippingProvider().parseWebhook(payload, cabeceras(request));
+  const evento = shippingProvider().parseWebhook(payload, cabeceras(request), crudo);
 
   if (!evento) {
     return ok({ received: true, processed: false, reason: 'firma inválida o evento ignorado' });

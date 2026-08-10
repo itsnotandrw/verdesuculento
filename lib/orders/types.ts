@@ -106,6 +106,14 @@ export interface OrderShipment {
   codSettledAt?: string;
   createdAt: string;
   externalId?: string;
+  /**
+   * Lo que la transportadora facturó de verdad al generar la guía, cuando el
+   * proveedor lo informa. `cost` es lo que se le mostró al cliente y no
+   * cambia; esto es para detectar si el precio se movió entre cotizar y
+   * generar (no hay reserva de tarifa) — ver la nota en
+   * lib/shipping/types.ts.
+   */
+  actualCost?: number;
 }
 
 export interface TrackingEvent {

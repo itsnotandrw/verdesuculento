@@ -43,6 +43,7 @@ export interface ShippingProvider {
    */
   parseWebhook(
     payload: unknown,
-    headers: Record<string, string>
+    headers: Record<string, string>,
+    rawBody: string
   ): ShippingWebhookEvent | null;
 }

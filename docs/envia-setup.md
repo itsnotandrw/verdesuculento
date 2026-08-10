@@ -10,10 +10,12 @@ descubrió probando, no lo que dice la documentación.
 |---|---|
 | Cotización (`/ship/rate/`) | ✅ 4 transportadoras, cualquier municipio del país |
 | Resolución de municipios (`/locate`) | ✅ |
-| Generar guía (`/ship/generate/`) | ⚠️ Implementado, **sin probar a propósito** |
-| Tracking | ⚠️ Implementado, sin probar |
-| Webhooks | ⚠️ Falta confirmar el esquema de firma |
+| Generar guía (`/ship/generate/`) | ✅ Probado en sandbox de punta a punta |
+| Tracking | ✅ Probado en sandbox |
+| Webhooks | ⚠️ Headers y body confirmados; algoritmo del HMAC sin confirmar (ver abajo) |
 | Contra entrega | ⚠️ Confirmado que existe; falta probar el flujo |
+| Cancelar guía | ❌ No implementado — ver "Qué falta" |
+| Recoger a domicilio | ❌ No implementado, API confirmada y lista — ver "Qué falta" |
 
 ## Lo que hacía que solo cotizara una transportadora
 
@@ -178,13 +180,107 @@ más 1,3% de seguro (mínimo $650) si se asegura.
 
 Sigue desactivado hasta probar el flujo completo con llave de sandbox.
 
+## ¿Usar Envia solo para cotizar y despachar manual?
+
+Es técnicamente trivial: llamar `/ship/rate/` para mostrar precios reales en
+el checkout y nunca llamar `/ship/generate/`, despachando cada pedido a mano
+por el portal de cada transportadora. El código ya lo permite —
+`SHIPPING_PROVIDER=tarifa-propia` sigue existiendo exactamente para esto.
+
+Pero hay que ser claro en qué se pierde: se pierde la guía automática, el
+tracking automático, y la generación de PDF. Cada pedido pasaría a ser
+trabajo manual de nuevo — exactamente lo que esta integración estaba
+resolviendo. Tiene sentido solo como paso transitorio si el saldo/cuenta
+está bloqueado, no como estrategia permanente.
+
+## ¿La tarifa es distinta siendo "aliado" que independiente?
+
+Investigado: el programa "Partners" de Envia (partners.envia.com) **no es
+un nivel de tarifa preferencial** — es un programa de referidos. Ahí se gana
+comisión por referir OTROS negocios que se registren y envíen con Envia, no
+por el volumen propio de envíos. No hay tarifa "de aliado" separada de la
+que ya tiene la cuenta actual: lo que se cotiza hoy con este token **es** la
+tarifa real de la cuenta, no una tarifa reducida por no ser partner.
+
+Ni la documentación pública ni la página de desarrolladores mencionan
+niveles de precio por volumen. Si existe un descuento por volumen, solo se
+sabría hablando directo con ventas de Envia — no es algo que la API exponga.
+
 ## Qué falta
 
-1. **Llave de sandbox** para probar `/ship/generate/` sin crear envíos reales.
-   Dashboard → Developer → API Keys, creándola desde el ambiente sandbox.
-2. **Esquema de firma de los webhooks.**
-3. **Probar el recaudo** de punta a punta.
-4. **Revisar la tarifa propia**, por debajo del costo real.
+1. **Llave de sandbox real** para volver a probar `/ship/generate/` sin
+   arriesgar la cuenta de producción. Dashboard → Developer → API Keys,
+   creándola desde el ambiente sandbox.
+
+2. **Confirmar el algoritmo exacto del HMAC de los webhooks.** Los headers y
+   la forma del body ya están confirmados contra la documentación real:
+
+   ```
+   X-Webhook-Signature: v1=<hex>
+   X-Webhook-Timestamp: <unix seconds>
+   X-Webhook-Id: <id del evento>
+
+   { "type": "tracking.simple", "created_at": "...",
+     "data": { "shipment_id", "tracking_number", "status", "carrier_name" } }
+   ```
+
+   Lo que falta es el cálculo exacto del hash — la documentación dice
+   "HMAC-SHA256" pero no dice sobre qué se calcula. El código ya implementa
+   la variante `HMAC(secreto, "${timestamp}.${body}")`, que es el patrón más
+   común en webhooks versionados así (Stripe, GitHub), pero es una hipótesis
+   sin confirmar, no un hecho verificado. Para confirmarla: registrar un
+   webhook con `POST /webhooks` apuntando a un túnel (`cloudflared tunnel
+   --url http://localhost:3000`), generar un evento de tracking real, y
+   comparar la firma recibida contra el cálculo. Mientras tanto el sistema
+   falla seguro: un secreto que no coincide con el algoritmo real hace que
+   se descarten TODOS los webhooks (nunca que se acepte uno falso), y el
+   tracking se degrada a lo que ya se ve consultando `/ship/generaltrack/`
+   manualmente desde el panel.
+
+3. **Cancelar guía no está implementado.** El endpoint existe
+   (`POST /ship/cancel/`, confirmado en la documentación) y no hay ningún
+   código que lo llame — si un pedido con guía ya generada se cae (dirección
+   mala, cliente se arrepiente), hoy no hay forma de anularla desde la
+   tienda. Un detalle real al construirlo: **Inter Rapidísimo no soporta
+   cancelar** — confirmado contra `GET queries.envia.com/carrier-action/152`,
+   que no trae `cancel` en su lista de acciones (sí lo tienen TCC,
+   Servientrega y Coordinadora). Habría que avisar en el panel que esas
+   guías se cancelan escribiéndole directo a la transportadora, no por API.
+
+4. **Recoger a domicilio no está implementado, y las cuatro transportadoras
+   lo soportan** (`action_id: 3` en las cuatro, confirmado). Ahora mismo el
+   despacho depende de llevar el paquete a un punto de la transportadora.
+   El endpoint es `POST /ship/pickup/`, acepta varias guías de la misma
+   transportadora y bodega en una sola solicitud, y **tiene costo** — cobra
+   una tarifa de recogida a la cuenta y valida que haya saldo antes de
+   agendar. Sería una acción nueva en el panel: "Agendar recogida" sobre los
+   pedidos ya despachados de un día, agrupados por transportadora.
+
+5. **Probar el recaudo** de punta a punta.
+
+6. **Revisar la tarifa propia**, por debajo del costo real (ver hallazgo de
+   la sesión anterior: Medellín se cobra $14.000, el costo real ronda
+   $17.550-21.700).
+
+## Reconciliación de precio: cotizado vs. cobrado real
+
+Envia **no reserva tarifa** entre cotizar y generar (confirmado en su propia
+guía de integración para checkout de e-commerce) — solo documenta el patrón
+cotizar → pagar → generar, sin ninguna opción de "hold" de precio. Con el
+flujo de Bre-B manual, entre que el cliente ve el total en el checkout y que
+alguien aprueba el pago a mano pueden pasar horas. Si la tarifa de la
+transportadora se movió en ese tiempo, se le cobra al cliente lo cotizado
+igual —eso no cambia—, pero lo que Envia factura de verdad a la cuenta
+puede ser distinto.
+
+`/ship/generate/` sí devuelve el costo real (`totalPrice`) y el saldo
+resultante (`currentBalance`), y antes se descartaban sin leer. Ahora se
+capturan, se comparan contra lo cotizado, y si difieren por más de $100 COP
+(margen para no alertar por redondeo) queda una entrada en la bitácora del
+pedido y una nota visible en el panel admin. El saldo tras cada guía queda
+en el log del servidor — no hay endpoint de saldo actual en la API (se ve
+solo indirectamente en cada línea de factura), así que esto es la única
+visibilidad al saldo sin entrar al dashboard.
 
 ## Endpoints útiles
 
@@ -195,3 +291,8 @@ Sigue desactivado hasta probar el flujo completo con llave de sandbox.
 | Transportadoras del país | `GET queries.envia.com/carrier?country_code=CO` |
 | Servicios, con flag de recaudo | `GET queries.envia.com/service?country_code=CO` |
 | Municipio → DANE | `POST api.envia.com/locate` |
+| Qué soporta cada transportadora (pickup, cancel, webhook…) | `GET queries.envia.com/carrier-action/{id}` |
+| Facturación del mes, con saldo línea a línea | `GET queries.envia.com/invoice/{mes}/{año}` |
+| Historial de pagos/recargas | `GET queries.envia.com/payment/{mes}/{año}` |
+| Agendar recogida (sin implementar) | `POST /ship/pickup/` |
+| Cancelar guía (sin implementar) | `POST /ship/cancel/` |
