@@ -58,13 +58,14 @@ export default function MiniCart() {
             <div className="minicart-empty">
               <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.3 }}>🌱</div>
               <div>Tu carrito aún está vacío.</div>
-              <button
+              <Link
+                href="/catalogo"
                 className="btn btn-ghost"
                 style={{ marginTop: 24 }}
                 onClick={() => setOpen(false)}
               >
                 Explorar catálogo →
-              </button>
+              </Link>
             </div>
           ) : (
             items.map((item) => (
@@ -117,6 +118,14 @@ export default function MiniCart() {
               onClick={() => setOpen(false)}
             >
               Finalizar compra <span className="btn-arrow">→</span>
+            </Link>
+            <Link
+              href="/catalogo"
+              className="btn btn-ghost"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}
+              onClick={() => setOpen(false)}
+            >
+              Seguir comprando
             </Link>
             <Link
               href="/carrito"
