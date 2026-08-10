@@ -34,13 +34,6 @@ export interface Category {
   blurb: string;
 }
 
-export interface ShippingRate {
-  dept: string;
-  city: string;
-  cost: number;
-  days: string;
-}
-
 export interface Testimonial {
   name: string;
   role: string;

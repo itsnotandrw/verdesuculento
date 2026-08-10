@@ -1,65 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { SHIPPING_RATES, formatCOP } from '@/data/catalog';
+import { formatCOP, FREE_SHIPPING_FROM } from '@/data/catalog';
+import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
+import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
 import ProductShape from '@/components/ProductShape';
 
 export default function CartPage() {
   const { items, subtotal, count, updateQty, remove, shipping, setShipping } = useCart();
-  const [selectedCity, setSelectedCity] = useState('');
+  const [departamento, setDepartamento] = useState('');
+  const [ciudad, setCiudad] = useState('');
+  const [ciudadOtra, setCiudadOtra] = useState('');
   const [cotizando, setCotizando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
+
+  const eligiendoOtro = ciudad === OTRO_MUNICIPIO;
+  const ciudadEfectiva = eligiendoOtro ? ciudadOtra.trim() : ciudad;
 
   const ship = shipping?.cost ?? 0;
   const total = subtotal + ship;
+  const faltaParaEnvioGratis = Math.max(0, FREE_SHIPPING_FROM - subtotal);
 
   /**
-   * El costo lo calcula el servidor con el peso y las dimensiones reales del
-   * pedido, igual que el checkout. Antes salía de una tabla fija y el cliente
-   * veía un precio aquí y otro al pagar.
+   * El mismo desplegable departamento → ciudad del checkout, y la misma API
+   * de cotización — antes esto tenía su propio selector con solo 10 ciudades
+   * y precios fijos de una tabla que dejó de actualizarse, así que mostraba
+   * un número distinto al que salía después en el checkout.
    */
-  const handleCityChange = async (city: string) => {
-    setSelectedCity(city);
-
-    const rate = SHIPPING_RATES.find((r) => r.city === city);
-    if (!rate) {
+  useEffect(() => {
+    if (!departamento || !ciudadEfectiva || items.length === 0) {
       setShipping(null);
       return;
     }
 
-    setCotizando(true);
-    try {
-      const respuesta = await fetch('/api/shipping/quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          departamento: rate.dept,
-          ciudad: rate.city,
-          lines: items.map((i) => ({
-            productId: i.product.id,
-            color: i.color.name,
-            size: i.size,
-            qty: i.qty,
-          })),
-        }),
-      });
+    let vigente = true;
+    const temporizador = setTimeout(async () => {
+      setCotizando(true);
+      setErrorEnvio(null);
+      try {
+        const respuesta = await fetch('/api/shipping/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            departamento,
+            ciudad: ciudadEfectiva,
+            lines: items.map((i) => ({
+              productId: i.product.id,
+              color: i.color.name,
+              size: i.size,
+              qty: i.qty,
+            })),
+          }),
+        });
 
-      const datos = await respuesta.json();
-      const mejor = datos.quotes?.[0];
+        const datos = await respuesta.json();
+        if (!vigente) return;
+        if (!respuesta.ok) throw new Error(datos.error ?? 'No pudimos cotizar el envío.');
 
-      setShipping(
-        mejor
-          ? { dept: rate.dept, city: rate.city, cost: mejor.cost, days: mejor.etaLabel }
-          : rate
-      );
-    } catch {
-      // Sin conexión se muestra la tarifa de referencia del catálogo.
-      setShipping(rate);
-    } finally {
-      setCotizando(false);
-    }
-  };
+        const mejor = datos.quotes?.[0];
+        setShipping(
+          mejor ? { dept: departamento, city: ciudadEfectiva, cost: mejor.cost, days: mejor.etaLabel } : null
+        );
+        if (!mejor) setErrorEnvio('No hay cobertura para ese destino.');
+      } catch (error) {
+        if (!vigente) return;
+        setShipping(null);
+        setErrorEnvio(error instanceof Error ? error.message : 'No pudimos cotizar el envío.');
+      } finally {
+        if (vigente) setCotizando(false);
+      }
+    }, 400);
+
+    return () => {
+      vigente = false;
+      clearTimeout(temporizador);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departamento, ciudadEfectiva, items.length]);
 
   if (count === 0) {
     return (
@@ -121,20 +140,51 @@ export default function CartPage() {
             {/* Shipping calculator */}
             <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)', marginBottom: 10, color: 'var(--fg-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Calcular envío</div>
+
               <select
-                value={selectedCity}
-                onChange={(e) => handleCityChange(e.target.value)}
-                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none' }}
+                value={departamento}
+                onChange={(e) => {
+                  setDepartamento(e.target.value);
+                  setCiudad('');
+                  setCiudadOtra('');
+                }}
+                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none', marginBottom: 10 }}
               >
-                <option value="">Selecciona tu ciudad</option>
-                {SHIPPING_RATES.map((r) => (
-                  <option key={r.city} value={r.city}>{r.city} — {r.dept}</option>
+                <option value="">Selecciona tu departamento</option>
+                {DEPARTAMENTOS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
                 ))}
               </select>
+
+              <select
+                value={ciudad}
+                onChange={(e) => setCiudad(e.target.value)}
+                disabled={!departamento}
+                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none' }}
+              >
+                <option value="">{departamento ? 'Selecciona tu ciudad' : 'Elige primero el departamento'}</option>
+                {departamento && ciudadesDe(departamento).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+
+              {eligiendoOtro && (
+                <input
+                  type="text"
+                  value={ciudadOtra}
+                  onChange={(e) => setCiudadOtra(e.target.value)}
+                  placeholder="Escribe el nombre de tu municipio"
+                  style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none', marginTop: 10 }}
+                />
+              )}
+
               {cotizando && (
                 <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', fontSize: 12.5, color: 'var(--fg-dim)' }}>
                   <span className="spinner-sm" /> Calculando…
                 </div>
+              )}
+              {errorEnvio && !cotizando && (
+                <p style={{ marginTop: 12, fontSize: 12.5, color: '#ef4444', lineHeight: 1.5 }}>{errorEnvio}</p>
               )}
               {shipping && !cotizando && (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border)' }}>
@@ -145,6 +195,11 @@ export default function CartPage() {
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>{shipping.days}</div>
+                </div>
+              )}
+              {!shipping && !cotizando && !errorEnvio && faltaParaEnvioGratis > 0 && (
+                <div style={{ marginTop: 12, fontSize: 12, color: 'var(--fg-dim)', lineHeight: 1.5 }}>
+                  Te faltan {formatCOP(faltaParaEnvioGratis)} para envío gratis.
                 </div>
               )}
             </div>
@@ -167,6 +222,9 @@ export default function CartPage() {
 
             <Link href="/checkout" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
               Finalizar compra <span className="btn-arrow">→</span>
+            </Link>
+            <Link href="/catalogo" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>
+              Seguir comprando
             </Link>
 
             {/* Trust signals */}

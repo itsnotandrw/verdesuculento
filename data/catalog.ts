@@ -1,4 +1,4 @@
-import type { Product, Category, ShippingRate, Testimonial, Article } from '@/types';
+import type { Product, Category, Testimonial, Article } from '@/types';
 
 export const CATALOG: Product[] = [
   // ============ SUCULENTAS Y CACTUS ============
@@ -1267,18 +1267,15 @@ export const CATEGORIES: Category[] = [
   { id: "otros", name: "Otros", count: 1, blurb: "Pedidos y servicios especiales del vivero." },
 ];
 
-export const SHIPPING_RATES: ShippingRate[] = [
-  { dept: 'Cundinamarca', city: 'Bogotá', cost: 10000, days: '2 — 3' },
-  { dept: 'Antioquia', city: 'Medellín', cost: 15000, days: '2 — 4' },
-  { dept: 'Valle del Cauca', city: 'Cali', cost: 15000, days: '2 — 4' },
-  { dept: 'Atlántico', city: 'Barranquilla', cost: 18000, days: '3 — 5' },
-  { dept: 'Santander', city: 'Bucaramanga', cost: 15000, days: '2 — 4' },
-  { dept: 'Bolívar', city: 'Cartagena', cost: 20000, days: '3 — 5' },
-  { dept: 'Risaralda', city: 'Pereira', cost: 14000, days: '2 — 3' },
-  { dept: 'Caldas', city: 'Manizales', cost: 14000, days: '2 — 3' },
-  { dept: 'Tolima', city: 'Ibagué', cost: 13000, days: '2 — 3' },
-  { dept: 'Quindío', city: 'Armenia', cost: 14000, days: '2 — 3' },
-];
+/**
+ * Compra mínima para envío gratis, visible en el navegador.
+ *
+ * Espejo de `SHIPPING_FREE_FROM` (servidor): el carrito lo usa para el
+ * mensaje "te faltan $X para envío gratis" sin tener que llamar a la API de
+ * cotización solo para saber el umbral. La tarifa real siempre la recalcula
+ * el servidor — esto es solo para el mensaje, nunca para cobrar.
+ */
+export const FREE_SHIPPING_FROM = Number(process.env.NEXT_PUBLIC_SHIPPING_FREE_FROM) || 120_000;
 
 export const TESTIMONIALS: Testimonial[] = [
   {
