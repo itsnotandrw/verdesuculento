@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/admin/expirar",
-      "schedule": "0 9,21 * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
