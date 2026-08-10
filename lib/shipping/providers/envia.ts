@@ -96,20 +96,28 @@ function credenciales(): { token: string; baseUrl: string } {
  * concurrente — es una característica de su backend, no un efecto de pedir
  * las cuatro transportadoras a la vez.
  *
- * Por eso el timeout es corto y no largo: un solo intento con margen para
- * los 10s gastaría todo el presupuesto de tiempo en la posibilidad lenta. Dos
- * intentos cortos (ver `conReintento`) dan dos oportunidades de caer en el
- * camino rápido por el mismo presupuesto total: si el primero entra en el
- * ciclo de ~10s, se corta a los 3.5s y el segundo intento parte de cero con
- * las mismas chances de ser rápido.
+ * Por eso, solo para la cotización, el timeout es corto y no largo: un solo
+ * intento con margen para los 10s gastaría todo el presupuesto de tiempo en
+ * la posibilidad lenta. Dos intentos cortos (ver `conReintento`) dan dos
+ * oportunidades de caer en el camino rápido por el mismo presupuesto total.
+ *
+ * Generar guía y consultar tracking son operaciones de un solo intento —no
+ * hay "más barata" que perder, es la única guía de ese pedido— así que usan
+ * un timeout mucho más largo. Se descubrió probando: con el mismo timeout
+ * corto de la cotización, una guía de TCC se cortaba a los 3.5s con "tiempo
+ * de espera agotado" cuando la llamada real solo necesitaba unos segundos
+ * más. Cortar una cotización temprano cuesta una opción de menos en la
+ * lista; cortar una guía temprano deja un pedido ya pagado sin poder
+ * despachar.
  */
-const TIMEOUT_MS = 3_500;
+const TIMEOUT_COTIZACION_MS = 3_500;
+const TIMEOUT_CRITICO_MS = 20_000;
 
-async function llamar<T>(ruta: string, body?: unknown): Promise<T> {
+async function llamar<T>(ruta: string, body: unknown, timeoutMs = TIMEOUT_CRITICO_MS): Promise<T> {
   const { token, baseUrl } = credenciales();
 
   const control = new AbortController();
-  const corte = setTimeout(() => control.abort(), TIMEOUT_MS);
+  const corte = setTimeout(() => control.abort(), timeoutMs);
 
   try {
     const respuesta = await fetch(`${baseUrl}${ruta}`, {
@@ -133,7 +141,7 @@ async function llamar<T>(ruta: string, body?: unknown): Promise<T> {
     return (json.data ?? json) as T;
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
-      throw new Error(`[envia] ${ruta} → tiempo de espera agotado (${TIMEOUT_MS}ms).`);
+      throw new Error(`[envia] ${ruta} → tiempo de espera agotado (${timeoutMs}ms).`);
     }
     throw error;
   } finally {
@@ -183,9 +191,33 @@ async function conReintento<T>(fn: () => Promise<T>, intentos = 1): Promise<T> {
 // Es transporte de carga, no paquetería.
 const TRANSPORTADORAS = ['tcc', 'interRapidisimo', 'serviEntrega', 'coordinadora'];
 
-/** Envia.com describe origen y destino con el mismo objeto. */
+/**
+ * Envia.com describe origen y destino con el mismo objeto.
+ *
+ * Confirmado contra `GET /generic-form?country_code=CO&form=address_info`
+ * —el formulario real que usa su propio dashboard— que en Colombia la
+ * dirección va completa en un solo campo `street`, sin un campo de número
+ * separado: por eso `numero` siempre queda en 'S/N' y no es un dato que
+ * falte, es como se representa una dirección colombiana en un esquema
+ * pensado para países que sí separan calle y número.
+ *
+ * `district` y `reference` sí son campos distintos y con propósitos
+ * distintos, según la referencia de /ship/generate/: `district` es el
+ * barrio, `reference` son instrucciones de entrega —su propio ejemplo es
+ * "Edificio azul, piso 3"—. Antes el checkout juntaba "Barrio, Apto 101" en
+ * un solo campo de texto que se mandaba entero como `district`, así que el
+ * número de apartamento nunca llegaba al campo que el mensajero realmente
+ * lee para encontrar la puerta.
+ */
 function ubicacion(
-  datos: { calle: string; numero?: string; barrio?: string; geo: UbicacionEnvia },
+  datos: {
+    calle: string;
+    numero?: string;
+    barrio?: string;
+    referencia?: string;
+    documento?: string;
+    geo: UbicacionEnvia;
+  },
   nombre: string,
   contacto?: { telefono: string; email: string }
 ) {
@@ -197,6 +229,11 @@ function ubicacion(
     street: datos.calle,
     number: datos.numero ?? 'S/N',
     district: datos.barrio ?? '',
+    reference: datos.referencia ?? '',
+    // TCC lo exige en el destino ("NIT/CC destino no puede ser vacío",
+    // probado contra su API real); las demás transportadoras no lo piden
+    // pero lo aceptan sin problema. Se manda siempre, no solo para TCC.
+    identificationNumber: datos.documento ?? '',
     // En Colombia `city` lleva el código DANE, no el nombre. Ver envia-geo.ts.
     city: datos.geo.city,
     state: datos.geo.state,
@@ -383,13 +420,17 @@ export const enviaProvider: ShippingProvider = {
       TRANSPORTADORAS.map(async (carrier) => {
         try {
           const tarifas = await conReintento(async () => {
-            const resultado = await llamar<TarifaEnvia[]>('/ship/rate/', {
-              origin: origen,
-              destination: destino,
-              packages: bultos,
-              shipment: { carrier, type: 1 },
-              settings: { currency: 'COP' },
-            });
+            const resultado = await llamar<TarifaEnvia[]>(
+              '/ship/rate/',
+              {
+                origin: origen,
+                destination: destino,
+                packages: bultos,
+                shipment: { carrier, type: 1 },
+                settings: { currency: 'COP' },
+              },
+              TIMEOUT_COTIZACION_MS
+            );
             if (!resultado?.length) throw new Error('respuesta vacía');
             return resultado;
           });
@@ -483,7 +524,13 @@ export const enviaProvider: ShippingProvider = {
     >('/ship/generate/', {
       origin: origen,
       destination: ubicacion(
-        { calle: order.address.direccion, barrio: order.address.barrio, geo: destinoGeo },
+        {
+          calle: order.address.direccion,
+          barrio: order.address.barrio,
+          referencia: order.address.notas,
+          documento: order.customer.documento,
+          geo: destinoGeo,
+        },
         `${order.customer.nombre} ${order.customer.apellido}`,
         { telefono: order.customer.telefono, email: order.customer.email }
       ),

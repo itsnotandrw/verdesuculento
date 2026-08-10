@@ -33,6 +33,15 @@ interface FormData {
   apellido: string;
   email: string;
   telefono: string;
+  /**
+   * Cédula o NIT del destinatario. TCC la exige para generar la guía —
+   * probado contra su API real: sin esto, /ship/generate/ responde
+   * "NIT/CC destino no puede ser vacío" y el pedido queda pagado sin poder
+   * despachar. Las otras transportadoras no la piden, pero TCC compite en
+   * varias rutas y a veces es la única opción, así que es obligatoria
+   * siempre y no solo cuando el cliente elige TCC.
+   */
+  documento: string;
   /** Valor del desplegable: un municipio de la lista, o el centinela OTRO_MUNICIPIO. */
   ciudad: string;
   /** Solo se usa cuando `ciudad === OTRO_MUNICIPIO`: el nombre que el cliente escribe a mano. */
@@ -40,16 +49,18 @@ interface FormData {
   departamento: string;
   direccion: string;
   barrio: string;
+  /** Torre, apto, piso o punto de referencia. Va al campo de instrucciones de entrega, no al de barrio. */
+  notas: string;
   codigoPostal: string;
 }
 
 const INITIAL_FORM: FormData = {
-  nombre: '', apellido: '', email: '', telefono: '',
-  ciudad: '', ciudadOtra: '', departamento: '', direccion: '', barrio: '', codigoPostal: '',
+  nombre: '', apellido: '', email: '', telefono: '', documento: '',
+  ciudad: '', ciudadOtra: '', departamento: '', direccion: '', barrio: '', notas: '', codigoPostal: '',
 };
 
 const CAMPOS_REQUERIDOS: Array<keyof FormData> = [
-  'nombre', 'apellido', 'email', 'telefono', 'ciudad', 'departamento', 'direccion',
+  'nombre', 'apellido', 'email', 'telefono', 'documento', 'ciudad', 'departamento', 'direccion',
 ];
 
 export default function CheckoutPage() {
@@ -500,11 +511,16 @@ const CAMPOS: Array<{
   { field: 'apellido', label: 'Apellido', type: 'text', placeholder: 'Tu apellido', autoComplete: 'family-name' },
   { field: 'email', label: 'Correo electrónico', type: 'email', placeholder: 'tu@email.com', full: true, inputMode: 'email', autoComplete: 'email' },
   { field: 'telefono', label: 'Teléfono / WhatsApp', type: 'tel', placeholder: '300 000 0000', inputMode: 'tel', autoComplete: 'tel' },
+  // Algunas transportadoras (TCC, confirmado) rechazan la guía sin esto.
+  { field: 'documento', label: 'Cédula o NIT', type: 'text', placeholder: '1234567890', inputMode: 'numeric', autoComplete: 'off' },
   { field: 'departamento', label: 'Departamento', type: 'text', placeholder: 'Cundinamarca', autoComplete: 'address-level1' },
   { field: 'ciudad', label: 'Ciudad', type: 'text', placeholder: 'Bogotá', autoComplete: 'address-level2' },
   { field: 'codigoPostal', label: 'Código postal', type: 'text', placeholder: '110111', inputMode: 'numeric', autoComplete: 'postal-code' },
   { field: 'direccion', label: 'Dirección', type: 'text', placeholder: 'Calle 123 # 45-67', full: true, autoComplete: 'street-address' },
-  { field: 'barrio', label: 'Barrio / Apto', type: 'text', placeholder: 'Barrio, Apto 101', full: true },
+  { field: 'barrio', label: 'Barrio', type: 'text', placeholder: 'El Poblado', autoComplete: 'address-level3' },
+  // Torre/apto/piso van aparte de "barrio": la transportadora los lee de un
+  // campo de instrucciones de entrega distinto, no del nombre del barrio.
+  { field: 'notas', label: 'Apto, torre o punto de referencia (opcional)', type: 'text', placeholder: 'Apto 301, torre 2, edificio azul' },
 ];
 
 function OrderSummary({

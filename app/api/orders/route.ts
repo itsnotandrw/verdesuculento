@@ -30,7 +30,12 @@ export async function POST(request: Request) {
           apellido: texto(body.apellido, 'el apellido', { max: 60 }),
           email: email(body.email),
           telefono: telefono(body.telefono),
-          documento: texto(body.documento, 'el documento', { max: 20, requerido: false }),
+          // Requerido en el servidor, no solo en el checkout: TCC rechaza la
+          // guía sin la cédula/NIT del destinatario ("NIT/CC destino no puede
+          // ser vacío", probado contra su API real), y confiar solo en la
+          // validación del navegador dejaría ese hueco abierto a cualquiera
+          // que llame a esta API directamente.
+          documento: texto(body.documento, 'la cédula o NIT', { max: 20 }),
         },
         address: {
           departamento: texto(body.departamento, 'el departamento', { max: 80 }),
