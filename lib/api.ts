@@ -24,7 +24,7 @@ export function fallo(error: unknown, contexto: string): NextResponse {
   console.error(`[api] ${contexto}:`, error);
 
   // Los errores de dominio son seguros de mostrar; el resto no.
-  const esDominio = error instanceof Error && ['OrderError', 'ShippingNotConfiguredError', 'PaymentNotConfiguredError', 'PaymentMethodNotSupportedError', 'CodNotAvailableError', 'DestinoNoResueltoError'].includes(error.name);
+  const esDominio = error instanceof Error && ['OrderError', 'ShippingNotConfiguredError', 'PaymentNotConfiguredError', 'PaymentMethodNotSupportedError', 'CodNotAvailableError', 'DestinoNoResueltoError', 'SinTarifasError'].includes(error.name);
 
   return fail(
     esDominio ? mensaje : 'No pudimos procesar la solicitud. Intenta de nuevo en un momento.',

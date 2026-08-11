@@ -144,3 +144,26 @@ export class DestinoNoResueltoError extends Error {
     this.name = 'DestinoNoResueltoError';
   }
 }
+
+/**
+ * Ninguna transportadora devolvió tarifa para esta ruta, ni siquiera tras
+ * reintentar la ronda completa.
+ *
+ * A propósito NO dice "no hay cobertura para tu ciudad": verificado contra la
+ * API real que rutas con cobertura confirmada (varias transportadoras
+ * cotizando normalmente) pueden devolver vacío las cuatro a la vez en un mal
+ * momento puntual — Coordinadora e Inter Rapidísimo son intermitentes bajo
+ * carga (ver conReintento en envia.ts). Decirle al comprador "no cotizamos
+ * aquí" cuando en realidad sí hay servicio lo espanta sin necesidad; el
+ * mensaje invita a reintentar en vez de eso.
+ */
+export class SinTarifasError extends Error {
+  constructor() {
+    super(
+      'No pudimos calcular el envío para esta dirección en este momento. ' +
+        'Intenta de nuevo en unos segundos — es probable que sea un tropiezo pasajero ' +
+        'de una transportadora, no falta de cobertura.'
+    );
+    this.name = 'SinTarifasError';
+  }
+}

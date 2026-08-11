@@ -29,6 +29,7 @@ import { roundToHundred } from '@/lib/money';
 import type { ShippingProvider } from '../provider';
 import {
   ShippingNotConfiguredError,
+  SinTarifasError,
   type CodCoverage,
   type CreateShipmentInput,
   type CreatedShipment,
@@ -417,36 +418,49 @@ export const enviaProvider: ShippingProvider = {
     // por qué Coordinadora e Inter Rapidísimo necesitan esto. Un `data: []`
     // sin error cuenta como fallo transitorio también — es exactamente lo que
     // se observó que devuelven bajo carga para rutas que sí tienen cobertura.
-    const respuestas = await Promise.all(
-      TRANSPORTADORAS.map(async (carrier) => {
-        try {
-          const tarifas = await conReintento(async () => {
-            const resultado = await llamar<TarifaEnvia[]>(
-              '/ship/rate/',
-              {
-                origin: origen,
-                destination: destino,
-                packages: bultos,
-                shipment: { carrier, type: 1 },
-                settings: { currency: 'COP' },
-              },
-              TIMEOUT_COTIZACION_MS
-            );
-            if (!resultado?.length) throw new Error('respuesta vacía');
-            return resultado;
-          });
-          return tarifas.map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
-        } catch (error) {
-          console.warn(`[envia] ${carrier} no cotizó tras reintentos: ${(error as Error).message.slice(0, 160)}`);
-          return [];
-        }
-      })
-    );
+    const consultarTodas = () =>
+      Promise.all(
+        TRANSPORTADORAS.map(async (carrier) => {
+          try {
+            const tarifas = await conReintento(async () => {
+              const resultado = await llamar<TarifaEnvia[]>(
+                '/ship/rate/',
+                {
+                  origin: origen,
+                  destination: destino,
+                  packages: bultos,
+                  shipment: { carrier, type: 1 },
+                  settings: { currency: 'COP' },
+                },
+                TIMEOUT_COTIZACION_MS
+              );
+              if (!resultado?.length) throw new Error('respuesta vacía');
+              return resultado;
+            });
+            return tarifas.map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
+          } catch (error) {
+            console.warn(`[envia] ${carrier} no cotizó tras reintentos: ${(error as Error).message.slice(0, 160)}`);
+            return [];
+          }
+        })
+      );
 
-    const tarifas = respuestas.flat();
+    let tarifas = (await consultarTodas()).flat();
+
+    // Que las CUATRO fallen a la vez —cada una ya con su propio reintento— es
+    // poco frecuente, pero se ha visto pasar: verificado en vivo contra la API
+    // real que una ruta con cobertura confirmada (3 de 4 transportadoras
+    // cotizando) puede devolver `[]` para las cuatro en un mal momento
+    // puntual, sin que signifique falta de cobertura. Antes de decirle al
+    // comprador que no hay opciones, se intenta la ronda completa una vez
+    // más — es barato comparado con perder la venta por un tropiezo pasajero.
+    if (tarifas.length === 0) {
+      await new Promise((r) => setTimeout(r, 400));
+      tarifas = (await consultarTodas()).flat();
+    }
 
     if (tarifas.length === 0) {
-      throw new Error('[envia] ninguna transportadora devolvió tarifa para esta ruta.');
+      throw new SinTarifasError();
     }
 
     const envioGratis =

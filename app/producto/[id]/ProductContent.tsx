@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CATALOG, CATEGORIES, getProductById, getRelatedProducts, getCrossSellProducts, formatCOP } from '@/data/catalog';
 import { SOCIAL_PROOF, SELLER_STATS } from '@/data/socialProof';
 import { useCart } from '@/context/CartContext';
@@ -17,7 +18,8 @@ import SoldCount from '@/components/SoldCount';
 import type { Product, ProductColor } from '@/types';
 
 export default function ProductContent({ product }: { product: Product }) {
-  const { add } = useCart();
+  const { add, count } = useCart();
+  const router = useRouter();
   const [activeColor, setActiveColor] = useState<ProductColor>(product.colors[0]);
   const [activeSize, setActiveSize] = useState(product.sizes[0]);
   const [qty, setQty] = useState(1);
@@ -210,7 +212,21 @@ export default function ProductContent({ product }: { product: Product }) {
                 <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
                   Añadir al carrito — {formatCOP(product.price * qty)} <span className="btn-arrow">→</span>
                 </button>
-                <Link href="/checkout" className="btn btn-ghost" style={{ justifyContent: 'center' }}>Comprar ya</Link>
+                <button
+                  className="btn btn-ghost"
+                  style={{ justifyContent: 'center' }}
+                  onClick={() => {
+                    // Si el carrito ya tiene algo, se respeta tal cual —
+                    // "comprar ya" no debe pisar lo que el cliente armó. Pero
+                    // con el carrito vacío, mandarlo a un checkout sin nada
+                    // que pagar es un callejón sin salida: se agrega este
+                    // producto primero.
+                    if (count === 0) handleAdd();
+                    router.push('/checkout');
+                  }}
+                >
+                  Comprar ya
+                </button>
               </div>
 
               <SellerTrust seller={SELLER_STATS} onNavigate={() => setActiveTab('reputacion')} />
