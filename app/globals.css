@@ -1493,24 +1493,190 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 .spec-value { font-weight: 500; align-self: center; }
 
 /* =============================================
+   DESCRIPTION SCROLL BOX (PDP)
+   ============================================= */
+
+/* La descripción viene del scraping de ML y a veces es larguísima: antes se
+   comía casi toda la pantalla antes de llegar a la compra. Se acota a una
+   caja chica con scroll propio; el degradado inferior avisa que hay más
+   texto sin depender de que alcance a scrollear todo antes de comprar. */
+.desc-box {
+  position: relative;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 24px;
+  padding-right: 12px;
+}
+.desc-box::after {
+  content: '';
+  position: sticky;
+  display: block;
+  bottom: 0;
+  height: 26px;
+  margin-top: -26px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+}
+
+/* =============================================
+   BUY BOX (PDP) — precio, presentación, cantidad, compra
+   ============================================= */
+
+/* Agrupa todo lo que hace falta para decidir y comprar en una sola caja con
+   peso visual propio, en vez de dejarlo disuelto entre la descripción y la
+   ficha técnica. */
+.buy-box {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 24px 48px -30px rgba(0, 0, 0, 0.45);
+}
+
+/* =============================================
+   PDP TABS — reputación / opiniones / preguntas
+   ============================================= */
+
+/* Antes eran tres secciones apiladas de punta a punta: para llegar a las
+   preguntas había que bajar toda la reputación y todas las reseñas primero.
+   Comparten un solo bloque y el usuario elige qué mirar. */
+.pdp-tabs-nav {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.pdp-tab {
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  position: relative;
+  transition: color 0.25s;
+}
+.pdp-tab::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.3s var(--ease-out);
+}
+.pdp-tab:hover { color: var(--fg); }
+.pdp-tab.active { color: var(--fg); }
+.pdp-tab.active::after { transform: scaleX(1); }
+/* SellerReputation/ProductReviews/ProductFAQ traen su propio borde y
+   padding superior porque también se usan como secciones sueltas en otros
+   contextos; aquí, dentro de una pestaña, ese borde duplicaría el de
+   .pdp-tabs-nav. !important porque esos estilos son inline. */
+.pdp-tab-panel section,
+.pdp-tab-panel .seller-rep {
+  border-top: none !important;
+  padding-top: 8px !important;
+}
+
+/* =============================================
+   STORY DRAWER — historia del cultivo (PDP)
+   ============================================= */
+
+/* Antes era una sección fija de la página; ahora es un panel que se desliza
+   desde la derecha, para que la compra no compita por espacio con una
+   historia que no todos quieren leer antes de comprar. */
+.story-tab {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 60;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  padding: 18px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  box-shadow: -4px 0 16px -6px rgba(0, 0, 0, 0.25);
+  transition: color 0.25s, padding 0.25s var(--ease-out), background 0.25s;
+}
+.story-tab:hover { color: var(--fg); padding-right: 14px; background: var(--bg-elev-2); }
+
+.story-drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(13, 19, 15, 0.6);
+  z-index: 310;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s;
+}
+.story-drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.story-drawer {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: min(460px, 92vw);
+  background: var(--bg);
+  border-left: 1px solid var(--border-strong);
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.45s var(--ease-out);
+  box-shadow: -24px 0 48px -16px rgba(0, 0, 0, 0.35);
+}
+.story-drawer-overlay.open .story-drawer { transform: translateX(0); }
+.story-drawer-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: color-mix(in oklab, var(--bg) 70%, transparent);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  z-index: 2;
+}
+.story-drawer-panel {
+  background: linear-gradient(155deg, #09190c 0%, #142a17 45%, #0b1e0e 75%, #071109 100%);
+  padding: 56px 28px 40px;
+  position: relative; overflow: hidden;
+  min-height: 220px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.story-drawer-panel::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 60% 30%, color-mix(in oklab, var(--accent) 15%, transparent), transparent 60%);
+  pointer-events: none;
+}
+
+@media (max-width: 520px) {
+  .story-drawer { width: 100vw; }
+}
+
+/* =============================================
    SELLER TRUST BADGE
    ============================================= */
 
+/* Dorado a propósito: el vendedor tiene medalla "MercadoLíder Gold" y este
+   es el único lugar de la ficha donde eso se hace visual, justo junto al
+   botón de compra — no compite con el verde de marca en el resto del sitio. */
 .seller-trust {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, color-mix(in oklab, #d4af37 16%, var(--bg-elev)), var(--bg-elev));
+  border: 1px solid color-mix(in oklab, #d4af37 42%, var(--border-strong));
   border-radius: 12px;
-  margin-bottom: 28px;
+  transition: border-color 0.25s, transform 0.25s;
 }
+.seller-trust:hover { border-color: color-mix(in oklab, #d4af37 70%, var(--border-strong)); transform: translateY(-1px); }
 .seller-trust-icon {
   flex-shrink: 0;
-  width: 34px; height: 34px;
+  width: 38px; height: 38px;
   border-radius: 50%;
   display: grid; place-items: center;
-  background: color-mix(in oklab, var(--accent) 14%, transparent);
-  color: var(--accent);
+  background: linear-gradient(135deg, #f2d488, #b8862f);
+  color: #3d2a06;
+  box-shadow: 0 2px 8px -2px rgba(184, 134, 47, 0.55);
 }
 
 /* =============================================
@@ -2099,4 +2265,6 @@ select.checkout-input {
   .modal-overlay.open .modal { transition-duration: 0.01s; }
   .product-card-add.pulse, .btn.pulse { animation: none !important; }
   .product-card-add.pulse::after { display: none; }
+  .story-drawer, .story-drawer-overlay { transition-duration: 0.01s; }
+  .seller-trust:hover { transform: none !important; }
 }

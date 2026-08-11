@@ -22,6 +22,8 @@ export default function ProductContent({ product }: { product: Product }) {
   const [activeSize, setActiveSize] = useState(product.sizes[0]);
   const [qty, setQty] = useState(1);
   const [stickyVisible, setStickyVisible] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'reputacion' | 'opiniones' | 'preguntas'>('opiniones');
   const ctaRef = useRef<HTMLButtonElement>(null);
 
   const related = getRelatedProducts(product, 3);
@@ -38,6 +40,21 @@ export default function ProductContent({ product }: { product: Product }) {
     if (ctaRef.current) observer.observe(ctaRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // Igual patrón que QuickView: Escape cierra, y el fondo no scrollea
+  // mientras el panel de historia está abierto.
+  useEffect(() => {
+    if (!storyOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setStoryOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    document.body.classList.add('scroll-locked');
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.classList.remove('scroll-locked');
+    };
+  }, [storyOpen]);
 
   const handleAdd = () => add(product, { color: activeColor, size: activeSize, qty });
 
@@ -98,7 +115,11 @@ export default function ProductContent({ product }: { product: Product }) {
             {social && (social.rating != null || social.soldCount > 0) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
                 {social.rating != null && (
-                  <a href="#reviews" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                  <a
+                    href="#pdp-tabs"
+                    onClick={() => setActiveTab('opiniones')}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+                  >
                     <StarRating rating={social.rating} size={15} />
                     <span className="mono" style={{ fontSize: 13, color: 'var(--fg-dim)' }}>
                       {social.rating.toFixed(1)} · {social.reviewCount} {social.reviewCount === 1 ? 'calificación' : 'calificaciones'}
@@ -112,71 +133,81 @@ export default function ProductContent({ product }: { product: Product }) {
               </div>
             )}
             <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 20 }}>{product.tagline}</p>
-            <div className="mono" style={{ fontSize: 28, marginBottom: 28, letterSpacing: '-0.02em' }}>{formatCOP(product.price)}</div>
 
-            {/* whiteSpace: pre-line respeta los \n\n que ya trae la
-                descripción (del scraping de ML); sin esto el HTML los
-                colapsa y todo se ve como un solo párrafo amontonado. */}
-            <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, marginBottom: 32, fontSize: 16, whiteSpace: 'pre-line' }}>{product.description}</p>
+            {/* Descripción acotada con scroll propio: el texto que trae el
+                scraping de ML es largo y antes se comía casi toda la pantalla
+                antes de llegar a la compra. Ahora es una caja chica, y lo que
+                importa (precio, presentación, cantidad, comprar) va debajo,
+                siempre visible sin bajar. */}
+            <div className="desc-box">
+              <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, fontSize: 15, whiteSpace: 'pre-line' }}>{product.description}</p>
+            </div>
 
-            {/* Variety selector */}
-            {product.colors.length > 1 && (
-              <div style={{ marginBottom: 24 }}>
-                <div className="eyebrow" style={{ marginBottom: 12 }}>
-                  Variedad:{' '}
-                  <span style={{ color: 'var(--fg)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--font-ui)' }}>{activeColor.name}</span>
+            {/* Buy box: todo lo necesario para decidir y comprar, agrupado
+                en una sola caja con peso visual propio en vez de quedar
+                disuelto en el resto de la página. */}
+            <div className="buy-box">
+              <div className="mono" style={{ fontSize: 30, marginBottom: 24, letterSpacing: '-0.02em' }}>{formatCOP(product.price)}</div>
+
+              {/* Variety selector */}
+              {product.colors.length > 1 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div className="eyebrow" style={{ marginBottom: 12 }}>
+                    Variedad:{' '}
+                    <span style={{ color: 'var(--fg)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--font-ui)' }}>{activeColor.name}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {product.colors.map((c) => (
+                      <button
+                        key={c.hex}
+                        onClick={() => setActiveColor(c)}
+                        className={`swatch ${activeColor.hex === c.hex ? 'active' : ''}`}
+                        style={{ width: 36, height: 36, background: c.hex, padding: 3, backgroundClip: 'content-box' }}
+                        aria-label={c.name}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {product.colors.map((c) => (
-                    <button
-                      key={c.hex}
-                      onClick={() => setActiveColor(c)}
-                      className={`swatch ${activeColor.hex === c.hex ? 'active' : ''}`}
-                      style={{ width: 36, height: 36, background: c.hex, padding: 3, backgroundClip: 'content-box' }}
-                      aria-label={c.name}
-                    />
+              )}
+
+              {/* Presentation / size selector */}
+              <div style={{ marginBottom: 24 }}>
+                <div className="eyebrow" style={{ marginBottom: 12 }}>Presentación</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {product.sizes.map((s) => (
+                    <button key={s} onClick={() => setActiveSize(s)} className={`chip ${activeSize === s ? 'active' : ''}`}>{s}</button>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Presentation / size selector */}
-            <div style={{ marginBottom: 28 }}>
-              <div className="eyebrow" style={{ marginBottom: 12 }}>Presentación</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {product.sizes.map((s) => (
-                  <button key={s} onClick={() => setActiveSize(s)} className={`chip ${activeSize === s ? 'active' : ''}`}>{s}</button>
-                ))}
+              {/* Quantity */}
+              <div style={{ marginBottom: 28 }}>
+                <div className="eyebrow" style={{ marginBottom: 12 }}>Cantidad</div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, border: '1px solid var(--border-strong)', borderRadius: 999, padding: '6px 6px' }}>
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    aria-label="Reducir cantidad"
+                    style={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--bg-elev)', fontSize: 18 }}
+                  >−</button>
+                  <span className="mono" style={{ minWidth: 32, textAlign: 'center', fontSize: 16 }}>{qty}</span>
+                  <button
+                    onClick={() => setQty((q) => q + 1)}
+                    aria-label="Aumentar cantidad"
+                    style={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--bg-elev)', fontSize: 18 }}
+                  >+</button>
+                </div>
               </div>
-            </div>
 
-            {/* Quantity */}
-            <div style={{ marginBottom: 28 }}>
-              <div className="eyebrow" style={{ marginBottom: 12 }}>Cantidad</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, border: '1px solid var(--border-strong)', borderRadius: 999, padding: '6px 6px' }}>
-                <button
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  aria-label="Reducir cantidad"
-                  style={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--bg-elev)', fontSize: 18 }}
-                >−</button>
-                <span className="mono" style={{ minWidth: 32, textAlign: 'center', fontSize: 16 }}>{qty}</span>
-                <button
-                  onClick={() => setQty((q) => q + 1)}
-                  aria-label="Aumentar cantidad"
-                  style={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--bg-elev)', fontSize: 18 }}
-                >+</button>
+              {/* Main CTA */}
+              <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+                <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
+                  Añadir al carrito — {formatCOP(product.price * qty)} <span className="btn-arrow">→</span>
+                </button>
+                <Link href="/checkout" className="btn btn-ghost" style={{ justifyContent: 'center' }}>Comprar ya</Link>
               </div>
-            </div>
 
-            {/* Main CTA */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 36, flexWrap: 'wrap' }}>
-              <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
-                Añadir al carrito — {formatCOP(product.price * qty)} <span className="btn-arrow">→</span>
-              </button>
-              <Link href="/checkout" className="btn btn-ghost" style={{ justifyContent: 'center' }}>Comprar ya</Link>
+              <SellerTrust seller={SELLER_STATS} onNavigate={() => setActiveTab('reputacion')} />
             </div>
-
-            <SellerTrust seller={SELLER_STATS} />
 
             {/* Trust signals */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 36, padding: '24px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
@@ -220,56 +251,47 @@ export default function ProductContent({ product }: { product: Product }) {
           </div>
         </div>
 
-        {/* Historia del cultivo */}
-        <section style={{ padding: '64px 0', borderTop: '1px solid var(--border)', marginBottom: 0 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }} className="story-grid">
-            {/* Immersive gradient panel */}
-            <div style={{
-              borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(155deg, #09190c 0%, #142a17 45%, #0b1e0e 75%, #071109 100%)',
-              padding: '48px 36px',
-              position: 'relative', overflow: 'hidden',
-              minHeight: 280,
-              display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-            }}>
-              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 60% 30%, color-mix(in oklab, var(--accent) 15%, transparent), transparent 60%)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', top: '20%', right: '15%', width: 90, height: 120, background: 'linear-gradient(155deg, rgba(60,140,60,0.35), rgba(20,70,20,0.15))', borderRadius: '50% 5% 50% 5%', transform: 'rotate(-18deg)', filter: 'blur(1px)' }} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div className="mono" style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', marginBottom: 12 }}>
-                  {category?.name.toUpperCase()} · COLOMBIA
-                </div>
-                <div className="display" style={{ fontSize: 'clamp(28px, 4vw, 48px)', color: 'rgba(255,255,255,0.9)', lineHeight: 1.1 }}>
-                  {product.tagline}
-                </div>
-              </div>
-            </div>
-            {/* Story text */}
-            <div>
-              <div className="eyebrow" style={{ marginBottom: 16 }}>HISTORIA DEL CULTIVO</div>
-              <p style={{ fontSize: 16, lineHeight: 1.75, color: 'var(--fg-dim)', marginBottom: 20, whiteSpace: 'pre-line' }}>
-                {product.description}
-              </p>
-              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--fg-dim)' }}>
-                En VERDE. seleccionamos este material genético directamente con propagadores certificados. Cada unidad pasa por inspección agronómica antes del despacho para garantizar que llega lista para producir.
-              </p>
-              <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <span className="chip">{product.specs.clima}</span>
-                <span className="chip">{product.specs.dificultad}</span>
-                <span className="chip">{product.specs.sol}</span>
-              </div>
-            </div>
+        {/* Reputación / opiniones / preguntas en pestañas: antes eran tres
+            secciones apiladas de punta a punta que obligaban a bajar mucho
+            para llegar a las reseñas o las preguntas. Comparten un solo
+            bloque y el usuario elige qué mirar. */}
+        <section id="pdp-tabs" style={{ marginBottom: 80, paddingTop: 64, borderTop: '1px solid var(--border)' }}>
+          <div className="pdp-tabs-nav" role="tablist" aria-label="Información del producto">
+            <button
+              role="tab"
+              aria-selected={activeTab === 'reputacion'}
+              className={`pdp-tab ${activeTab === 'reputacion' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reputacion')}
+            >
+              Reputación
+            </button>
+            {social && social.rating != null && (
+              <button
+                role="tab"
+                aria-selected={activeTab === 'opiniones'}
+                className={`pdp-tab ${activeTab === 'opiniones' ? 'active' : ''}`}
+                onClick={() => setActiveTab('opiniones')}
+              >
+                Opiniones{social.reviewCount ? ` (${social.reviewCount})` : ''}
+              </button>
+            )}
+            {social && social.qna.length > 0 && (
+              <button
+                role="tab"
+                aria-selected={activeTab === 'preguntas'}
+                className={`pdp-tab ${activeTab === 'preguntas' ? 'active' : ''}`}
+                onClick={() => setActiveTab('preguntas')}
+              >
+                Preguntas ({social.qna.length})
+              </button>
+            )}
           </div>
-          <style>{`@media (max-width: 760px) { .story-grid { grid-template-columns: 1fr !important; } }`}</style>
+          <div className="pdp-tab-panel">
+            {activeTab === 'reputacion' && <SellerReputation seller={SELLER_STATS} />}
+            {activeTab === 'opiniones' && social && <ProductReviews data={social} />}
+            {activeTab === 'preguntas' && social && <ProductFAQ items={social.qna} />}
+          </div>
         </section>
-
-        {/* Reputación del vendedor */}
-        <SellerReputation seller={SELLER_STATS} />
-
-        {/* Reseñas de compradores */}
-        {social && <ProductReviews data={social} />}
-
-        {/* Preguntas frecuentes */}
-        {social && <ProductFAQ items={social.qna} />}
 
         {/* Cross-sell */}
         {crossSell.length > 0 && (
@@ -314,6 +336,62 @@ export default function ProductContent({ product }: { product: Product }) {
         <button className="btn btn-primary btn-sm" onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
           Añadir <span className="btn-arrow">→</span>
         </button>
+      </div>
+
+      {/* Pestaña flotante "Historia": la historia del cultivo dejó de ocupar
+          espacio en la página principal — ahora vive en un panel que se
+          desliza desde la derecha, anclado a un botón siempre visible. */}
+      <button
+        className="story-tab"
+        onClick={() => setStoryOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={storyOpen}
+      >
+        Historia
+      </button>
+
+      <div
+        className={`story-drawer-overlay ${storyOpen ? 'open' : ''}`}
+        onClick={() => setStoryOpen(false)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Historia del cultivo"
+        aria-hidden={!storyOpen}
+      >
+        <div className="story-drawer" onClick={(e) => e.stopPropagation()}>
+          <button className="story-drawer-close" onClick={() => setStoryOpen(false)} aria-label="Cerrar historia">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+
+          <div className="story-drawer-panel">
+            <div style={{ position: 'absolute', top: '18%', right: '12%', width: 80, height: 106, background: 'linear-gradient(155deg, rgba(60,140,60,0.35), rgba(20,70,20,0.15))', borderRadius: '50% 5% 50% 5%', transform: 'rotate(-18deg)', filter: 'blur(1px)' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div className="mono" style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', marginBottom: 12 }}>
+                {category?.name.toUpperCase()} · COLOMBIA
+              </div>
+              <div className="display" style={{ fontSize: 'clamp(26px, 6vw, 38px)', color: 'rgba(255,255,255,0.9)', lineHeight: 1.1 }}>
+                {product.tagline}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: '32px 28px 48px' }}>
+            <div className="eyebrow" style={{ marginBottom: 16 }}>HISTORIA DEL CULTIVO</div>
+            <p style={{ fontSize: 15.5, lineHeight: 1.75, color: 'var(--fg-dim)', marginBottom: 20, whiteSpace: 'pre-line' }}>
+              {product.description}
+            </p>
+            <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--fg-dim)' }}>
+              En VERDE. seleccionamos este material genético directamente con propagadores certificados. Cada unidad pasa por inspección agronómica antes del despacho para garantizar que llega lista para producir.
+            </p>
+            <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span className="chip">{product.specs.clima}</span>
+              <span className="chip">{product.specs.dificultad}</span>
+              <span className="chip">{product.specs.sol}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style>{`
