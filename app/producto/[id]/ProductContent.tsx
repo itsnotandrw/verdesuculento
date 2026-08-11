@@ -437,8 +437,12 @@ export default function ProductContent({ product }: { product: Product }) {
              caja de la imagen vacía. relative desactiva el sticky (ya no
              hace falta: en una sola columna cada item es su propia fila, así
              que sticky no tenía margen para "pegarse" a nada) sin romper esa
-             ancla. */
-          .pdp-media { position: relative !important; height: auto !important; }
+             ancla. top:0 es imprescindible: el estilo inline trae top:100
+             (el offset del sticky de escritorio), y position:relative +
+             top:100 desplaza la caja 100px hacia abajo sin reservarle ese
+             espacio en el flujo — dejaba el hueco arriba y la imagen se
+             montaba 100px sobre el título de abajo. */
+          .pdp-media { position: relative !important; top: 0 !important; height: auto !important; }
         }
       `}</style>
     </div>
