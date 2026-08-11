@@ -23,6 +23,7 @@ export default function ProductContent({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'reputacion' | 'opiniones' | 'preguntas'>('opiniones');
   const ctaRef = useRef<HTMLButtonElement>(null);
 
@@ -42,11 +43,14 @@ export default function ProductContent({ product }: { product: Product }) {
   }, []);
 
   // Igual patrón que QuickView: Escape cierra, y el fondo no scrollea
-  // mientras el panel de historia está abierto.
+  // mientras el panel de historia o el modal de descripción están abiertos.
   useEffect(() => {
-    if (!storyOpen) return;
+    if (!storyOpen && !descOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setStoryOpen(false);
+      if (e.key === 'Escape') {
+        setStoryOpen(false);
+        setDescOpen(false);
+      }
     };
     document.addEventListener('keydown', handleKey);
     document.body.classList.add('scroll-locked');
@@ -54,7 +58,7 @@ export default function ProductContent({ product }: { product: Product }) {
       document.removeEventListener('keydown', handleKey);
       document.body.classList.remove('scroll-locked');
     };
-  }, [storyOpen]);
+  }, [storyOpen, descOpen]);
 
   const handleAdd = () => add(product, { color: activeColor, size: activeSize, qty });
 
@@ -134,13 +138,16 @@ export default function ProductContent({ product }: { product: Product }) {
             )}
             <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 20 }}>{product.tagline}</p>
 
-            {/* Descripción acotada con scroll propio: el texto que trae el
-                scraping de ML es largo y antes se comía casi toda la pantalla
-                antes de llegar a la compra. Ahora es una caja chica, y lo que
-                importa (precio, presentación, cantidad, comprar) va debajo,
-                siempre visible sin bajar. */}
-            <div className="desc-box">
-              <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, fontSize: 15, whiteSpace: 'pre-line' }}>{product.description}</p>
+            {/* Descripción recortada a 4 líneas con "Ver más": el texto que
+                trae el scraping de ML es largo y antes ocupaba una caja con
+                scroll propio, incómoda tanto en PC como en móvil. Ahora es
+                una vista previa y el resto vive en una ventana aparte, para
+                llegar más rápido a la compra. */}
+            <div style={{ marginBottom: 24 }}>
+              <p className="desc-preview">{product.description}</p>
+              <button className="desc-more-btn" onClick={() => setDescOpen(true)}>
+                Ver descripción completa →
+              </button>
             </div>
 
             {/* Buy box: todo lo necesario para decidir y comprar, agrupado
@@ -343,6 +350,26 @@ export default function ProductContent({ product }: { product: Product }) {
         </button>
       </div>
 
+      {/* Modal "Ver descripción completa" — mismo patrón en PC y en móvil. */}
+      <div
+        className={`desc-modal-overlay ${descOpen ? 'open' : ''}`}
+        onClick={() => setDescOpen(false)}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Descripción de ${product.name}`}
+        aria-hidden={!descOpen}
+      >
+        <div className="desc-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close" onClick={() => setDescOpen(false)} aria-label="Cerrar descripción">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <div className="eyebrow" style={{ marginBottom: 14 }}>{product.name}</div>
+          <p style={{ color: 'var(--fg-dim)', lineHeight: 1.7, fontSize: 15, whiteSpace: 'pre-line' }}>{product.description}</p>
+        </div>
+      </div>
+
       {/* Pestaña flotante "Historia": la historia del cultivo dejó de ocupar
           espacio en la página principal — ahora vive en un panel que se
           desliza desde la derecha, anclado a un botón siempre visible. */}
@@ -402,12 +429,16 @@ export default function ProductContent({ product }: { product: Product }) {
       <style>{`
         @media (max-width: 760px) {
           .pdp-grid { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 48px !important; }
-          /* La imagen se queda pegada arriba (sticky) porque en desktop
-             comparte fila con una columna de info más alta y así no se
-             mueve mientras se scrollea esa columna. En una sola columna
-             móvil ya no hay nada que "esperar": si sigue sticky, tapa el
-             resto de la página entera mientras se baja. */
-          .pdp-media { position: static !important; height: auto !important; }
+          /* relative, no static: el carrusel de fotos usa <Image fill> por
+             dentro, que se posiciona con position:absolute esperando que
+             este contenedor sea su ancla (position no-static). Con static
+             perdía esa ancla y se salía a posicionarse contra el siguiente
+             ancestro con position — se metía debajo del navbar y dejaba la
+             caja de la imagen vacía. relative desactiva el sticky (ya no
+             hace falta: en una sola columna cada item es su propia fila, así
+             que sticky no tenía margen para "pegarse" a nada) sin romper esa
+             ancla. */
+          .pdp-media { position: relative !important; height: auto !important; }
         }
       `}</style>
     </div>

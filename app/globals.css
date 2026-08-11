@@ -1512,30 +1512,61 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 @media (max-width: 900px) { .trust-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* =============================================
-   DESCRIPTION SCROLL BOX (PDP)
+   DESCRIPTION PREVIEW + MODAL (PDP)
    ============================================= */
 
-/* La descripción viene del scraping de ML y a veces es larguísima: antes se
-   comía casi toda la pantalla antes de llegar a la compra. Se acota a una
-   caja chica con scroll propio; el degradado inferior avisa que hay más
-   texto sin depender de que alcance a scrollear todo antes de comprar. */
-.desc-box {
-  position: relative;
-  max-height: 150px;
+/* La descripción viene del scraping de ML y a veces es larguísima: antes
+   ocupaba una caja con scroll propio, incómoda tanto en PC como en móvil.
+   Ahora se recorta a 4 líneas y el resto se lee en una ventana aparte. */
+.desc-preview {
+  color: var(--fg-dim);
+  line-height: 1.65;
+  font-size: 15px;
+  white-space: pre-line;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.desc-more-btn {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
+  padding-bottom: 2px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.desc-more-btn:hover { border-color: var(--accent); }
+
+.desc-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(13, 19, 15, 0.78);
+  z-index: 300;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s;
+  display: grid; place-items: center;
+  padding: 24px;
+}
+.desc-modal-overlay.open { opacity: 1; pointer-events: auto; }
+.desc-modal {
+  background: var(--bg-elev);
+  border-radius: var(--radius-lg);
+  max-width: 560px;
+  width: 100%;
+  max-height: 80vh;
   overflow-y: auto;
-  margin-bottom: 24px;
-  padding-right: 12px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  position: relative;
+  transform: translateY(20px) scale(0.98);
+  opacity: 0;
+  transition: opacity 0.4s, transform 0.5s var(--ease-out);
 }
-.desc-box::after {
-  content: '';
-  position: sticky;
-  display: block;
-  bottom: 0;
-  height: 26px;
-  margin-top: -26px;
-  background: linear-gradient(to bottom, transparent, var(--bg));
-  pointer-events: none;
-}
+.desc-modal-overlay.open .desc-modal { opacity: 1; transform: translateY(0) scale(1); }
 
 /* =============================================
    BUY BOX (PDP) — precio, presentación, cantidad, compra
@@ -2285,5 +2316,6 @@ select.checkout-input {
   .product-card-add.pulse, .btn.pulse { animation: none !important; }
   .product-card-add.pulse::after { display: none; }
   .story-drawer, .story-drawer-overlay { transition-duration: 0.01s; }
+  .desc-modal, .desc-modal-overlay { transition-duration: 0.01s; }
   .seller-trust:hover { transform: none !important; }
 }
