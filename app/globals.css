@@ -1491,6 +1491,25 @@ html { transition: background 0.6s var(--ease-out), color 0.45s; }
 }
 .spec-label { color: var(--fg-dim); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; align-self: center; }
 .spec-value { font-weight: 500; align-self: center; }
+/* Variante a todo el ancho de página (PDP): dos columnas de filas en vez de
+   una sola angosta metida junto al botón de compra. */
+.spec-grid-wide { grid-template-columns: 1fr 1fr; column-gap: 56px; }
+@media (max-width: 760px) { .spec-grid-wide { grid-template-columns: 1fr; } }
+
+/* =============================================
+   TRUST BAR (PDP) — a todo el ancho, bajo la grilla principal
+   ============================================= */
+.trust-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 64px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.trust-bar-item { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+@media (max-width: 900px) { .trust-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* =============================================
    DESCRIPTION SCROLL BOX (PDP)

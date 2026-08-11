@@ -87,7 +87,7 @@ export default function ProductContent({ product }: { product: Product }) {
         {/* Main PDP grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, marginBottom: 100 }} className="pdp-grid">
           {/* Image */}
-          <div style={{
+          <div className="pdp-media" style={{
             position: 'sticky' as const, top: 100, height: 'fit-content',
             aspectRatio: '4/5',
             background: 'radial-gradient(circle at 50% 30%, color-mix(in oklab, var(--accent) 15%, transparent), transparent 60%), var(--bg-elev)',
@@ -208,48 +208,53 @@ export default function ProductContent({ product }: { product: Product }) {
 
               <SellerTrust seller={SELLER_STATS} onNavigate={() => setActiveTab('reputacion')} />
             </div>
-
-            {/* Trust signals */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 36, padding: '24px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-              {([
-                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 22V12"/><path d="M12 12c0 0 4-3.5 8-3.5 0 3.5-4 3.5-8 3.5"/><path d="M12 12c0 0-4-3.5-8-3.5 0 3.5 4 3.5 8 3.5"/><path d="M12 7a5 5 0 0 1 5 5"/></svg>, label: 'Planta viva garantizada', sub: 'Reposición sin preguntas' },
-                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>, label: 'Envío a Colombia', sub: '2 — 5 días hábiles' },
-                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h10a2 2 0 0 1 2 2v4"/><path d="M3 9h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 15l2 2 4-4"/></svg>, label: 'Genética certificada', sub: 'Inspección agronómica' },
-                { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>, label: 'Asesoría gratis', sub: 'Primeros 6 meses' },
-              ] as { icon: JSX.Element; label: string; sub: string }[]).map((item) => (
-                <div key={item.label} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <span style={{ color: 'var(--accent)', marginTop: 1, flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>{item.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{item.sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Spec table */}
-            <div>
-              <div className="eyebrow" style={{ marginBottom: 18 }}>Ficha técnica agronómica</div>
-              <div className="spec-grid">
-                {(
-                  [
-                    ['Clima', specs.clima],
-                    ['Exposición solar', specs.sol],
-                    ['Riego', specs.riego],
-                    ['Producción', specs.produccion],
-                    ['Altura adulta', specs.altura],
-                    ['Dificultad', specs.dificultad],
-                  ] as [string, string][]
-                ).map(([k, v]) => (
-                  <div className="spec-row" key={k}>
-                    <span className="spec-label">{k}</span>
-                    <span className="spec-value">{v}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
+
+        {/* Trust signals — a todo el ancho, no metidos en la columna de
+            info: antes esta columna era mucho más alta que la imagen y
+            dejaba un vacío enorme al lado izquierdo mientras se scrolleaba.
+            Recortar la columna de info a lo esencial (título, descripción,
+            compra) la deja casi del mismo alto que la imagen. */}
+        <div className="trust-bar">
+          {([
+            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 22V12"/><path d="M12 12c0 0 4-3.5 8-3.5 0 3.5-4 3.5-8 3.5"/><path d="M12 12c0 0-4-3.5-8-3.5 0 3.5 4 3.5 8 3.5"/><path d="M12 7a5 5 0 0 1 5 5"/></svg>, label: 'Planta viva garantizada', sub: 'Reposición sin preguntas' },
+            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>, label: 'Envío a Colombia', sub: '2 — 5 días hábiles' },
+            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h10a2 2 0 0 1 2 2v4"/><path d="M3 9h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 15l2 2 4-4"/></svg>, label: 'Genética certificada', sub: 'Inspección agronómica' },
+            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>, label: 'Asesoría gratis', sub: 'Primeros 6 meses' },
+          ] as { icon: JSX.Element; label: string; sub: string }[]).map((item) => (
+            <div key={item.label} className="trust-bar-item">
+              <span style={{ color: 'var(--accent)', marginTop: 1, flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>{item.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{item.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Spec table — igual, a todo el ancho, en dos columnas en vez de
+            una sola angosta que sobraba en la columna de info. */}
+        <section style={{ marginBottom: 80 }}>
+          <div className="eyebrow" style={{ marginBottom: 18 }}>Ficha técnica agronómica</div>
+          <div className="spec-grid spec-grid-wide">
+            {(
+              [
+                ['Clima', specs.clima],
+                ['Exposición solar', specs.sol],
+                ['Riego', specs.riego],
+                ['Producción', specs.produccion],
+                ['Altura adulta', specs.altura],
+                ['Dificultad', specs.dificultad],
+              ] as [string, string][]
+            ).map(([k, v]) => (
+              <div className="spec-row" key={k}>
+                <span className="spec-label">{k}</span>
+                <span className="spec-value">{v}</span>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Reputación / opiniones / preguntas en pestañas: antes eran tres
             secciones apiladas de punta a punta que obligaban a bajar mucho
@@ -395,7 +400,15 @@ export default function ProductContent({ product }: { product: Product }) {
       </div>
 
       <style>{`
-        @media (max-width: 760px) { .pdp-grid { grid-template-columns: 1fr !important; gap: 40px !important; } }
+        @media (max-width: 760px) {
+          .pdp-grid { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 48px !important; }
+          /* La imagen se queda pegada arriba (sticky) porque en desktop
+             comparte fila con una columna de info más alta y así no se
+             mueve mientras se scrollea esa columna. En una sola columna
+             móvil ya no hay nada que "esperar": si sigue sticky, tapa el
+             resto de la página entera mientras se baja. */
+          .pdp-media { position: static !important; height: auto !important; }
+        }
       `}</style>
     </div>
   );
