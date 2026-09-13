@@ -94,11 +94,23 @@ export const env = {
 
   // ------------------------------------------------------------------ admin
   /**
-   * Token del panel de verificación manual de pagos. Sin él, las rutas de
-   * administración responden 503 en lugar de quedar abiertas — un panel que
-   * marca pedidos como pagados no puede tener autenticación opcional.
+   * Token estático para llamar a las rutas de admin por script/curl (no para
+   * el panel del navegador — eso usa el login de abajo). Sin él NI el login
+   * configurado, las rutas de administración responden 503 en lugar de
+   * quedar abiertas — un panel que marca pedidos como pagados no puede tener
+   * autenticación opcional.
    */
   adminToken: str('ADMIN_API_TOKEN'),
+
+  /**
+   * Login del panel /admin (navegador humano, no scripts). Los tres hacen
+   * falta juntos para que el login funcione — ver .env.example para cómo
+   * generar `ADMIN_PASSWORD_HASH` (con scrypt, no en texto plano) y
+   * `ADMIN_SESSION_SECRET` (openssl rand -hex 32).
+   */
+  adminEmail: str('ADMIN_EMAIL'),
+  adminPasswordHash: str('ADMIN_PASSWORD_HASH'),
+  adminSessionSecret: str('ADMIN_SESSION_SECRET'),
 
   /**
    * Secreto que debe traer el header `Authorization: Bearer` de quien llame

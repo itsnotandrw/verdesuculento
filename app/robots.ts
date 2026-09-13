@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
+import { env } from '@/lib/env';
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = env.siteUrl.replace(/\/$/, '');
   return {
     rules: [
       {
@@ -11,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/carrito', '/checkout', '/pedido', '/admin', '/api'],
       },
     ],
-    sitemap: 'https://verde.co/sitemap.xml',
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

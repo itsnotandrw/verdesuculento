@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
+import { sesionActual } from '@/lib/admin/session';
 
 export function ok<T>(data: T, status = 200): NextResponse {
   return NextResponse.json(data, { status });
@@ -105,28 +106,41 @@ export async function cuerpo(request: Request): Promise<Record<string, unknown>>
 /**
  * Autoriza las rutas del panel.
  *
- * Si `ADMIN_API_TOKEN` no está configurado, responde 503 en vez de dejar todo
+ * Dos caminos, para dos tipos de llamante distintos:
+ *
+ *   1. Sesión de navegador (cookie firmada, ver lib/admin/session.ts) — la
+ *      usa el panel /admin/pedidos después de iniciar sesión en /admin/login.
+ *   2. Token estático por header (`ADMIN_API_TOKEN`) — para scripts/curl/cron
+ *      que llaman a la API directo, sin navegador ni cookie. Sin cambios
+ *      respecto a como funcionaba antes.
+ *
+ * Si NINGUNO de los dos está configurado, responde 503 en vez de dejar todo
  * abierto: un endpoint que marca pedidos como pagados no puede tener
  * autenticación opcional.
  */
 export function autorizarAdmin(request: Request): NextResponse | null {
-  if (!env.adminToken) {
+  const sesion = sesionActual();
+  if (sesion) return null;
+
+  if (env.adminToken) {
+    const cabecera = request.headers.get('authorization') ?? '';
+    const recibido = cabecera.replace(/^Bearer\s+/i, '').trim();
+    if (recibido) {
+      const a = Buffer.from(recibido, 'utf-8');
+      const b = Buffer.from(env.adminToken, 'utf-8');
+      if (a.length === b.length && timingSafeEqual(a, b)) return null;
+    }
+  }
+
+  const loginConfigurado = Boolean(env.adminEmail && env.adminPasswordHash && env.adminSessionSecret);
+  if (!env.adminToken && !loginConfigurado) {
     return fail(
-      'El panel no está habilitado: falta configurar ADMIN_API_TOKEN en .env.local.',
+      'El panel no está habilitado: falta configurar el login (ver .env.example) o ADMIN_API_TOKEN.',
       503
     );
   }
 
-  const cabecera = request.headers.get('authorization') ?? '';
-  const recibido = cabecera.replace(/^Bearer\s+/i, '').trim();
-
-  if (!recibido) return fail('No autorizado.', 401);
-
-  const a = Buffer.from(recibido, 'utf-8');
-  const b = Buffer.from(env.adminToken, 'utf-8');
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return fail('No autorizado.', 401);
-
-  return null;
+  return fail('No autorizado.', 401);
 }
 
 /** Cabeceras que llegan al webhook, en minúscula, para buscar la firma. */

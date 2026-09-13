@@ -9,6 +9,7 @@ import { ValidationError, cuerpo, email, fail, fallo, lineasCarrito, ok, telefon
 import { crearPedido } from '@/lib/orders/orchestrator';
 import { toPublicOrder, type PaymentMethodId } from '@/lib/orders/types';
 import type { PaymentContext } from '@/lib/payments';
+import { ipDe, limitarCheckout } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,10 @@ const METODOS: PaymentMethodId[] = ['BREB', 'NEQUI', 'PSE', 'CARD', 'COD'];
 
 export async function POST(request: Request) {
   try {
+    if (!(await limitarCheckout(ipDe(request)))) {
+      return fail('Demasiados pedidos seguidos desde esta conexión. Espera un minuto e intenta de nuevo.', 429);
+    }
+
     const body = await cuerpo(request);
 
     const metodo = texto(body.method, 'el método de pago', { max: 10 }).toUpperCase() as PaymentMethodId;

@@ -1,7 +1,11 @@
 import { MetadataRoute } from 'next';
 import { CATALOG, CATEGORIES, ARTICLES } from '@/data/catalog';
+import { env } from '@/lib/env';
 
-const BASE_URL = 'https://verde.co';
+// Antes hardcodeado a 'https://verde.co' — con el dominio real ya comprado,
+// sale de la misma variable que usa el resto del código (NEXT_PUBLIC_SITE_URL),
+// así que cambiar de dominio no implica tocar este archivo.
+const BASE_URL = env.siteUrl.replace(/\/$/, '');
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [

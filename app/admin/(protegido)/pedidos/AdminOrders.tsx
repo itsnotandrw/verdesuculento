@@ -8,12 +8,15 @@
  * primero lo que espera acción humana, porque cada minuto ahí es un despacho
  * que no sale.
  *
- * El token se guarda en `sessionStorage`, no en `localStorage`: al cerrar la
- * pestaña se va. Es un panel que aprueba pagos, no conviene que quede pegado
- * en un computador compartido.
+ * La autenticación ya no vive acá: el layout de `app/admin/(protegido)/`
+ * exige sesión antes de renderizar esta página, y cada fetch manda la cookie
+ * httpOnly sola (comportamiento normal del navegador en same-origin, sin
+ * `Authorization` a mano). Si una sesión expira a mitad de uso, la API
+ * responde 401 y este componente manda a /admin/login — ver `cargar()`.
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatCOP } from '@/data/catalog';
 
 interface Linea {
@@ -90,11 +93,8 @@ const TONO: Record<string, 'wait' | 'ok' | 'bad'> = {
   expired: 'bad',
 };
 
-const CLAVE = 'verde-admin-token';
-
 export default function AdminOrders() {
-  const [token, setToken] = useState('');
-  const [autenticado, setAutenticado] = useState(false);
+  const router = useRouter();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [sistema, setSistema] = useState<Sistema | null>(null);
@@ -104,48 +104,40 @@ export default function AdminOrders() {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [operador, setOperador] = useState('');
 
-  useEffect(() => {
-    const guardado = sessionStorage.getItem(CLAVE);
-    if (guardado) {
-      setToken(guardado);
-      setAutenticado(true);
-    }
-  }, []);
+  const cargar = useCallback(async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const respuesta = await fetch('/api/admin/orders', { cache: 'no-store' });
 
-  const cargar = useCallback(
-    async (elToken: string) => {
-      setCargando(true);
-      setError(null);
-      try {
-        const respuesta = await fetch('/api/admin/orders', {
-          headers: { Authorization: `Bearer ${elToken}` },
-          cache: 'no-store',
-        });
-        const datos = await respuesta.json();
-
-        if (!respuesta.ok) {
-          setAutenticado(false);
-          sessionStorage.removeItem(CLAVE);
-          throw new Error(datos.error ?? 'No autorizado.');
-        }
-
-        setPedidos(datos.orders ?? []);
-        setResumen(datos.resumen ?? null);
-        setSistema(datos.sistema ?? null);
-        setAutenticado(true);
-        sessionStorage.setItem(CLAVE, elToken);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error al cargar.');
-      } finally {
-        setCargando(false);
+      if (respuesta.status === 401) {
+        // La sesión expiró (o la cookie se venció) a mitad de uso -- de
+        // vuelta al login, no tiene sentido mostrar un error genérico acá.
+        router.push('/admin/login?next=/admin/pedidos');
+        return;
       }
-    },
-    []
-  );
+
+      const datos = await respuesta.json();
+      if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo cargar.');
+
+      setPedidos(datos.orders ?? []);
+      setResumen(datos.resumen ?? null);
+      setSistema(datos.sistema ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al cargar.');
+    } finally {
+      setCargando(false);
+    }
+  }, [router]);
 
   useEffect(() => {
-    if (autenticado && token) cargar(token);
-  }, [autenticado, token, cargar]);
+    cargar();
+  }, [cargar]);
+
+  const salir = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    router.push('/admin/login');
+  };
 
   const accionar = async (pedido: Pedido, accion: string, extra: Record<string, unknown> = {}) => {
     setOcupado(pedido.id);
@@ -153,52 +145,18 @@ export default function AdminOrders() {
     try {
       const respuesta = await fetch(`/api/admin/orders/${pedido.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accion, quien: operador || 'operador', ...extra }),
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo aplicar la acción.');
-      await cargar(token);
+      await cargar();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al aplicar la acción.');
     } finally {
       setOcupado(null);
     }
   };
-
-  // ------------------------------------------------------------- login
-  if (!autenticado) {
-    return (
-      <div className="page-section" style={{ paddingTop: 140 }}>
-        <div className="container" style={{ maxWidth: 420 }}>
-          <div className="eyebrow" style={{ marginBottom: 16 }}>PANEL INTERNO</div>
-          <h1 className="display" style={{ fontSize: 'clamp(34px, 7vw, 48px)', marginBottom: 28 }}>Pedidos</h1>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (token.trim()) cargar(token.trim());
-            }}
-          >
-            <label className="checkout-label" htmlFor="admin-token">Token de acceso</label>
-            <input
-              id="admin-token"
-              type="password"
-              className="checkout-input"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="••••••••••••"
-              autoComplete="off"
-            />
-            {error && <p style={{ marginTop: 14, fontSize: 13, color: '#ef4444' }}>{error}</p>}
-            <button className="btn btn-primary" style={{ marginTop: 20, width: '100%', justifyContent: 'center' }} disabled={cargando}>
-              {cargando ? 'Verificando…' : 'Entrar'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   // ------------------------------------------------------------- bandeja
   return (
@@ -209,9 +167,12 @@ export default function AdminOrders() {
             <div className="eyebrow" style={{ marginBottom: 10 }}>PANEL INTERNO</div>
             <h1 className="display" style={{ fontSize: 'clamp(32px, 6vw, 48px)' }}>Pedidos</h1>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => cargar(token)} disabled={cargando}>
-            {cargando ? 'Actualizando…' : 'Actualizar'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => cargar()} disabled={cargando}>
+              {cargando ? 'Actualizando…' : 'Actualizar'}
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={salir}>Cerrar sesión</button>
+          </div>
         </div>
 
         {sistema && !sistema.almacenamiento.apto && (

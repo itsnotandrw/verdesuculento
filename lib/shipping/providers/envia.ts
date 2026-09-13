@@ -677,6 +677,18 @@ export const enviaProvider: ShippingProvider = {
       return null;
     }
 
+    // Anti-replay: una firma capturada y reenviada más tarde (por ejemplo, por
+    // alguien que la vio en un log o en una petición interceptada) sigue
+    // siendo válida criptográficamente para siempre si no se le pone fecha de
+    // vencimiento — la firma por sí sola no dice CUÁNDO se generó. Se rechaza
+    // cualquier evento con más de 5 minutos de antigüedad, aunque la firma sea
+    // perfecta.
+    const segundosTranscurridos = Math.abs(Date.now() / 1000 - Number(timestamp));
+    if (!Number.isFinite(segundosTranscurridos) || segundosTranscurridos > 300) {
+      console.error(`[envia] webhook con timestamp fuera de rango (${timestamp}). Descartado por posible replay.`);
+      return null;
+    }
+
     const cuerpo = payload as {
       type?: string;
       created_at?: string;

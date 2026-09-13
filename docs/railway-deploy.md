@@ -34,6 +34,11 @@ Cambian con la migración:
 - `CRON_SECRET` → generar uno **nuevo** con `openssl rand -hex 32`. El de
   Vercel no sirve porque nadie más que Vercel lo mandaba automáticamente —
   ver paso 4.
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` / `ADMIN_SESSION_SECRET` → nuevas,
+  para el login del panel `/admin` (antes era un token pegado a mano). Ver el
+  comentario en `.env.example` para el comando exacto que genera el hash de
+  la contraseña — la contraseña real nunca va en una variable de entorno,
+  solo su hash.
 
 ## 3. Almacenamiento de pedidos: la decisión que no se puede saltar
 
@@ -135,6 +140,7 @@ apuntando al dominio viejo si no se actualizan a mano:
 
 - [ ] Variables de entorno copiadas y `NEXT_PUBLIC_SITE_URL` con el dominio real.
 - [ ] `CRON_SECRET` nuevo generado, puesto en Railway y en el programador externo.
+- [ ] `ADMIN_EMAIL`/`ADMIN_PASSWORD_HASH`/`ADMIN_SESSION_SECRET` configurados y probado el login en `/admin/login`.
 - [ ] Redis configurado (Opción A) o Volume montado (Opción B) — no ambas vacías.
 - [ ] Un pedido de prueba de punta a punta: checkout → cotización de envío → pago manual → panel admin.
 - [ ] Dominio verificado y sirviendo por HTTPS.

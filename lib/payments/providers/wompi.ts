@@ -329,6 +329,19 @@ export const wompiProvider: PaymentProvider = {
       return null;
     }
 
+    // Anti-replay: el checksum por sí solo no vence — una notificación
+    // capturada y reenviada más tarde seguiría siendo válida para siempre sin
+    // este chequeo. Se rechaza cualquier evento con más de 5 minutos de
+    // antigüedad. Si de verdad hace falta reconciliar un pago cuya
+    // notificación llegó tarde, existe la consulta directa a Wompi
+    // (`getStatus`) como camino aparte — descartar aquí no deja el pedido sin
+    // salida.
+    const segundosTranscurridos = Math.abs(Date.now() / 1000 - Number(evento.timestamp));
+    if (!Number.isFinite(segundosTranscurridos) || segundosTranscurridos > 300) {
+      console.error(`[wompi] webhook con timestamp fuera de rango para ${transaccion.id}. Descartado por posible replay.`);
+      return null;
+    }
+
     return {
       // Wompi no manda un id de evento propio: la combinación transacción +
       // estado identifica el cambio y basta para no procesarlo dos veces.
