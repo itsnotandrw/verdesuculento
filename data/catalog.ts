@@ -1291,7 +1291,7 @@ export const TESTIMONIALS: Testimonial[] = [
   {
     name: 'Lina R.',
     role: 'Diseñadora de paisajes',
-    text: 'Trabajo con VERDE. en todos mis proyectos. La variedad de ornamentales es la mejor del país y los tiempos de entrega siempre se cumplen.',
+    text: 'Trabajo con Vivero Verde Suculento en todos mis proyectos. La variedad de ornamentales es la mejor del país y los tiempos de entrega siempre se cumplen.',
   },
 ];
 

@@ -436,7 +436,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
               {product.description}
             </p>
             <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--fg-dim)' }}>
-              En VERDE. seleccionamos este material genético directamente con propagadores certificados. Cada unidad pasa por inspección agronómica antes del despacho para garantizar que llega lista para producir.
+              En Vivero Verde Suculento seleccionamos este material genético directamente con propagadores certificados. Cada unidad pasa por inspección agronómica antes del despacho para garantizar que llega lista para producir.
             </p>
             <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <span className="chip">{product.specs.clima}</span>

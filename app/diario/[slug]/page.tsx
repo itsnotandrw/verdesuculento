@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = ARTICLES.find((a) => a.slug === params.slug);
   if (!article) return {};
   return {
-    title: `${article.title} — VERDE. Diario`,
+    title: `${article.title} — Diario Vivero Verde Suculento`,
     description: article.excerpt,
   };
 }
@@ -112,7 +112,7 @@ export default function ArticlePage({ params }: Props) {
           }}>
             <div className="mono" style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: 12 }}>CONSEJO DEL AGRÓNOMO</div>
             <p style={{ margin: 0, color: 'var(--fg)', fontSize: 16, lineHeight: 1.6 }}>
-              Si tienes dudas específicas sobre tu cultivo — variedad, altitud, tipo de suelo — escríbenos por WhatsApp. Nuestro equipo agronómico responde en menos de 24 horas sin costo adicional para clientes de VERDE.
+              Si tienes dudas específicas sobre tu cultivo — variedad, altitud, tipo de suelo — escríbenos por WhatsApp. Nuestro equipo agronómico responde en menos de 24 horas sin costo adicional para clientes de Vivero Verde Suculento
             </p>
           </div>
 
@@ -131,7 +131,7 @@ export default function ArticlePage({ params }: Props) {
         <div style={{ padding: '48px 0', display: 'flex', gap: 20, alignItems: 'flex-start', borderBottom: '1px solid var(--border)' }}>
           <div style={{ width: 56, height: 56, background: 'var(--accent)', borderRadius: '50% 0 50% 50%', transform: 'rotate(45deg)', flexShrink: 0 }} />
           <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>Equipo agronómico VERDE.</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Equipo agronómico Vivero Verde Suculento</div>
             <p style={{ color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
               Ingenieros agrónomos con experiencia en cultivos tropicales colombianos. ¿Tienes preguntas sobre este tema?{' '}
               <a href="https://wa.me/573205550102" style={{ color: 'var(--accent)' }} target="_blank" rel="noopener noreferrer">Escríbenos por WhatsApp</a>.

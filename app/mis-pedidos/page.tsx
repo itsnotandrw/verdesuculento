@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import MisPedidos from './MisPedidos';
 
 export const metadata: Metadata = {
-  title: 'Mis pedidos · VERDE.',
+  title: 'Mis pedidos · Vivero Verde Suculento',
   description: 'Busca tus pedidos con tu correo.',
   robots: { index: false, follow: false },
 };

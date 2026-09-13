@@ -230,26 +230,19 @@ input, select, textarea { cursor: text; }
   cursor: none;
 }
 .nav-logo-mark {
-  width: 28px; height: 28px;
-  position: relative;
-  display: inline-block;
+  width: 34px; height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
-.nav-logo-mark::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent);
-  border-radius: 50% 0 50% 50%;
-  transform: rotate(45deg);
+.nav-logo-text {
+  font-size: 19px;
+  line-height: 1.1;
+  white-space: nowrap;
 }
-.nav-logo-mark::after {
-  content: '';
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 1.5px; height: 50%;
-  background: var(--bg);
-  transform: translate(-50%, -10%);
-  border-radius: 2px;
+/* El nombre completo no cabe cómodo en una barra angosta -- el ícono ya
+   carga la identidad de marca ahí, el texto se puede sacrificar. */
+@media (max-width: 480px) {
+  .nav-logo-text { display: none; }
 }
 
 .nav-links {

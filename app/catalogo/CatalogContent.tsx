@@ -117,7 +117,7 @@ export default function CatalogContent({ products }: { products: Product[] }) {
       <div className="container">
         {/* Header */}
         <div style={{ marginBottom: 36 }}>
-          <div className="eyebrow" style={{ marginBottom: 16 }}>CATÁLOGO VERDE.</div>
+          <div className="eyebrow" style={{ marginBottom: 16 }}>CATÁLOGO COMPLETO</div>
           <h1 className="display" style={{ fontSize: 'clamp(48px, 7vw, 110px)' }}>
             Todo para <em style={{ color: 'var(--accent)' }}>tu cultivo.</em>
           </h1>
@@ -321,7 +321,7 @@ export default function CatalogContent({ products }: { products: Product[] }) {
                     items.push(
                       <div key={`break-${i}`} className="catalog-editorial-break">
                         <div style={{ position: 'relative', zIndex: 1 }}>
-                          <div className="eyebrow" style={{ marginBottom: 12 }}>COLECCIÓN VERDE.</div>
+                          <div className="eyebrow" style={{ marginBottom: 12 }}>COLECCIÓN DESTACADA</div>
                           <h3 className="display" style={{ fontSize: 'clamp(28px, 3vw, 48px)', marginBottom: 12 }}>
                             {breakData.title}
                           </h3>

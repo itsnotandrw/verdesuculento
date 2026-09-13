@@ -32,21 +32,21 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'VERDE. — Vivero & Agricultura Moderna',
-    template: '%s | VERDE.',
+    default: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',
+    template: '%s | Vivero Verde Suculento',
   },
   description: 'Vivero especializado en frutales, ornamentales y agricultura moderna. Envíos a toda Colombia con garantía de plantas vivas.',
   keywords: ['vivero', 'plantas', 'frutales', 'Colombia', 'agricultura', 'suculentas', 'ornamentales'],
   openGraph: {
-    title: 'VERDE. — Vivero & Agricultura Moderna',
+    title: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',
     description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos.',
-    siteName: 'VERDE.',
+    siteName: 'Vivero Verde Suculento',
     locale: 'es_CO',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VERDE. — Vivero & Agricultura Moderna',
+    title: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',
     description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos.',
   },
 };

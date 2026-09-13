@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = CATEGORIES.find((c) => c.id === params.categoria);
   if (!cat) return {};
   return {
-    title: `${cat.name} — Catálogo VERDE.`,
+    title: `${cat.name} — Catálogo Vivero Verde Suculento`,
     description: cat.blurb,
   };
 }

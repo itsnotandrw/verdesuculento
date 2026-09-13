@@ -9,7 +9,7 @@ import OrderStatus from './OrderStatus';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Tu pedido · VERDE.',
+  title: 'Tu pedido · Vivero Verde Suculento',
   description: 'Estado de tu pedido, datos de pago y seguimiento del envío.',
   // La referencia es la llave de acceso al pedido: no debe terminar indexada.
   robots: { index: false, follow: false },

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { CATEGORIES } from '@/data/catalog';
 
 export default function Footer() {
@@ -7,8 +8,11 @@ export default function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-col">
-            <div className="display" style={{ fontSize: 72, marginBottom: 16, letterSpacing: '-0.025em' }}>
-              verde<em style={{ color: 'var(--accent)' }}>.</em>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+              <Image src="/logo-icon.png" alt="" width={48} height={48} style={{ width: 44, height: 44, objectFit: 'contain' }} />
+              <div className="display" style={{ fontSize: 34, letterSpacing: '-0.02em', lineHeight: 1.05 }}>
+                Vivero Verde<br />Suculento<em style={{ color: 'var(--accent)' }}>.</em>
+              </div>
             </div>
             <p style={{ color: 'var(--fg-dim)', maxWidth: 360, marginBottom: 24, lineHeight: 1.55 }}>
               Vivero especializado en frutales, ornamentales y agricultura moderna. Envíos a toda Colombia.
@@ -49,14 +53,18 @@ export default function Footer() {
               <li><a href="tel:+573205550102">+57 320 555 0102</a></li>
               <li><a href="mailto:hola@verde.co">hola@verde.co</a></li>
               <li><a href="#">Lun—Sáb · 8 — 6 pm</a></li>
-              <li><a href="#">Km 3 vía La Ceja, Antioquia</a></li>
+              <li>
+                <a href="https://maps.app.goo.gl/BFLhTU3YjHjoBopM6" target="_blank" rel="noopener noreferrer">
+                  Cl. 1 #10, Soacha, Cundinamarca
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>© 2026 VERDE. Vivero &amp; agricultura moderna.</span>
-          <span>BOGOTÁ · MEDELLÍN · CALI</span>
+          <span>© 2026 Vivero Verde Suculento. Envíos a toda Colombia.</span>
+          <span>SOACHA · CUNDINAMARCA</span>
         </div>
       </div>
     </footer>

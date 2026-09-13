@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { useCart } from '@/context/CartContext';
@@ -76,8 +77,8 @@ export default function Nav() {
   return (
     <nav className="nav">
       <Link href="/" className="nav-logo" data-cursor-hover>
-        <span className="nav-logo-mark" />
-        <span>verde.</span>
+        <Image src="/logo-icon.png" alt="" width={36} height={36} priority className="nav-logo-mark" />
+        <span className="nav-logo-text">Vivero Verde Suculento</span>
       </Link>
 
       <div

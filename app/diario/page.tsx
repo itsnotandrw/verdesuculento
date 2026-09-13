@@ -11,8 +11,8 @@ const ARTICLE_PHOTOS: Record<string, string> = {
 };
 
 export const metadata: Metadata = {
-  title: 'Diario agronómico — VERDE.',
-  description: 'Guías de cultivo, manejo agronómico y consejos para tu huerto. Contenido educativo del equipo de VERDE.',
+  title: 'Diario agronómico — Vivero Verde Suculento',
+  description: 'Guías de cultivo, manejo agronómico y consejos para tu huerto. Contenido educativo del equipo de Vivero Verde Suculento',
 };
 
 export default function BlogPage() {

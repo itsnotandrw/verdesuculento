@@ -3,15 +3,15 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 
 export const metadata: Metadata = {
-  title: 'Nosotros — VERDE.',
-  description: 'Conoce el equipo detrás de VERDE. Agrónomos y amantes de las plantas comprometidos con la agricultura moderna en Colombia.',
+  title: 'Nosotros — Vivero Verde Suculento',
+  description: 'Conoce el equipo detrás de Vivero Verde Suculento Agrónomos y amantes de las plantas comprometidos con la agricultura moderna en Colombia.',
 };
 
 const TEAM = [
   {
     name: 'Sebastián Mora',
     role: 'Fundador & Agrónomo jefe',
-    bio: 'Ingeniero agrónomo de la Universidad Nacional, con 12 años propagando material vegetal en Antioquia. Fundó VERDE. para acercar la genética de vivero a los colombianos.',
+    bio: 'Ingeniero agrónomo de la Universidad Nacional, con 12 años propagando material vegetal en Antioquia. Fundó Vivero Verde Suculento para acercar la genética de vivero a los colombianos.',
     photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
   },
   {
@@ -23,7 +23,7 @@ const TEAM = [
   {
     name: 'Camilo Zapata',
     role: 'Logística & post-venta',
-    bio: 'Especialista en packaging sostenible para material vivo. Diseñó el sistema de embalaje de VERDE. que garantiza la llegada en perfectas condiciones.',
+    bio: 'Especialista en packaging sostenible para material vivo. Diseñó el sistema de embalaje de Vivero Verde Suculento que garantiza la llegada en perfectas condiciones.',
     photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
   },
 ];
@@ -73,9 +73,9 @@ export default function NosotrosPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, var(--bg) 100%)' }} />
         <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
           <Reveal>
-            <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 20 }}>VEREDA LA CEJA · ANTIOQUIA · 1.950 MSNM</div>
+            <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 20 }}>SOACHA · CUNDINAMARCA</div>
             <h1 className="display" style={{ fontSize: 'clamp(56px, 9vw, 130px)', color: '#fff', letterSpacing: '-0.03em', lineHeight: 0.92, marginBottom: 28 }}>
-              Somos <em style={{ color: 'var(--accent)' }}>VERDE.</em>
+              Somos <em style={{ color: 'var(--accent)' }}>Vivero Verde Suculento</em>
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 19, maxWidth: 560, margin: '0 auto', lineHeight: 1.55 }}>
               Un vivero fundado por agrónomos, para personas que quieren cultivar en serio.
@@ -99,7 +99,7 @@ export default function NosotrosPage() {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)' }} />
                 <div style={{ position: 'absolute', bottom: 28, left: 28 }}>
                   <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>DESDE 2019</div>
-                  <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 15 }}>Vivero La Ceja, Antioquia</p>
+                  <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 15 }}>Vivero Verde Suculento, Soacha</p>
                 </div>
               </div>
             </Reveal>
@@ -111,7 +111,7 @@ export default function NosotrosPage() {
                 Terminamos <em style={{ color: 'var(--accent)' }}>enseñando.</em>
               </h2>
               <p style={{ color: 'var(--fg-dim)', fontSize: 17, lineHeight: 1.75, marginBottom: 20 }}>
-                VERDE. nació en 2019 cuando Sebastián Mora, recién egresado de la Universidad Nacional, se dio cuenta de que no existía en Colombia un vivero que combinara genética certificada con asesoría honesta.
+                Vivero Verde Suculento nació en 2019 cuando Sebastián Mora, recién egresado de la Universidad Nacional, se dio cuenta de que no existía en Colombia un vivero que combinara genética certificada con asesoría honesta.
               </p>
               <p style={{ color: 'var(--fg-dim)', fontSize: 17, lineHeight: 1.75, marginBottom: 20 }}>
                 La primera temporada vendimos 40 plantas de arándano a vecinos del corregimiento. Hoy despachamos a 10 ciudades del país, con el mismo protocolo de siempre: inspección agronómica antes del despacho, empaque especializado, y un agrónomo disponible durante los primeros seis meses.
@@ -190,14 +190,14 @@ export default function NosotrosPage() {
             <Reveal>
               <div className="eyebrow" style={{ marginBottom: 20 }}>EL VIVERO</div>
               <h2 className="display" style={{ fontSize: 'clamp(40px, 5vw, 72px)', marginBottom: 28, letterSpacing: '-0.02em' }}>
-                Visítanos en <em style={{ color: 'var(--accent)' }}>La Ceja.</em>
+                Visítanos en <em style={{ color: 'var(--accent)' }}>Soacha.</em>
               </h2>
               <p style={{ color: 'var(--fg-dim)', fontSize: 16, lineHeight: 1.75, marginBottom: 28 }}>
-                Nuestro vivero está ubicado en la vereda El Tambo, Municipio de La Ceja del Tambo, Antioquia. A 40 km de Medellín, en un microclima perfecto para la aclimatación de frutales de altura.
+                Nuestro vivero está ubicado en Soacha, Cundinamarca, a minutos de Bogotá. La altura de la sabana nos da un clima estable, ideal para la aclimatación de frutales de altura y suculentas.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 36 }}>
                 {([
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>, label: 'Vereda El Tambo, La Ceja, Antioquia' },
+                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>, label: 'Cl. 1 #10, Soacha, Cundinamarca' },
                   { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: 'Lunes a sábado 7 AM — 4 PM' },
                   { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>, label: '+57 320 555 0102' },
                   { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>, label: 'hola@verde.co' },

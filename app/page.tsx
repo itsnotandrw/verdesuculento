@@ -11,7 +11,7 @@ import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
 import type { Product } from '@/types';
 
 export const metadata: Metadata = {
-  title: 'VERDE. — Vivero & Agricultura Moderna',
+  title: 'Vivero Verde Suculento — Agricultura Moderna',
   description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos. Envío a toda Colombia con garantía de plantas vivas.',
 };
 
@@ -27,7 +27,7 @@ export default async function HomePage() {
       <HeroSection />
 
       {/* ── MARQUEE ──────────────────────────────────── */}
-      <div className="marquee" aria-label="Beneficios de VERDE">
+      <div className="marquee" aria-label="Beneficios de Vivero Verde Suculento">
         <div className="marquee-track">
           {['Envío a toda Colombia', 'Garantía planta viva', 'Asesoría agronómica', 'Genética certificada', 'Empaque biodegradable',
             'Envío a toda Colombia', 'Garantía planta viva', 'Asesoría agronómica', 'Genética certificada', 'Empaque biodegradable'].map((t, i) => (
@@ -74,7 +74,7 @@ export default async function HomePage() {
               }}>
                 <Image
                   src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=85"
-                  alt="Vivero VERDE en Antioquia, Colombia"
+                  alt="Vivero Verde Suculento en Soacha, Cundinamarca"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   style={{ objectFit: 'cover' }}
@@ -82,8 +82,8 @@ export default async function HomePage() {
                 />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)' }} />
                 <div style={{ position: 'absolute', bottom: 28, left: 28, right: 28 }}>
-                  <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>VIVERO · VEREDA LA CEJA</div>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>Antioquia, Colombia — 1.950 msnm</p>
+                  <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>VIVERO · SOACHA</div>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>Soacha, Cundinamarca, Colombia</p>
                 </div>
               </div>
             </Reveal>
@@ -130,7 +130,7 @@ export default async function HomePage() {
       <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
         <div className="container">
           <Reveal>
-            <div className="eyebrow" style={{ marginBottom: 24 }}>POR QUÉ COMPRAR EN VERDE.</div>
+            <div className="eyebrow" style={{ marginBottom: 24 }}>POR QUÉ COMPRAR CON NOSOTROS</div>
             <h2 className="display" style={{ fontSize: 'clamp(40px, 6vw, 92px)', maxWidth: 1100, marginBottom: 64, letterSpacing: '-0.02em' }}>
               Una planta no es un objeto cualquiera. Es{' '}
               <em style={{ color: 'var(--accent)' }}>un ser vivo que confiamos a tus manos.</em>{' '}
@@ -362,7 +362,7 @@ function HeroSection() {
       <div className="hero-photo-bg">
         <Image
           src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1920&q=70"
-          alt="Vivero VERDE — plantas y cultivos"
+          alt="Vivero Verde Suculento — plantas y cultivos"
           fill
           priority
           sizes="100vw"
@@ -371,7 +371,7 @@ function HeroSection() {
       </div>
       <FloatingBotanicals />
       <div className="container" style={{ position: 'relative', zIndex: 2, textAlign: 'center', pointerEvents: 'none' }}>
-        <div className="eyebrow reveal in" style={{ marginBottom: 24 }}>COSECHA 2026 · VIVERO LA CEJA · ANTIOQUIA</div>
+        <div className="eyebrow reveal in" style={{ marginBottom: 24 }}>COSECHA 2026 · SOACHA · CUNDINAMARCA</div>
         <h1 className="display hero-heading" style={{ fontSize: 'clamp(52px, 8vw, 120px)', marginBottom: 28, letterSpacing: '-0.025em', lineHeight: 0.95, maxWidth: 1200, marginInline: 'auto' }}>
           Todo para tu cultivo<br />
           <em style={{ fontStyle: 'italic', color: 'var(--hero-em)' }}>en un solo lugar.</em>

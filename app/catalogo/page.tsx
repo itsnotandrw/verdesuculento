@@ -3,7 +3,7 @@ import { getAllProducts } from '@/lib/catalog/store';
 import CatalogContent from './CatalogContent';
 
 export const metadata: Metadata = {
-  title: 'Catálogo — VERDE.',
+  title: 'Catálogo — Vivero Verde Suculento',
   description: 'Explora nuestro catálogo de frutales, ornamentales, suculentas e insumos agrícolas. Envíos a toda Colombia con garantía de plantas vivas.',
 };
 

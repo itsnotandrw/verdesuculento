@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 
 export const metadata: Metadata = {
-  title: 'Asesoría agronómica — VERDE.',
+  title: 'Asesoría agronómica — Vivero Verde Suculento',
   description: 'Asesoría agronómica personalizada con nuestro equipo de expertos. Incluida gratis por 6 meses con cada compra.',
 };
 
@@ -32,7 +32,7 @@ const INCLUDED = [
   'Calendario de fertilización para los primeros 6 meses',
   'Identificación y manejo de plagas comunes en Colombia',
   'Soporte por WhatsApp y correo sin costo adicional',
-  'Acceso al diario agronómico VERDE. con guías de cultivo',
+  'Acceso al diario agronómico Vivero Verde Suculento con guías de cultivo',
   'Consulta de seguimiento a los 30, 90 y 180 días',
 ];
 
@@ -43,7 +43,7 @@ const FAQ = [
   },
   {
     q: '¿Quién responde mis preguntas?',
-    a: 'Un agrónomo certificado. No hay bots, ni respuestas automáticas. Cuando escribes al WhatsApp de VERDE., responde Valentina, Sebastián o Camilo, según la especialidad.',
+    a: 'Un agrónomo certificado. No hay bots, ni respuestas automáticas. Cuando escribes al WhatsApp de Vivero Verde Suculento, responde Valentina, Sebastián o Camilo, según la especialidad.',
   },
   {
     q: '¿Funciona si vivo en una ciudad?',
@@ -135,7 +135,7 @@ export default function AsesoriaPage() {
                 Todo lo que necesitas <em style={{ color: 'var(--accent)' }}>para cosechar.</em>
               </h2>
               <p style={{ color: 'var(--fg-dim)', fontSize: 16, lineHeight: 1.75 }}>
-                El acompañamiento agronómico de VERDE. cubre el ciclo completo: desde que la planta llega a tus manos hasta la primera cosecha. Sin costo adicional para clientes activos.
+                El acompañamiento agronómico de Vivero Verde Suculento cubre el ciclo completo: desde que la planta llega a tus manos hasta la primera cosecha. Sin costo adicional para clientes activos.
               </p>
             </Reveal>
             <Reveal stagger>
@@ -177,7 +177,7 @@ export default function AsesoriaPage() {
             <div style={{ maxWidth: 760 }}>
               <div style={{ fontSize: 72, lineHeight: 1, color: 'var(--accent)', marginBottom: 24, fontFamily: 'var(--font-display)' }}>"</div>
               <p className="display" style={{ fontSize: 'clamp(24px, 3.5vw, 44px)', color: 'rgba(255,255,255,0.9)', lineHeight: 1.3, marginBottom: 40 }}>
-                Le escribí al WhatsApp de VERDE. a las 10 de la noche porque a mi arándano le salieron manchas raras. A los 20 minutos me respondió Valentina con fotos de referencia y el tratamiento exacto. Eso no lo hace ningún vivero normal.
+                Le escribí al WhatsApp de Vivero Verde Suculento a las 10 de la noche porque a mi arándano le salieron manchas raras. A los 20 minutos me respondió Valentina con fotos de referencia y el tratamiento exacto. Eso no lo hace ningún vivero normal.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ width: 48, height: 48, background: 'var(--accent)', borderRadius: '50% 0 50% 50%', transform: 'rotate(45deg)', flexShrink: 0 }} />
