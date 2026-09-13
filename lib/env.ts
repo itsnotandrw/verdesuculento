@@ -101,11 +101,13 @@ export const env = {
   adminToken: str('ADMIN_API_TOKEN'),
 
   /**
-   * Secreto que Vercel Cron manda solo en el header `Authorization` cuando
-   * este mismo valor está configurado como variable de entorno del proyecto
-   * — no hay que generarlo ni copiarlo a mano, Vercel lo inyecta él mismo en
-   * cada llamada programada. Separado de `adminToken` porque uno lo escribe
-   * un humano en el panel y el otro lo manda una máquina en automático.
+   * Secreto que debe traer el header `Authorization: Bearer` de quien llame
+   * a /api/admin/expirar por GET (el cron externo — ver docs/railway-deploy.md).
+   * A diferencia de Vercel, Railway no inyecta esto solo: hay que generarlo
+   * (`openssl rand -hex 32`), pegarlo como variable de entorno del servicio,
+   * y configurar el mismo valor en quien sea que dispare la llamada
+   * programada. Separado de `adminToken` porque uno lo escribe un humano en
+   * el panel y el otro lo manda una máquina en automático.
    */
   cronSecret: str('CRON_SECRET'),
 
@@ -126,6 +128,16 @@ export const env = {
    * ¿Corremos donde el disco local no se comparte entre rutas? En serverless
    * cada ruta es una función aparte, así que guardar pedidos en un archivo es
    * perderlos.
+   *
+   * Railway (y cualquier "servidor propio") NO entra aquí a propósito: es un
+   * solo proceso de un solo contenedor, así que el archivo sí se comparte
+   * entre rutas dentro de esa vida del contenedor. Pero el disco de Railway
+   * no es persistente por defecto — un redeploy crea un contenedor nuevo con
+   * disco vacío. Este flag no puede detectar eso (Railway no expone una
+   * variable equivalente a VERCEL=1), así que en Railway la responsabilidad
+   * de no perder pedidos es 100% operativa: o se configura Redis (KV_* /
+   * UPSTASH_*, igual que en serverless) o se monta un Volume en el
+   * directorio de `ORDERS_FILE`. Ver docs/railway-deploy.md.
    */
   serverless: Boolean(
     process.env.VERCEL ||

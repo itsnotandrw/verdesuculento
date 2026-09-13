@@ -8,12 +8,12 @@
  *     curl -X POST https://<dominio>/api/admin/expirar \
  *          -H "Authorization: Bearer $ADMIN_API_TOKEN"
  *
- *   GET, automático — Vercel Cron (ver vercel.json) llama a esta ruta según
- *     el horario configurado ahí. Vercel manda el header
- *     `Authorization: Bearer $CRON_SECRET` solo si esa variable de entorno
- *     existe en el proyecto: se configura una vez en el dashboard y Vercel
- *     se encarga de firmar cada llamada, sin que el código tenga que saber
- *     nada de credenciales de Vercel.
+ *   GET, automático — cualquier programador externo (cron de Railway, un
+ *     Scheduled Workflow de GitHub Actions, cron-job.org, etc.) llama a esta
+ *     ruta una vez al día con el header `Authorization: Bearer $CRON_SECRET`.
+ *     El código no sabe ni le importa quién programa la llamada — solo
+ *     valida el secreto. Ver docs/railway-deploy.md para cómo dejarlo
+ *     andando en Railway.
  *
  * Antes de expirar cada pedido consulta el estado real en la pasarela: matar
  * un pedido que sí se pagó es mucho peor que dejarlo abierto unas horas de más.
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   return correr();
 }
 
-/** Vercel Cron llama por GET, nunca por POST. */
+/** El programador externo (cron) llama por GET, nunca por POST. */
 export async function GET(request: Request) {
   const noAutorizado = autorizarCron(request);
   if (noAutorizado) return noAutorizado;
