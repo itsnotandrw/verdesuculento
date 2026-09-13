@@ -38,6 +38,7 @@ function crear(nombre: string, limite: number, ventana: Parameters<typeof Rateli
 
 const checkoutLimiter = crear('checkout', 10, '1 m');
 const loginLimiter = crear('admin-login', 5, '5 m');
+const busquedaPedidosLimiter = crear('order-lookup', 10, '10 m');
 
 /** 10 intentos de crear pedido por minuto por IP. Fail-open sin Redis. */
 export async function limitarCheckout(ip: string): Promise<boolean> {
@@ -54,25 +55,26 @@ export async function limitarCheckout(ip: string): Promise<boolean> {
   }
 }
 
-// Fallback en memoria SOLO para login — ver el porqué en el comentario de
-// arriba. Vive en memoria del proceso: en Railway (un solo proceso
-// persistente) esto protege de verdad; se reinicia en cada redeploy, lo cual
-// es aceptable como capa secundaria (la contraseña sigue siendo la barrera
-// real).
-const intentosLoginEnMemoria = new Map<string, { conteo: number; expiraEn: number }>();
-const VENTANA_LOGIN_MS = 5 * 60_000;
-const MAX_INTENTOS_LOGIN = 5;
-
-function limitarLoginEnMemoria(ip: string): boolean {
-  const ahora = Date.now();
-  const entrada = intentosLoginEnMemoria.get(ip);
-  if (!entrada || ahora > entrada.expiraEn) {
-    intentosLoginEnMemoria.set(ip, { conteo: 1, expiraEn: ahora + VENTANA_LOGIN_MS });
-    return true;
-  }
-  entrada.conteo++;
-  return entrada.conteo <= MAX_INTENTOS_LOGIN;
+// Fallback en memoria para los endpoints que NUNCA deben fail-open (ver el
+// porqué en el comentario de arriba). Vive en memoria del proceso: en
+// Railway (un solo proceso persistente) esto protege de verdad; se reinicia
+// en cada redeploy, aceptable como capa secundaria.
+function crearLimitadorMemoria(maxIntentos: number, ventanaMs: number) {
+  const registro = new Map<string, { conteo: number; expiraEn: number }>();
+  return (clave: string): boolean => {
+    const ahora = Date.now();
+    const entrada = registro.get(clave);
+    if (!entrada || ahora > entrada.expiraEn) {
+      registro.set(clave, { conteo: 1, expiraEn: ahora + ventanaMs });
+      return true;
+    }
+    entrada.conteo++;
+    return entrada.conteo <= maxIntentos;
+  };
 }
+
+const limitarLoginEnMemoria = crearLimitadorMemoria(5, 5 * 60_000);
+const limitarBusquedaEnMemoria = crearLimitadorMemoria(10, 10 * 60_000);
 
 /** 5 intentos de login por 5 minutos por IP. Nunca fail-open. */
 export async function limitarLogin(ip: string): Promise<boolean> {
@@ -83,6 +85,23 @@ export async function limitarLogin(ip: string): Promise<boolean> {
   } catch (error) {
     console.warn('[ratelimit] login: Redis falló, cayendo al limitador en memoria.', error);
     return limitarLoginEnMemoria(ip);
+  }
+}
+
+/**
+ * 10 búsquedas de "mis pedidos" por correo cada 10 minutos por IP. Tampoco
+ * fail-open: a diferencia del checkout, esto expone (aunque resumida)
+ * información de pedidos ajenos si alguien prueba muchos correos seguidos —
+ * el correo es bastante menos secreto que la referencia del pedido.
+ */
+export async function limitarBusquedaPedidos(ip: string): Promise<boolean> {
+  if (!busquedaPedidosLimiter) return limitarBusquedaEnMemoria(ip);
+  try {
+    const { success } = await busquedaPedidosLimiter.limit(ip);
+    return success;
+  } catch (error) {
+    console.warn('[ratelimit] order-lookup: Redis falló, cayendo al limitador en memoria.', error);
+    return limitarBusquedaEnMemoria(ip);
   }
 }
 

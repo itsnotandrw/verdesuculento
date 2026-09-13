@@ -34,6 +34,7 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Servicio</h4>
             <ul>
+              <li><Link href="/mis-pedidos">Mis pedidos</Link></li>
               <li><a href="#">Envíos a Colombia</a></li>
               <li><a href="#">Garantía de plantas</a></li>
               <li><a href="#">Política de cambios</a></li>
