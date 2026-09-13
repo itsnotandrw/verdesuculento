@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
 import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
 import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
+import { RECOGER_TIENDA_QUOTE_ID, DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
 import ProductShape from '@/components/ProductShape';
 
 const STEPS = ['Envío', 'Pago'];
@@ -59,8 +60,13 @@ const INITIAL_FORM: FormData = {
   ciudad: '', ciudadOtra: '', departamento: '', direccion: '', barrio: '', notas: '', codigoPostal: '',
 };
 
-const CAMPOS_REQUERIDOS: Array<keyof FormData> = [
+const CAMPOS_REQUERIDOS_DOMICILIO: Array<keyof FormData> = [
   'nombre', 'apellido', 'email', 'telefono', 'documento', 'ciudad', 'departamento', 'direccion',
+];
+// Recoger en tienda no necesita nada de dirección -- solo identificar a quién
+// le entregamos.
+const CAMPOS_REQUERIDOS_RECOGER: Array<keyof FormData> = [
+  'nombre', 'apellido', 'email', 'telefono', 'documento',
 ];
 
 export default function CheckoutPage() {
@@ -70,6 +76,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [modoEntrega, setModoEntrega] = useState<'domicilio' | 'recoger'>('domicilio');
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [quoteId, setQuoteId] = useState<string | null>(null);
@@ -95,6 +102,23 @@ export default function CheckoutPage() {
 
   // --- cotización: se dispara cuando ya hay destino y algo en el carrito
   const cotizar = useCallback(async () => {
+    // Recoger en tienda no depende del destino ni de ninguna transportadora:
+    // es una sola opción fija, gratis, siempre disponible.
+    if (modoEntrega === 'recoger') {
+      setQuotes([{
+        id: RECOGER_TIENDA_QUOTE_ID,
+        carrier: 'Recoger en tienda',
+        service: `${DIRECCION_RECOGIDA.direccion}, ${DIRECCION_RECOGIDA.ciudad}`,
+        cost: 0,
+        listCost: 0,
+        etaLabel: 'Te avisamos por WhatsApp/correo cuando esté listo',
+      }]);
+      setQuoteId(RECOGER_TIENDA_QUOTE_ID);
+      setCodDisponible(false);
+      setErrorEnvio(null);
+      return;
+    }
+
     if (!form.departamento.trim() || !ciudadEfectiva.trim() || items.length === 0) {
       setQuotes([]);
       return;
@@ -136,7 +160,7 @@ export default function CheckoutPage() {
     } finally {
       setCotizando(false);
     }
-  }, [form.departamento, ciudadEfectiva, form.codigoPostal, items]);
+  }, [modoEntrega, form.departamento, ciudadEfectiva, form.codigoPostal, items]);
 
   // Se espera a que el cliente termine de escribir "Otro municipio" antes de
   // cotizar; elegir de la lista ya no necesita esperar nada, pero el mismo
@@ -189,12 +213,13 @@ export default function CheckoutPage() {
 
   const validarEnvio = (): boolean => {
     const nuevos: Partial<Record<keyof FormData, string>> = {};
-    for (const campo of CAMPOS_REQUERIDOS) {
+    const requeridos = modoEntrega === 'recoger' ? CAMPOS_REQUERIDOS_RECOGER : CAMPOS_REQUERIDOS_DOMICILIO;
+    for (const campo of requeridos) {
       if (!form[campo].trim()) nuevos[campo] = 'Requerido';
     }
     // El municipio manual solo es obligatorio cuando se eligió "Otro
     // municipio…"; el resto del tiempo el campo no se muestra siquiera.
-    if (eligiendoOtro && !form.ciudadOtra.trim()) {
+    if (modoEntrega === 'domicilio' && eligiendoOtro && !form.ciudadOtra.trim()) {
       nuevos.ciudadOtra = 'Requerido';
     }
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -227,12 +252,21 @@ export default function CheckoutPage() {
       // municipio…"; la API espera `ciudad` con el nombre real ya resuelto.
       const { ciudadOtra: _ciudadOtra, ...datosEnvio } = form;
 
+      // Recoger en tienda: se manda la dirección de la propia tienda en vez
+      // de los campos de dirección (vacíos, ni se mostraron) -- así el
+      // pedido queda con un destino real y legible en el panel admin, en
+      // vez de campos en blanco.
+      const direccionFinal =
+        modoEntrega === 'recoger'
+          ? { departamento: DIRECCION_RECOGIDA.departamento, ciudad: DIRECCION_RECOGIDA.ciudad, direccion: DIRECCION_RECOGIDA.direccion, barrio: '', codigoPostal: '' }
+          : { ciudad: ciudadEfectiva };
+
       const respuesta = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...datosEnvio,
-          ciudad: ciudadEfectiva,
+          ...direccionFinal,
           method: metodo,
           quoteId,
           lines: items.map((i) => ({
@@ -285,8 +319,33 @@ export default function CheckoutPage() {
             <div style={{ minWidth: 0 }}>
               <h2 className="display checkout-title">Información de envío</h2>
 
+              {/* --- domicilio vs. recoger en tienda --- */}
+              <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className={`chip ${modoEntrega === 'domicilio' ? 'active' : ''}`}
+                  onClick={() => setModoEntrega('domicilio')}
+                >
+                  Envío a domicilio
+                </button>
+                <button
+                  type="button"
+                  className={`chip ${modoEntrega === 'recoger' ? 'active' : ''}`}
+                  onClick={() => setModoEntrega('recoger')}
+                >
+                  Recoger en tienda — gratis
+                </button>
+              </div>
+
+              {modoEntrega === 'recoger' && (
+                <p className="checkout-hint" style={{ marginBottom: 28 }}>
+                  Recoges en {DIRECCION_RECOGIDA.direccion}, {DIRECCION_RECOGIDA.ciudad},{' '}
+                  {DIRECCION_RECOGIDA.departamento}. Te avisamos por correo o WhatsApp cuando esté listo.
+                </p>
+              )}
+
               <div className="checkout-fields-grid">
-                {CAMPOS.map((f) => (
+                {CAMPOS.filter((f) => modoEntrega === 'domicilio' || !f.soloDomicilio).map((f) => (
                   <div key={f.field} style={{ gridColumn: f.full ? '1 / -1' : undefined, minWidth: 0 }}>
                     <label htmlFor={`checkout-${f.field}`} className="checkout-label">
                       {f.label}{' '}
@@ -348,7 +407,7 @@ export default function CheckoutPage() {
                   </div>
                 ))}
 
-                {eligiendoOtro && (
+                {modoEntrega === 'domicilio' && eligiendoOtro && (
                   <div style={{ gridColumn: '1 / -1', minWidth: 0 }}>
                     <label htmlFor="checkout-ciudad-otra" className="checkout-label">
                       Nombre del municipio{' '}
@@ -375,7 +434,7 @@ export default function CheckoutPage() {
               <div style={{ marginTop: 40 }}>
                 <div className="eyebrow" style={{ marginBottom: 16 }}>Opciones de envío</div>
 
-                {!form.departamento || !ciudadEfectiva ? (
+                {modoEntrega === 'domicilio' && (!form.departamento || !ciudadEfectiva) ? (
                   <p className="checkout-hint">Elige departamento y ciudad para ver el costo del envío.</p>
                 ) : cotizando ? (
                   <p className="checkout-hint"><span className="spinner-sm" /> Cotizando con las transportadoras…</p>
@@ -506,6 +565,8 @@ const CAMPOS: Array<{
   full?: boolean;
   inputMode?: 'text' | 'email' | 'tel' | 'numeric';
   autoComplete?: string;
+  /** Recoger en tienda no necesita dirección: este campo no se muestra en ese modo. */
+  soloDomicilio?: boolean;
 }> = [
   { field: 'nombre', label: 'Nombre', type: 'text', placeholder: 'Tu nombre', autoComplete: 'given-name' },
   { field: 'apellido', label: 'Apellido', type: 'text', placeholder: 'Tu apellido', autoComplete: 'family-name' },
@@ -513,11 +574,11 @@ const CAMPOS: Array<{
   { field: 'telefono', label: 'Teléfono / WhatsApp', type: 'tel', placeholder: '300 000 0000', inputMode: 'tel', autoComplete: 'tel' },
   // Algunas transportadoras (TCC, confirmado) rechazan la guía sin esto.
   { field: 'documento', label: 'Cédula o NIT', type: 'text', placeholder: '1234567890', inputMode: 'numeric', autoComplete: 'off' },
-  { field: 'departamento', label: 'Departamento', type: 'text', placeholder: 'Cundinamarca', autoComplete: 'address-level1' },
-  { field: 'ciudad', label: 'Ciudad', type: 'text', placeholder: 'Bogotá', autoComplete: 'address-level2' },
-  { field: 'codigoPostal', label: 'Código postal', type: 'text', placeholder: '110111', inputMode: 'numeric', autoComplete: 'postal-code' },
-  { field: 'direccion', label: 'Dirección', type: 'text', placeholder: 'Calle 123 # 45-67', full: true, autoComplete: 'street-address' },
-  { field: 'barrio', label: 'Barrio', type: 'text', placeholder: 'El Poblado', autoComplete: 'address-level3' },
+  { field: 'departamento', label: 'Departamento', type: 'text', placeholder: 'Cundinamarca', autoComplete: 'address-level1', soloDomicilio: true },
+  { field: 'ciudad', label: 'Ciudad', type: 'text', placeholder: 'Bogotá', autoComplete: 'address-level2', soloDomicilio: true },
+  { field: 'codigoPostal', label: 'Código postal', type: 'text', placeholder: '110111', inputMode: 'numeric', autoComplete: 'postal-code', soloDomicilio: true },
+  { field: 'direccion', label: 'Dirección', type: 'text', placeholder: 'Calle 123 # 45-67', full: true, autoComplete: 'street-address', soloDomicilio: true },
+  { field: 'barrio', label: 'Barrio', type: 'text', placeholder: 'El Poblado', autoComplete: 'address-level3', soloDomicilio: true },
   // Torre/apto/piso van aparte de "barrio": la transportadora los lee de un
   // campo de instrucciones de entrega distinto, no del nombre del barrio.
   { field: 'notas', label: 'Apto, torre o punto de referencia (opcional)', type: 'text', placeholder: 'Apto 301, torre 2, edificio azul' },

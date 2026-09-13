@@ -7,7 +7,7 @@
 
 import { autorizarAdmin, fallo, ok } from '@/lib/api';
 import { almacenamiento, orders } from '@/lib/orders/store';
-import { etiquetaEnvio, etiquetaEstado, type Order } from '@/lib/orders/types';
+import { etiquetaEnvioPedido, etiquetaEstadoPedido, type Order } from '@/lib/orders/types';
 import { paymentProvider } from '@/lib/payments';
 import { shippingProvider } from '@/lib/shipping';
 
@@ -32,10 +32,14 @@ function resumen(order: Order) {
     createdAt: order.createdAt,
     expiresAt: order.expiresAt,
     status: order.status,
-    statusLabel: etiquetaEstado(order.status),
+    statusLabel: etiquetaEstadoPedido(order),
     cliente: `${order.customer.nombre} ${order.customer.apellido}`,
     email: order.customer.email,
     telefono: order.customer.telefono,
+    // De selectedQuote, no de shipment: selectedQuote existe desde que se
+    // crea el pedido, shipment recién existe después de aprobar el pago —
+    // el botón "generar guía"/"marcar listo" tiene que verse ANTES de eso.
+    esRecogerEnTienda: order.selectedQuote.provider === 'pickup',
     destino: `${order.address.ciudad}, ${order.address.departamento}`,
     direccion: [order.address.direccion, order.address.barrio].filter(Boolean).join(', '),
     total: order.total,
@@ -54,7 +58,7 @@ function resumen(order: Order) {
           service: order.shipment.service,
           trackingNumber: order.shipment.trackingNumber,
           status: order.shipment.status,
-          statusLabel: etiquetaEnvio(order.shipment.status),
+          statusLabel: etiquetaEnvioPedido(order.shipment),
           codAmount: order.shipment.codAmount,
           codSettledAt: order.shipment.codSettledAt,
           labelUrl: order.shipment.labelUrl,

@@ -44,6 +44,7 @@ interface Pedido {
   cliente: string;
   email: string;
   telefono: string;
+  esRecogerEnTienda: boolean;
   destino: string;
   direccion: string;
   total: number;
@@ -323,7 +324,13 @@ export default function AdminOrders() {
 
                       {pedido.pagoEstado === 'approved' && !pedido.envio && (
                         <button className="btn btn-primary btn-sm" disabled={trabajando} onClick={() => accionar(pedido, 'reintentar-guia')}>
-                          Generar guía
+                          {pedido.esRecogerEnTienda ? 'Marcar listo para recoger' : 'Generar guía'}
+                        </button>
+                      )}
+
+                      {pedido.esRecogerEnTienda && pedido.envio && pedido.envio.statusLabel !== 'Recogido' && (
+                        <button className="btn btn-primary btn-sm" disabled={trabajando} onClick={() => accionar(pedido, 'marcar-recogido')}>
+                          Marcar recogido
                         </button>
                       )}
 

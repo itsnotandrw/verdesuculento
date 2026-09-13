@@ -243,6 +243,31 @@ export function etiquetaEnvio(status: ShipmentStatus): string {
   return ETIQUETAS_ENVIO[status] ?? status;
 }
 
+/**
+ * Igual que `etiquetaEstado`/`etiquetaEnvio`, pero corrige el texto para
+ * pedidos de recoger en tienda: en la máquina de estados un pedido "listo
+ * para recoger" es técnicamente `shipped`/`created` (las mismas etiquetas
+ * que "en camino"/"guía generada" de un envío real) — decirle eso al
+ * cliente cuando en realidad está esperando en el mostrador confunde más de
+ * lo que ayuda. No se creó un estado nuevo para esto a propósito: es
+ * un caso de presentación, no una rama nueva de la máquina de estados.
+ */
+export function etiquetaEstadoPedido(order: Pick<Order, 'status' | 'shipment'>): string {
+  if (order.shipment?.provider === 'pickup') {
+    if (order.status === 'shipped') return 'Listo para recoger';
+    if (order.status === 'delivered') return 'Recogido';
+  }
+  return etiquetaEstado(order.status);
+}
+
+export function etiquetaEnvioPedido(shipment: OrderShipment): string {
+  if (shipment.provider === 'pickup') {
+    if (shipment.status === 'created') return 'Listo para recoger';
+    if (shipment.status === 'delivered') return 'Recogido';
+  }
+  return etiquetaEnvio(shipment.status);
+}
+
 /** Recalcula el estado agregado a partir de las dos máquinas de estado. */
 export function derivarEstado(payment: OrderPayment, shipment?: OrderShipment): OrderStatus {
   if (shipment?.status === 'delivered') return 'delivered';

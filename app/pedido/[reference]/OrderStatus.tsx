@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatCOP } from '@/data/catalog';
+import { DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
 
 interface PublicOrder {
   reference: string;
@@ -52,6 +53,20 @@ const ETIQUETA: Record<string, string> = {
   expired: 'Expirado',
 };
 
+/**
+ * En la máquina de estados, un pedido "listo para recoger" es técnicamente
+ * `shipped`/idéntico a un envío real -- corrige el texto solo para mostrar,
+ * sin inventar un estado nuevo (ver la misma decisión en
+ * lib/orders/types.ts, etiquetaEstadoPedido/etiquetaEnvioPedido).
+ */
+function etiquetaEstadoCliente(pedido: PublicOrder): string {
+  if (pedido.carrier === 'Recoger en tienda') {
+    if (pedido.status === 'shipped') return 'Listo para recoger';
+    if (pedido.status === 'delivered') return 'Recogido';
+  }
+  return ETIQUETA[pedido.status] ?? pedido.status;
+}
+
 function fecha(iso: string) {
   return new Date(iso).toLocaleString('es-CO', {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
@@ -73,6 +88,7 @@ export default function OrderStatus({
 
   const esperandoPago = pedido.paymentStatus === 'pending';
   const enRevision = pedido.paymentStatus === 'in_review';
+  const esRecogerEnTienda = pedido.carrier === 'Recoger en tienda';
 
   // Mientras el pago no esté resuelto se refresca solo: si el operador aprueba
   // desde el panel, el cliente lo ve sin recargar.
@@ -125,7 +141,7 @@ export default function OrderStatus({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 12 }}>
           <div className="eyebrow">PEDIDO {pedido.reference}</div>
           <span className="status-pill" data-tone={TONO[pedido.status] ?? 'wait'}>
-            {ETIQUETA[pedido.status] ?? pedido.status}
+            {etiquetaEstadoCliente(pedido)}
           </span>
         </div>
 
@@ -154,7 +170,9 @@ export default function OrderStatus({
             'Transfiere el valor exacto a la llave del vivero usando la referencia de abajo. Apenas veamos el abono, despachamos tu planta.'}
           {enRevision &&
             'Ya registramos tu aviso. Estamos confirmando el abono en la cuenta; en cuanto aparezca, tu pedido pasa a despacho y te avisamos por correo.'}
-          {pedido.paymentStatus === 'approved' &&
+          {pedido.paymentStatus === 'approved' && esRecogerEnTienda &&
+            `Tu pedido está confirmado. Te avisamos por correo o WhatsApp cuando esté listo para recoger en ${DIRECCION_RECOGIDA.direccion}, ${DIRECCION_RECOGIDA.ciudad}.`}
+          {pedido.paymentStatus === 'approved' && !esRecogerEnTienda &&
             `Tu pedido está confirmado y viaja a ${pedido.destino}. Cada planta sale empacada para el viaje y con garantía de planta viva.`}
           {pedido.paymentStatus === 'declined' && 'Este pedido fue cancelado. Si crees que es un error, escríbenos y lo revisamos.'}
           {pedido.paymentStatus === 'expired' && 'Venció el plazo de pago y liberamos el pedido. Puedes volver a armarlo cuando quieras.'}
@@ -251,22 +269,34 @@ export default function OrderStatus({
           </div>
         )}
 
-        {/* --- envío --- */}
+        {/* --- envío / recogida --- */}
         {pedido.trackingNumber && (
           <div className="pay-panel" style={{ marginBottom: 32 }}>
-            <div className="eyebrow" style={{ marginBottom: 18 }}>Envío</div>
-            <div className="pay-field">
-              <div style={{ minWidth: 0 }}>
-                <div className="pay-field-label">Guía · {pedido.carrier}</div>
-                <div className="pay-field-value">{pedido.trackingNumber}</div>
+            <div className="eyebrow" style={{ marginBottom: 18 }}>{esRecogerEnTienda ? 'Recoger en tienda' : 'Envío'}</div>
+
+            {esRecogerEnTienda ? (
+              <div className="pay-field">
+                <div style={{ minWidth: 0 }}>
+                  <div className="pay-field-label">Dirección</div>
+                  <div className="pay-field-value">
+                    {DIRECCION_RECOGIDA.direccion}, {DIRECCION_RECOGIDA.ciudad}, {DIRECCION_RECOGIDA.departamento}
+                  </div>
+                </div>
               </div>
-              <button
-                className={`pay-copy ${copiado === 'guia' ? 'done' : ''}`}
-                onClick={() => copiar(pedido.trackingNumber!, 'guia')}
-              >
-                {copiado === 'guia' ? '✓ Copiada' : 'Copiar'}
-              </button>
-            </div>
+            ) : (
+              <div className="pay-field">
+                <div style={{ minWidth: 0 }}>
+                  <div className="pay-field-label">Guía · {pedido.carrier}</div>
+                  <div className="pay-field-value">{pedido.trackingNumber}</div>
+                </div>
+                <button
+                  className={`pay-copy ${copiado === 'guia' ? 'done' : ''}`}
+                  onClick={() => copiar(pedido.trackingNumber!, 'guia')}
+                >
+                  {copiado === 'guia' ? '✓ Copiada' : 'Copiar'}
+                </button>
+              </div>
+            )}
 
             {pedido.tracking.length > 0 && (
               <div style={{ marginTop: 24 }}>
@@ -315,7 +345,7 @@ export default function OrderStatus({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 14, marginBottom: 16 }}>
               <span style={{ color: 'var(--fg-dim)', minWidth: 0 }}>
-                Envío a {pedido.destino}
+                {esRecogerEnTienda ? 'Recoger en tienda' : `Envío a ${pedido.destino}`}
                 <span className="mono" style={{ display: 'block', fontSize: 11, color: 'var(--fg-mute)' }}>{pedido.etaLabel}</span>
               </span>
               <span className="mono" style={{ flexShrink: 0 }}>

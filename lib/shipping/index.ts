@@ -12,8 +12,10 @@ import { tarifaPropiaProvider } from './providers/tarifa-propia';
 import { mipaqueteProvider } from './providers/mipaquete';
 import { enviaProvider } from './providers/envia';
 import type { QuoteRequest, ShippingAddress, ShippingParcel, ShippingQuote } from './types';
+import { RECOGER_TIENDA_QUOTE_ID } from './constants';
 
 export { logisticaDe, armarPaquete } from './paquete';
+export { RECOGER_TIENDA_QUOTE_ID } from './constants';
 
 const PROVEEDORES: Record<string, ShippingProvider> = {
   [tarifaPropiaProvider.id]: tarifaPropiaProvider,
@@ -51,6 +53,30 @@ export async function cotizar(request: QuoteRequest): Promise<ShippingQuote[]> {
 }
 
 /**
+ * La opción "recoger en tienda": cuesta $0, no tiene transportadora, y no
+ * depende del destino — por eso no pasa por ningún adaptador de
+ * `shippingProvider()`, a diferencia de todas las demás cotizaciones.
+ */
+export function cotizacionRecogerEnTienda(): ShippingQuote {
+  return {
+    id: RECOGER_TIENDA_QUOTE_ID,
+    provider: 'pickup',
+    carrier: 'Recoger en tienda',
+    carrierCode: 'pickup',
+    service: `${env.shipping.origin.direccion}, ${env.shipping.origin.ciudad}`,
+    serviceCode: 'pickup',
+    cost: 0,
+    listCost: 0,
+    currency: 'COP',
+    etaMinDays: 0,
+    etaMaxDays: 0,
+    etaLabel: 'Te avisamos por WhatsApp/correo cuando esté listo',
+    cashOnDeliveryAvailable: false,
+    cashOnDeliveryFee: 0,
+  };
+}
+
+/**
  * Re-cotiza y busca la opción por id.
  *
  * El checkout devuelve el id de la cotización elegida, nunca su precio: el
@@ -64,6 +90,10 @@ export async function resolverCotizacion(
   merchandiseValue: number,
   cashOnDelivery = false
 ): Promise<ShippingQuote | null> {
+  // Recoger en tienda no tiene destino que cotizar -- ni siquiera hace falta
+  // que `destination` traiga algo válido.
+  if (quoteId === RECOGER_TIENDA_QUOTE_ID) return cotizacionRecogerEnTienda();
+
   const opciones = await cotizar({ destination, parcel, merchandiseValue, cashOnDelivery });
   return opciones.find((opcion) => opcion.id === quoteId) ?? null;
 }

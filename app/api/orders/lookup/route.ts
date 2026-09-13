@@ -13,7 +13,7 @@
 
 import { ValidationError, cuerpo, email as validarEmail, fail, fallo, ok } from '@/lib/api';
 import { orders } from '@/lib/orders/store';
-import { etiquetaEstado } from '@/lib/orders/types';
+import { etiquetaEstadoPedido } from '@/lib/orders/types';
 import { ipDe, limitarBusquedaPedidos } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         orderNumber: o.orderNumber ?? null,
         createdAt: o.createdAt,
         status: o.status,
-        statusLabel: etiquetaEstado(o.status),
+        statusLabel: etiquetaEstadoPedido(o),
         total: o.total,
         etaLabel: o.selectedQuote.etaLabel,
       }));

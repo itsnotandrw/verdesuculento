@@ -14,15 +14,16 @@ import {
   aprobarPago,
   conciliarRecaudo,
   crearGuia,
+  marcarRecogido,
   rechazarPago,
   reintentarPago,
 } from '@/lib/orders/orchestrator';
 import { orders } from '@/lib/orders/store';
-import { etiquetaEstado } from '@/lib/orders/types';
+import { etiquetaEstadoPedido } from '@/lib/orders/types';
 
 export const dynamic = 'force-dynamic';
 
-const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar'] as const;
+const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido'] as const;
 type Accion = (typeof ACCIONES)[number];
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -79,6 +80,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
       case 'conciliar':
         resultado = await conciliarRecaudo(pedido.id, quien);
         break;
+
+      case 'marcar-recogido':
+        if (pedido.shipment?.provider !== 'pickup') {
+          return fail('Este pedido no es de recoger en tienda.', 409);
+        }
+        resultado = await marcarRecogido(pedido.id, quien);
+        break;
     }
 
     if (!resultado) return fail('No se pudo aplicar la acción.', 409);
@@ -87,7 +95,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       id: resultado.id,
       reference: resultado.reference,
       status: resultado.status,
-      statusLabel: etiquetaEstado(resultado.status),
+      statusLabel: etiquetaEstadoPedido(resultado),
       pagoEstado: resultado.payment.status,
       envio: resultado.shipment
         ? { trackingNumber: resultado.shipment.trackingNumber, carrier: resultado.shipment.carrier }

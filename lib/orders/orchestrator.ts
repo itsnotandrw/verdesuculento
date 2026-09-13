@@ -256,6 +256,39 @@ export async function crearGuia(orderId: string, cashOnDelivery?: number): Promi
     return pedido;
   }
 
+  // Recoger en tienda no tiene transportadora que llamar: no hay destino que
+  // cotizar ni guía real que generar. Queda "listo" a la espera de que el
+  // cliente pase por él; `marcarRecogido()` cierra el ciclo cuando eso pasa.
+  if (pedido.selectedQuote.provider === 'pickup') {
+    return orders.update(orderId, (order) => {
+      if (order.shipment) return order;
+
+      order.shipment = {
+        provider: 'pickup',
+        status: 'created',
+        carrier: 'Recoger en tienda',
+        service: order.selectedQuote.service,
+        cost: 0,
+        trackingNumber: order.reference,
+        createdAt: new Date().toISOString(),
+      };
+      order.tracking.push({
+        status: 'created',
+        description: 'Listo para recoger en tienda.',
+        occurredAt: new Date().toISOString(),
+      });
+      order.status = derivarEstado(order.payment, order.shipment);
+
+      registrar(order, {
+        type: 'listo_para_recoger',
+        actor: 'sistema',
+        message: 'Pedido listo para recoger en tienda.',
+      });
+
+      return order;
+    });
+  }
+
   const proveedor = shippingProvider();
 
   try {
@@ -582,6 +615,34 @@ export async function conciliarRecaudo(orderId: string, quien: string): Promise<
       actor: 'admin',
       message: `Giro del recaudo recibido y conciliado por ${quien}.`,
     });
+    return order;
+  });
+}
+
+/**
+ * Cierra el ciclo de un pedido de recoger en tienda: el cliente ya pasó por
+ * él. No aplica a envíos con transportadora — esos se entregan solos vía el
+ * webhook de tracking.
+ */
+export async function marcarRecogido(orderId: string, quien: string): Promise<Order | null> {
+  return orders.update(orderId, (order) => {
+    if (!order.shipment || order.shipment.provider !== 'pickup') return order;
+    if (order.shipment.status === 'delivered') return order;
+
+    order.shipment.status = 'delivered';
+    order.tracking.push({
+      status: 'delivered',
+      description: 'Recogido en tienda.',
+      occurredAt: new Date().toISOString(),
+    });
+    order.status = derivarEstado(order.payment, order.shipment);
+
+    registrar(order, {
+      type: 'recogido',
+      actor: 'admin',
+      message: `${quien} marcó el pedido como recogido en tienda.`,
+    });
+
     return order;
   });
 }
