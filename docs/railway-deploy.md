@@ -154,3 +154,13 @@ apuntando al dominio viejo si no se actualizan a mano:
 - [ ] Dominio verificado y sirviendo por HTTPS.
 - [ ] Webhooks de transportadora/pasarela actualizados al dominio nuevo, si aplica.
 - [ ] El proyecto de Vercel se puede pausar/borrar solo después de confirmar que Railway lleva unos días estables.
+
+## 8. Problemas conocidos del build
+
+**`TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]` corriendo `pnpm i --frozen-lockfile`,
+con `Node.js v18.20.5` en el log** — bug real de Corepack bajo Node 18, no del
+proyecto. Se corrige fijando la versión de Node que Nixpacks debe usar:
+`package.json` ya trae `"engines": { "node": ">=20" }` para esto. Si Railway
+sigue picando Node 18 a pesar de eso (pasa si el build usa una imagen de
+Nixpacks cacheada vieja), forzarlo explícito con una variable de entorno del
+servicio: `NIXPACKS_NODE_VERSION=20`, y volver a desplegar.
