@@ -10,8 +10,11 @@ Esta guía es esa lista, una sola vez.
 1. En Railway: **New Project → Deploy from GitHub repo** → elegir
    `itsnotandrw/verdesuculento`.
 2. Railway detecta Next.js con Nixpacks solo — no hace falta Dockerfile.
-   `railway.json` (en la raíz del repo) ya fija el build (`npm run build`),
-   el arranque (`npm run start`) y el healthcheck (`/`).
+   `railway.json` (en la raíz del repo) ya fija el build (`pnpm build`), el
+   arranque (`pnpm start`) y el healthcheck (`/`). El proyecto usa pnpm (ver
+   `pnpm-lock.yaml` y el campo `packageManager` en `package.json`) — Nixpacks
+   lo detecta solo y usa Corepack para instalar la versión exacta, sin nada
+   que configurar aparte.
 3. Next.js escucha en el puerto que Railway inyecte en `PORT` automáticamente
    — no hay que tocar nada para eso.
 
