@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
+import CountUp from '@/components/CountUp';
+import BlurText from '@/components/BlurText';
 
 export const metadata: Metadata = {
   title: 'Nosotros — Vivero Verde Suculento',
@@ -74,9 +76,12 @@ export default function NosotrosPage() {
         <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
           <Reveal>
             <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 20 }}>SOACHA · CUNDINAMARCA</div>
-            <h1 className="display" style={{ fontSize: 'clamp(56px, 9vw, 130px)', color: '#fff', letterSpacing: '-0.03em', lineHeight: 0.92, marginBottom: 28 }}>
-              Somos <em style={{ color: 'var(--accent)' }}>Vivero Verde Suculento</em>
-            </h1>
+            <BlurText
+              text="Somos Vivero Verde Suculento"
+              className="display"
+              style={{ fontSize: 'clamp(56px, 9vw, 130px)', color: '#fff', letterSpacing: '-0.03em', lineHeight: 0.92, marginBottom: 28, justifyContent: 'center' }}
+              emphasizeLast={3}
+            />
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 19, maxWidth: 560, margin: '0 auto', lineHeight: 1.55 }}>
               Un vivero fundado por agrónomos, para personas que quieren cultivar en serio.
             </p>
@@ -120,9 +125,15 @@ export default function NosotrosPage() {
                 No somos un intermediario. Somos el vivero.
               </p>
               <div style={{ display: 'flex', gap: 48, marginTop: 40, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
-                {[{ n: '2019', label: 'Fundación' }, { n: '21+', label: 'Variedades' }, { n: '10', label: 'Ciudades' }].map((s) => (
+                <div>
+                  <div className="display" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--accent)', lineHeight: 1 }}>2019</div>
+                  <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', marginTop: 6, letterSpacing: '0.08em' }}>FUNDACIÓN</div>
+                </div>
+                {[{ to: 21, suffix: '+', label: 'Variedades' }, { to: 10, suffix: '', label: 'Ciudades' }].map((s) => (
                   <div key={s.label}>
-                    <div className="display" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--accent)', lineHeight: 1 }}>{s.n}</div>
+                    <div className="display" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--accent)', lineHeight: 1 }}>
+                      <CountUp to={s.to} suffix={s.suffix} />
+                    </div>
                     <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', marginTop: 6, letterSpacing: '0.08em' }}>{s.label.toUpperCase()}</div>
                   </div>
                 ))}

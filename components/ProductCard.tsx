@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useQuickView } from '@/context/QuickViewContext';
 import { formatCOP } from '@/data/catalog';
 import { RATINGS } from '@/data/ratings';
+import { useSpotlight } from '@/hooks/useSpotlight';
 import ProductShape from './ProductShape';
 import StarRating from './StarRating';
 import SoldCount from './SoldCount';
@@ -24,9 +25,15 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
   const [activeColor, setActiveColor] = useState(product.colors[0]);
   const rating = RATINGS[product.id];
   const badgeLabel = rating?.bestsellerRank ? 'Más vendido' : product.badge;
+  const spotlight = useSpotlight<HTMLElement>();
 
   return (
-    <article className="product-card" data-compact={compact ? 'true' : 'false'}>
+    <article
+      ref={spotlight.ref}
+      onMouseMove={spotlight.onMouseMove}
+      className="product-card"
+      data-compact={compact ? 'true' : 'false'}
+    >
       {badgeLabel && <span className="product-badge">{badgeLabel}</span>}
 
       <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>

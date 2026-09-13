@@ -704,6 +704,25 @@ input, select, textarea { cursor: text; }
   box-shadow: 0 24px 60px -12px color-mix(in oklab, var(--accent) 18%, transparent),
               0 8px 24px -6px rgba(0,0,0,0.35);
 }
+.product-card::after,
+.testimonial-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle 240px at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in oklab, var(--accent) 20%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.product-card:hover::after,
+.testimonial-card:hover::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card::after, .testimonial-card::after { transition: none; }
+}
 .product-card-media {
   aspect-ratio: 4/5;
   position: relative;

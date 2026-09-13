@@ -8,6 +8,9 @@ import ProductShape from '@/components/ProductShape';
 import Reveal from '@/components/Reveal';
 import NewsletterForm from '@/components/NewsletterForm';
 import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
+import TestimonialCard from '@/components/TestimonialCard';
+import CountUp from '@/components/CountUp';
+import BlurText from '@/components/BlurText';
 import type { Product } from '@/types';
 
 export const metadata: Metadata = {
@@ -98,12 +101,14 @@ export default async function HomePage() {
               </p>
               <div style={{ display: 'flex', gap: 40, marginBottom: 40, paddingTop: 28, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 {[
-                  { n: '21', label: 'variedades curadas' },
-                  { n: '12', label: 'meses de cultivo promedio' },
-                  { n: '100%', label: 'garantía de llegada' },
+                  { to: 21, suffix: '', label: 'variedades curadas' },
+                  { to: 12, suffix: '', label: 'meses de cultivo promedio' },
+                  { to: 100, suffix: '%', label: 'garantía de llegada' },
                 ].map((s) => (
                   <div key={s.label}>
-                    <div className="display" style={{ fontSize: 'clamp(32px, 4vw, 52px)', color: 'var(--accent)', lineHeight: 1 }}>{s.n}</div>
+                    <div className="display" style={{ fontSize: 'clamp(32px, 4vw, 52px)', color: 'var(--accent)', lineHeight: 1 }}>
+                      <CountUp to={s.to} suffix={s.suffix} />
+                    </div>
                     <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', marginTop: 6, letterSpacing: '0.08em' }}>{s.label.toUpperCase()}</div>
                   </div>
                 ))}
@@ -201,13 +206,7 @@ export default async function HomePage() {
           </div>
           <Reveal stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="testimonial-card">
-                <p className="testimonial-text">{t.text}</p>
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>{t.name}</div>
-                  <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', marginTop: 2, letterSpacing: '0.05em' }}>{t.role}</div>
-                </div>
-              </div>
+              <TestimonialCard key={i} testimonial={t} />
             ))}
           </Reveal>
         </div>
@@ -372,10 +371,14 @@ function HeroSection() {
       <FloatingBotanicals />
       <div className="container" style={{ position: 'relative', zIndex: 2, textAlign: 'center', pointerEvents: 'none' }}>
         <div className="eyebrow reveal in" style={{ marginBottom: 24 }}>COSECHA 2026 · SOACHA · CUNDINAMARCA</div>
-        <h1 className="display hero-heading" style={{ fontSize: 'clamp(52px, 8vw, 120px)', marginBottom: 28, letterSpacing: '-0.025em', lineHeight: 0.95, maxWidth: 1200, marginInline: 'auto' }}>
-          Todo para tu cultivo<br />
-          <em style={{ fontStyle: 'italic', color: 'var(--hero-em)' }}>en un solo lugar.</em>
-        </h1>
+        <BlurText
+          text="Todo para tu cultivo en un solo lugar."
+          className="display hero-heading"
+          style={{ fontSize: 'clamp(52px, 8vw, 120px)', marginBottom: 28, letterSpacing: '-0.025em', lineHeight: 0.95, maxWidth: 1200, marginInline: 'auto', justifyContent: 'center' }}
+          emphasizeLast={4}
+          breakBeforeLast={4}
+          emphasizeStyle={{ fontStyle: 'italic', color: 'var(--hero-em)' }}
+        />
         <Reveal>
           <p style={{ fontSize: 19, color: 'var(--fg-dim)', maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.5 }}>
             Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos. Envío a toda Colombia con garantía de plantas vivas.
