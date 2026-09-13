@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { CATALOG, CATEGORIES, ARTICLES } from '@/data/catalog';
+import { CATEGORIES, ARTICLES } from '@/data/catalog';
+import { getAllProducts } from '@/lib/catalog/store';
 import { env } from '@/lib/env';
 
 // Antes hardcodeado a 'https://verde.co' — con el dominio real ya comprado,
@@ -7,7 +8,8 @@ import { env } from '@/lib/env';
 // así que cambiar de dominio no implica tocar este archivo.
 const BASE_URL = env.siteUrl.replace(/\/$/, '');
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const catalog = await getAllProducts();
   const staticPages = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 1 },
     { url: `${BASE_URL}/catalogo`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.9 },
@@ -25,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const productPages = CATALOG.map((product) => ({
+  const productPages = catalog.map((product) => ({
     url: `${BASE_URL}/producto/${product.id}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,

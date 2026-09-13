@@ -20,7 +20,7 @@
  *      en `in_review`, nunca en `approved`.
  */
 
-import { getProductById } from '@/data/catalog';
+import { getProductById } from '@/lib/catalog/store';
 import { nuevaReferenciaPago, nuevaReferenciaPedido, nuevoOrderId } from '@/lib/ids';
 import { env } from '@/lib/env';
 import { paymentProvider, type PaymentContext } from '@/lib/payments';
@@ -87,15 +87,16 @@ export async function crearPedido(
   }
 
   // --- líneas y subtotal, siempre con el precio del catálogo del servidor
-  const lines: OrderLine[] = input.lines.map((linea) => {
-    const producto = getProductById(linea.productId);
+  const lines: OrderLine[] = [];
+  for (const linea of input.lines) {
+    const producto = await getProductById(linea.productId);
     if (!producto) {
       throw new OrderError(`El producto ${linea.productId} ya no está disponible.`, 'producto_invalido');
     }
 
     const qty = Math.max(1, Math.min(99, Math.floor(linea.qty)));
 
-    return {
+    lines.push({
       productId: producto.id,
       name: producto.name,
       color: linea.color || producto.colors[0]?.name || '',
@@ -103,8 +104,8 @@ export async function crearPedido(
       qty,
       unitPrice: producto.price,
       weightGrams: logisticaDe(producto.id).weightGrams,
-    };
-  });
+    });
+  }
 
   const subtotal = lines.reduce((suma, l) => suma + l.unitPrice * l.qty, 0);
 

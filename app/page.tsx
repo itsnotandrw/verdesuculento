@@ -1,20 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { CATALOG, CATEGORIES, TESTIMONIALS, ARTICLES, getFeaturedProducts, formatCOP } from '@/data/catalog';
+import { CATEGORIES, TESTIMONIALS, ARTICLES, formatCOP } from '@/data/catalog';
+import { getAllProducts } from '@/lib/catalog/store';
 import ProductCard from '@/components/ProductCard';
 import ProductShape from '@/components/ProductShape';
 import Reveal from '@/components/Reveal';
 import NewsletterForm from '@/components/NewsletterForm';
 import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
+import type { Product } from '@/types';
 
 export const metadata: Metadata = {
   title: 'VERDE. — Vivero & Agricultura Moderna',
   description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos. Envío a toda Colombia con garantía de plantas vivas.',
 };
 
-export default function HomePage() {
-  const featured = getFeaturedProducts().slice(0, 4);
+export const revalidate = 60;
+
+export default async function HomePage() {
+  const products = await getAllProducts();
+  const featured = products.filter((p) => p.badge).slice(0, 4);
 
   return (
     <main>
@@ -118,7 +123,7 @@ export default function HomePage() {
             Categorías <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>destacadas.</em>
           </h2>
         </div>
-        <HorizontalScroller />
+        <HorizontalScroller products={products} />
       </section>
 
       {/* ── MANIFESTO / BENEFITS ─────────────────────── */}
@@ -391,12 +396,12 @@ function HeroSection() {
   );
 }
 
-function HorizontalScroller() {
+function HorizontalScroller({ products }: { products: Product[] }) {
   return (
     <HorizontalScrollerClient>
       <div style={{ display: 'flex', gap: 20, padding: '0 32px', width: 'max-content' }}>
         {CATEGORIES.map((cat, i) => {
-          const product = CATALOG.find((p) => p.category === cat.id);
+          const product = products.find((p) => p.category === cat.id);
           const accent = i % 2 === 0 ? 'var(--accent)' : 'var(--accent-2)';
           return (
             <Link

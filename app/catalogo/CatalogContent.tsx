@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CATALOG, CATEGORIES, PRICE_RANGES, DIFFICULTY_LEVELS, SUN_OPTIONS, formatCOP } from '@/data/catalog';
+import { CATEGORIES, PRICE_RANGES, DIFFICULTY_LEVELS, SUN_OPTIONS, formatCOP } from '@/data/catalog';
 import ProductCard from '@/components/ProductCard';
 import type { Product } from '@/types';
 
@@ -35,7 +35,7 @@ const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: strin
   },
 };
 
-export default function CatalogContent() {
+export default function CatalogContent({ products }: { products: Product[] }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
@@ -61,7 +61,7 @@ export default function CatalogContent() {
   const priceRange = PRICE_RANGES.find((r) => r.id === selectedPrice) ?? null;
 
   const filtered = useMemo(() => {
-    let list = [...CATALOG];
+    let list = [...products];
     if (search) list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || p.tagline.toLowerCase().includes(search.toLowerCase()));
     if (selectedCats.length) list = list.filter((p) => selectedCats.includes(p.category));
     if (selectedDifficulty.length) list = list.filter((p) => selectedDifficulty.includes(p.specs.dificultad));
@@ -86,7 +86,7 @@ export default function CatalogContent() {
     if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') list.sort((a, b) => b.price - a.price);
     return list;
-  }, [search, selectedCats, selectedDifficulty, selectedSun, priceRange, selectedClimate, selectedObjective, sort]);
+  }, [products, search, selectedCats, selectedDifficulty, selectedSun, priceRange, selectedClimate, selectedObjective, sort]);
 
   const activeFilterCount = selectedCats.length + selectedDifficulty.length + selectedSun.length + (selectedPrice ? 1 : 0) + selectedClimate.length + selectedObjective.length;
 

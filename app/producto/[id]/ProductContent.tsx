@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CATALOG, CATEGORIES, getProductById, getRelatedProducts, getCrossSellProducts, formatCOP } from '@/data/catalog';
+import { CATEGORIES, formatCOP } from '@/data/catalog';
 import { SOCIAL_PROOF, SELLER_STATS } from '@/data/socialProof';
 import { useCart } from '@/context/CartContext';
 import ProductShape from '@/components/ProductShape';
@@ -17,7 +17,14 @@ import SellerReputation from '@/components/SellerReputation';
 import SoldCount from '@/components/SoldCount';
 import type { Product, ProductColor } from '@/types';
 
-export default function ProductContent({ product }: { product: Product }) {
+interface Props {
+  product: Product;
+  /** Calculados server-side en page.tsx (el catálogo puede vivir en Redis, un componente cliente no puede leerlo directo). */
+  related: Product[];
+  crossSell: Product[];
+}
+
+export default function ProductContent({ product, related, crossSell }: Props) {
   const { add, count } = useCart();
   const router = useRouter();
   const [activeColor, setActiveColor] = useState<ProductColor>(product.colors[0]);
@@ -29,8 +36,6 @@ export default function ProductContent({ product }: { product: Product }) {
   const [activeTab, setActiveTab] = useState<'reputacion' | 'opiniones' | 'preguntas'>('opiniones');
   const ctaRef = useRef<HTMLButtonElement>(null);
 
-  const related = getRelatedProducts(product, 3);
-  const crossSell = getCrossSellProducts(product);
   const category = CATEGORIES.find((c) => c.id === product.category);
   const specs = product.specs;
   const social = SOCIAL_PROOF[product.id];

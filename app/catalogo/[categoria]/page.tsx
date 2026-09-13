@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CATALOG, CATEGORIES, formatCOP } from '@/data/catalog';
+import { CATEGORIES, formatCOP } from '@/data/catalog';
+import { getProductsByCategory } from '@/lib/catalog/store';
 import ProductCard from '@/components/ProductCard';
 
 interface Props {
   params: { categoria: string };
 }
+
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   return CATEGORIES.map((c) => ({ categoria: c.id }));
@@ -21,11 +24,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params }: Props) {
   const cat = CATEGORIES.find((c) => c.id === params.categoria);
   if (!cat) notFound();
 
-  const products = CATALOG.filter((p) => p.category === params.categoria);
+  const products = await getProductsByCategory(params.categoria);
 
   return (
     <div className="page-section" style={{ paddingTop: 120 }}>

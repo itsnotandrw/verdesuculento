@@ -5,7 +5,7 @@
  * nunca llegan al navegador.
  */
 
-import { getProductById } from '@/data/catalog';
+import { getProductById } from '@/lib/catalog/store';
 import { ValidationError, cuerpo, fail, fallo, lineasCarrito, ok, texto } from '@/lib/api';
 import { env } from '@/lib/env';
 import { armarPaquete, cotizar, logisticaDe, shippingProvider } from '@/lib/shipping';
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     // el navegador: de él depende si aplica el envío gratis.
     const lines: OrderLine[] = [];
     for (const linea of lineas) {
-      const producto = getProductById(linea.productId);
+      const producto = await getProductById(linea.productId);
       if (!producto) return fail(`El producto ${linea.productId} ya no está disponible.`, 400);
       lines.push({
         productId: producto.id,

@@ -1335,37 +1335,12 @@ export const ARTICLES: Article[] = [
 ];
 
 // Helper functions
-export function getProductById(id: string): Product | undefined {
-  return CATALOG.find((p) => p.id === id);
-}
-
-export function getProductsByCategory(category: string): Product[] {
-  return CATALOG.filter((p) => p.category === category);
-}
-
-export function getFeaturedProducts(): Product[] {
-  return CATALOG.filter((p) => p.badge);
-}
-
-export function getRelatedProducts(product: Product, limit = 3): Product[] {
-  return CATALOG.filter((p) => p.category === product.category && p.id !== product.id).slice(0, limit);
-}
-
-export function getCrossSellProducts(product: Product): Product[] {
-  const crossMap: Record<string, string[]> = {
-    berries: ['agroinsumos'],
-    citricos: ['agroinsumos'],
-    'frutales-calido': ['agroinsumos'],
-    'frutales-exoticos': ['agroinsumos'],
-    'frutales-frio': ['agroinsumos'],
-    suculentas: ['agroinsumos'],
-    agroinsumos: ['suculentas'],
-    especias: ['agroinsumos'],
-    otros: ['agroinsumos'],
-  };
-  const targets = crossMap[product.category] || [];
-  return CATALOG.filter((p) => targets.includes(p.category)).slice(0, 3);
-}
+// Las funciones de lectura del catálogo (getProductById, getFeaturedProducts,
+// getRelatedProducts, etc.) viven en lib/catalog/store.ts, no acá: el
+// catálogo puede editarse desde el admin y guardarse en Redis, así que leerlo
+// es async. Este archivo sigue siendo la SEMILLA (`CATALOG`, el array
+// estático) que store.ts usa la primera vez que hay Redis configurado, y sin
+// Redis (desarrollo local) es la fuente de solo lectura.
 
 export function formatCOP(n: number): string {
   return `$${n.toLocaleString('es-CO')}`;

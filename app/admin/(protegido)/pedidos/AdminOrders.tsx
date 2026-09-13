@@ -134,11 +134,6 @@ export default function AdminOrders() {
     cargar();
   }, [cargar]);
 
-  const salir = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    router.push('/admin/login');
-  };
-
   const accionar = async (pedido: Pedido, accion: string, extra: Record<string, unknown> = {}) => {
     setOcupado(pedido.id);
     setError(null);
@@ -160,19 +155,15 @@ export default function AdminOrders() {
 
   // ------------------------------------------------------------- bandeja
   return (
-    <div className="page-section" style={{ paddingTop: 120 }}>
-      <div className="container" style={{ maxWidth: 1000 }}>
+    <div style={{ paddingTop: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
           <div>
             <div className="eyebrow" style={{ marginBottom: 10 }}>PANEL INTERNO</div>
             <h1 className="display" style={{ fontSize: 'clamp(32px, 6vw, 48px)' }}>Pedidos</h1>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => cargar()} disabled={cargando}>
-              {cargando ? 'Actualizando…' : 'Actualizar'}
-            </button>
-            <button className="btn btn-ghost btn-sm" onClick={salir}>Cerrar sesión</button>
-          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => cargar()} disabled={cargando}>
+            {cargando ? 'Actualizando…' : 'Actualizar'}
+          </button>
         </div>
 
         {sistema && !sistema.almacenamiento.apto && (
@@ -363,7 +354,6 @@ export default function AdminOrders() {
             );
           })}
         </div>
-      </div>
     </div>
   );
 }

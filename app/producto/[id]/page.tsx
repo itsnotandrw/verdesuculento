@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { CATEGORIES, getProductById } from '@/data/catalog';
+import { CATEGORIES } from '@/data/catalog';
+import { getProductById, getRelatedProducts, getCrossSellProducts } from '@/lib/catalog/store';
 import { SOCIAL_PROOF } from '@/data/socialProof';
 import { env } from '@/lib/env';
 import ProductContent from './ProductContent';
@@ -11,7 +12,7 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = getProductById(params.id);
+  const product = await getProductById(params.id);
   if (!product) return {};
   return {
     title: `${product.name} — VERDE.`,
@@ -82,9 +83,17 @@ function jsonLd(product: Product) {
   return [productLd, breadcrumbLd];
 }
 
-export default function ProductPage({ params }: Props) {
-  const product = getProductById(params.id);
+export default async function ProductPage({ params }: Props) {
+  const product = await getProductById(params.id);
   if (!product) notFound();
+
+  // Calculado acá (servidor) y pasado como prop en vez de que ProductContent
+  // (cliente) importe el catálogo directo — el catálogo ahora puede vivir en
+  // Redis, y un componente cliente no puede leer ahí.
+  const [related, crossSell] = await Promise.all([
+    getRelatedProducts(product, 3),
+    getCrossSellProducts(product),
+  ]);
 
   return (
     <>
@@ -96,7 +105,7 @@ export default function ProductPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
         />
       ))}
-      <ProductContent product={product} />
+      <ProductContent product={product} related={related} crossSell={crossSell} />
     </>
   );
 }

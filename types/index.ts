@@ -25,6 +25,8 @@ export interface Product {
   accent?: string;
   specs: ProductSpecs;
   images: string[];
+  /** false = oculto de listados y home, pero sigue siendo buscable por id (pedidos viejos, carritos abiertos). Ausente = activo. */
+  activo?: boolean;
 }
 
 export interface Category {

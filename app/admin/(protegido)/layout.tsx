@@ -15,8 +15,16 @@
 
 import { redirect } from 'next/navigation';
 import { sesionActual } from '@/lib/admin/session';
+import AdminNav from './AdminNav';
 
 export default function AdminProtegidoLayout({ children }: { children: React.ReactNode }) {
   if (!sesionActual()) redirect('/admin/login');
-  return <>{children}</>;
+  return (
+    <div className="page-section" style={{ paddingTop: 100 }}>
+      <div className="container" style={{ maxWidth: 1000 }}>
+        <AdminNav />
+        {children}
+      </div>
+    </div>
+  );
 }

@@ -78,6 +78,13 @@ base de Upstash es reutilizable: se administra directo desde
 No dejar ninguna de las dos sin configurar: es la diferencia entre perder
 pedidos reales en el primer redeploy o no.
 
+**El catálogo editable del admin (`/admin/catalogo`) solo funciona con la
+Opción A.** A diferencia de los pedidos, el catálogo no tiene fallback a
+archivo/Volume — sin `KV_REST_API_URL`/`TOKEN` configurados, `/admin/catalogo`
+sigue mostrando el catálogo (de solo lectura) pero cualquier intento de
+guardar un cambio falla con un aviso claro, nunca en silencio. Si vas a usar
+el admin para editar productos, la Opción A no es opcional.
+
 ## 4. El cron de expiración de pedidos
 
 `vercel.json` (ya no existe en el repo) le decía a Vercel que llamara
@@ -142,6 +149,7 @@ apuntando al dominio viejo si no se actualizan a mano:
 - [ ] `CRON_SECRET` nuevo generado, puesto en Railway y en el programador externo.
 - [ ] `ADMIN_EMAIL`/`ADMIN_PASSWORD_HASH`/`ADMIN_SESSION_SECRET` configurados y probado el login en `/admin/login`.
 - [ ] Redis configurado (Opción A) o Volume montado (Opción B) — no ambas vacías.
+- [ ] Si vas a usar `/admin/catalogo` para editar productos: confirmado que es Opción A (Redis), no B.
 - [ ] Un pedido de prueba de punta a punta: checkout → cotización de envío → pago manual → panel admin.
 - [ ] Dominio verificado y sirviendo por HTTPS.
 - [ ] Webhooks de transportadora/pasarela actualizados al dominio nuevo, si aplica.
