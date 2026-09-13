@@ -11,24 +11,33 @@ import { ValidationError, cuerpo, fail, fallo, texto } from '@/lib/api';
 import { env } from '@/lib/env';
 import { verifyPassword } from '@/lib/admin/password';
 import { crearTokenSesion, DURACION_SESION_MS, NOMBRE_COOKIE } from '@/lib/admin/session';
+import { getCredenciales, registrarIntentoLogin } from '@/lib/admin/store';
 import { ipDe, limitarLogin } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const ip = ipDe(request);
+  let email = '';
+
   try {
-    if (!env.adminEmail || !env.adminPasswordHash || !env.adminSessionSecret) {
+    if (!env.adminSessionSecret) {
+      return fail('El login del panel no está configurado. Ver .env.example.', 503);
+    }
+
+    const credenciales = await getCredenciales();
+    if (!credenciales) {
       return fail('El login del panel no está configurado. Ver .env.example.', 503);
     }
 
     // Nunca fail-open acá (ver lib/ratelimit.ts): sin esto, la contraseña es
     // la única barrera contra fuerza bruta.
-    if (!(await limitarLogin(ipDe(request)))) {
+    if (!(await limitarLogin(ip))) {
       return fail('Demasiados intentos. Espera unos minutos e intenta de nuevo.', 429);
     }
 
     const body = await cuerpo(request);
-    const email = texto(body.email, 'el correo', { max: 160 }).toLowerCase();
+    email = texto(body.email, 'el correo', { max: 160 }).toLowerCase();
     const password = texto(body.password, 'la contraseña', { max: 200 });
 
     // El correo no es secreto -- solo identifica cuál cuenta es (hoy, una
@@ -37,7 +46,15 @@ export async function POST(request: Request) {
     // verifyPassword. El mensaje de error es el mismo para "correo
     // incorrecto" y "contraseña incorrecta" a propósito: no le regala a un
     // atacante cuál de los dos datos acertó.
-    if (email !== env.adminEmail.toLowerCase() || !verifyPassword(password, env.adminPasswordHash)) {
+    const correcto = email === credenciales.email.toLowerCase() && verifyPassword(password, credenciales.passwordHash);
+
+    // Rastro de accesos: console.log queda en los logs de Railway sin
+    // configurar nada más; registrarIntentoLogin además lo guarda en Redis
+    // (si está configurado) para verlo en /admin/cuenta sin salir del panel.
+    console.log(`[admin] login ${correcto ? 'ok' : 'fallido'} — ${email} desde ${ip}`);
+    await registrarIntentoLogin({ email, ip, exito: correcto });
+
+    if (!correcto) {
       return fail('Correo o contraseña incorrectos.', 401);
     }
 
