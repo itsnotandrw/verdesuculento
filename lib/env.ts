@@ -66,14 +66,19 @@ export const env = {
     /** Compra mínima para envío gratis. 0 lo desactiva. */
     freeShippingFrom: num('SHIPPING_FREE_FROM', 120_000),
 
-    /** Bodega de despacho (origen de todas las guías). */
+    /**
+     * Bodega de despacho (origen de todas las guías): Cl. 1 #10, Soacha,
+     * Cundinamarca — confirmada por el negocio, no un placeholder. DANE
+     * 25754000 verificado contra /locate de Envia el 2026-09-13 (ver el
+     * mismo método en docs/railway-deploy.md).
+     */
     origin: {
       departamento: str('SHIPPING_ORIGIN_DEPT', 'Cundinamarca'),
-      ciudad: str('SHIPPING_ORIGIN_CITY', 'Bogotá'),
-      cityCode: str('SHIPPING_ORIGIN_CITY_CODE', '11001000'),
-      /** Envia lo exige en origen y destino. 110111 = Bogotá. */
-      postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', '110111'),
-      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Vivero Verde Suculento'),
+      ciudad: str('SHIPPING_ORIGIN_CITY', 'Soacha'),
+      cityCode: str('SHIPPING_ORIGIN_CITY_CODE', '25754000'),
+      /** El esquema lo exige, pero con el DANE presente Envia no lo usa. */
+      postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', ''),
+      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Cl. 1 #10'),
     },
 
     /** Contra entrega: se ofrece solo si el proveedor confirma cobertura. */
