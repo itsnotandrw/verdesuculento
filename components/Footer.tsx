@@ -18,9 +18,9 @@ export default function Footer() {
               Vivero especializado en frutales, ornamentales y agricultura moderna. Envíos a toda Colombia.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href="#" className="chip">Instagram</a>
-              <a href="#" className="chip">WhatsApp</a>
-              <a href="#" className="chip">YouTube</a>
+              <a href="https://wa.me/573205550102" target="_blank" rel="noopener noreferrer" className="chip">WhatsApp</a>
+              <a href="https://www.facebook.com/p/Verde-Suculento-100091965755148/" target="_blank" rel="noopener noreferrer" className="chip">Facebook</a>
+              <a href="https://www.mercadolibre.com.co/pagina/viveroverde_suculento" target="_blank" rel="noopener noreferrer" className="chip">Mercado Libre</a>
             </div>
           </div>
 
@@ -51,11 +51,11 @@ export default function Footer() {
             <h4>Contacto</h4>
             <ul>
               <li><a href="tel:+573205550102">+57 320 555 0102</a></li>
-              <li><a href="mailto:hola@verde.co">hola@verde.co</a></li>
+              <li><a href="mailto:fabianlds2019@gmail.com">fabianlds2019@gmail.com</a></li>
               <li><a href="#">Lun—Sáb · 8 — 6 pm</a></li>
               <li>
-                <a href="https://maps.app.goo.gl/BFLhTU3YjHjoBopM6" target="_blank" rel="noopener noreferrer">
-                  Cl. 1 #10, Soacha, Cundinamarca
+                <a href="https://www.google.com/maps/search/?api=1&query=Calle+6+%233c-08%2C+Soacha%2C+Cundinamarca" target="_blank" rel="noopener noreferrer">
+                  Calle 6 # 3c-08, Soacha, Cundinamarca
                 </a>
               </li>
             </ul>

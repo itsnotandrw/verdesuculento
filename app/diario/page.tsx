@@ -117,7 +117,7 @@ export default function BlogPage() {
             <a href="https://wa.me/573205550102" className="btn btn-primary" target="_blank" rel="noopener noreferrer">
               WhatsApp <span className="btn-arrow">→</span>
             </a>
-            <a href="mailto:hola@verde.co" className="btn btn-ghost">hola@verde.co</a>
+            <a href="mailto:fabianlds2019@gmail.com" className="btn btn-ghost">fabianlds2019@gmail.com</a>
           </div>
         </div>
       </div>

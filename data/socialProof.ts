@@ -5790,6 +5790,6 @@ export const SELLER_STATS: SellerStats = {
   "claimsRate": 0.3,
   "delayedRate": 0.6,
   "cancellationRate": 0,
-  "followersLabel": "+1.000",
+  "followersLabel": "+1.200",
   "profileUrl": "https://perfil.mercadolibre.com.co/VIVERO+VERDE_SUCULENTO"
 };

@@ -8,13 +8,13 @@ export const RECOGER_TIENDA_QUOTE_ID = 'pickup:tienda:recoger';
 
 /**
  * Dirección de recogida, para mostrarle al cliente en el checkout. Mismo
- * lugar que `SHIPPING_ORIGIN_*` en lib/env.ts (Cl. 1 #10, Soacha,
+ * lugar que `SHIPPING_ORIGIN_*` en lib/env.ts (Calle 6 # 3c-08, Soacha,
  * Cundinamarca) — duplicado a mano porque el checkout es un componente
  * cliente y no puede leer variables de entorno de servidor. Si la bodega se
  * muda, actualizar los dos lugares.
  */
 export const DIRECCION_RECOGIDA = {
-  direccion: 'Cl. 1 #10',
+  direccion: 'Calle 6 # 3c-08',
   ciudad: 'Soacha',
   departamento: 'Cundinamarca',
 };

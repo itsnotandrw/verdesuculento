@@ -67,10 +67,12 @@ export const env = {
     freeShippingFrom: num('SHIPPING_FREE_FROM', 120_000),
 
     /**
-     * Bodega de despacho (origen de todas las guías): Cl. 1 #10, Soacha,
-     * Cundinamarca — confirmada por el negocio, no un placeholder. DANE
-     * 25754000 verificado contra /locate de Envia el 2026-09-13 (ver el
-     * mismo método en docs/railway-deploy.md).
+     * Bodega de despacho (origen de todas las guías): Calle 6 # 3c-08,
+     * Soacha, Cundinamarca — confirmada por el negocio (misma dirección de
+     * su página de Facebook), no un placeholder. DANE 25754000 verificado
+     * contra /locate de Envia el 2026-09-13 (ver el mismo método en
+     * docs/railway-deploy.md); el código no cambia porque sigue siendo
+     * Soacha, solo cambió la dirección exacta.
      */
     origin: {
       departamento: str('SHIPPING_ORIGIN_DEPT', 'Cundinamarca'),
@@ -78,7 +80,7 @@ export const env = {
       cityCode: str('SHIPPING_ORIGIN_CITY_CODE', '25754000'),
       /** El esquema lo exige, pero con el DANE presente Envia no lo usa. */
       postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', ''),
-      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Cl. 1 #10'),
+      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Calle 6 # 3c-08'),
     },
 
     /** Contra entrega: se ofrece solo si el proveedor confirma cobertura. */

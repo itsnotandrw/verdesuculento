@@ -6,8 +6,10 @@ import gsap from 'gsap';
 interface CountUpProps {
   to: number;
   decimals?: number;
+  prefix?: string;
   suffix?: string;
   duration?: number;
+  separator?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -16,8 +18,15 @@ interface CountUpProps {
 // GSAP en vez de Framer Motion: el sitio ya trae GSAP como dependencia
 // (CardSwap, scroll horizontal), así que evita sumar una librería de
 // animación más solo para este efecto.
-export default function CountUp({ to, decimals = 0, suffix = '', duration = 1.6, className, style }: CountUpProps) {
+export default function CountUp({ to, decimals = 0, prefix = '', suffix = '', duration = 1.6, separator = false, className, style }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
+
+  const format = (value: number) => {
+    const body = separator
+      ? new Intl.NumberFormat('es-CO', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value)
+      : value.toFixed(decimals);
+    return prefix + body + suffix;
+  };
 
   useEffect(() => {
     const el = ref.current;
@@ -35,7 +44,7 @@ export default function CountUp({ to, decimals = 0, suffix = '', duration = 1.6,
           duration,
           ease: 'power2.out',
           onUpdate: () => {
-            if (el) el.textContent = obj.value.toFixed(decimals) + suffix;
+            if (el) el.textContent = format(obj.value);
           },
         });
       },
@@ -47,7 +56,8 @@ export default function CountUp({ to, decimals = 0, suffix = '', duration = 1.6,
       obs.disconnect();
       tween?.kill();
     };
-  }, [to, decimals, suffix, duration]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [to, decimals, prefix, suffix, duration, separator]);
 
-  return <span ref={ref} className={className} style={style}>{(0).toFixed(decimals) + suffix}</span>;
+  return <span ref={ref} className={className} style={style}>{format(0)}</span>;
 }

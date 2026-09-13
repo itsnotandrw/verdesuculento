@@ -226,7 +226,7 @@ function ubicacion(
   return {
     name: nombre,
     company: 'Vivero Verde Suculento',
-    email: contacto?.email ?? 'hola@verde.co',
+    email: contacto?.email ?? 'fabianlds2019@gmail.com',
     phone: contacto?.telefono ?? '3000000000',
     street: datos.calle,
     number: datos.numero ?? 'S/N',

@@ -124,20 +124,26 @@ export default function NosotrosPage() {
               <p style={{ color: 'var(--fg-dim)', fontSize: 17, lineHeight: 1.75 }}>
                 No somos un intermediario. Somos el vivero.
               </p>
-              <div style={{ display: 'flex', gap: 48, marginTop: 40, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
-                <div>
-                  <div className="display" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--accent)', lineHeight: 1 }}>2019</div>
-                  <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', marginTop: 6, letterSpacing: '0.08em' }}>FUNDACIÓN</div>
-                </div>
-                {[{ to: 21, suffix: '+', label: 'Variedades' }, { to: 10, suffix: '', label: 'Ciudades' }].map((s) => (
+              <div style={{ marginTop: 40, paddingTop: 24 }}>
+                <span className="chip">🏅 MercadoLíder Gold</span>
+              </div>
+              <div style={{ display: 'flex', gap: 48, marginTop: 20, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
+                {[
+                  { to: 92, prefix: '', suffix: '%', separator: false, label: 'Calificación positiva' },
+                  { to: 3076, prefix: '', suffix: '', separator: true, label: 'Pedidos completados' },
+                  { to: 1200, prefix: '+', suffix: '', separator: true, label: 'Seguidores en Mercado Libre' },
+                ].map((s) => (
                   <div key={s.label}>
                     <div className="display" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--accent)', lineHeight: 1 }}>
-                      <CountUp to={s.to} suffix={s.suffix} />
+                      <CountUp to={s.to} prefix={s.prefix} suffix={s.suffix} separator={s.separator} />
                     </div>
                     <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', marginTop: 6, letterSpacing: '0.08em' }}>{s.label.toUpperCase()}</div>
                   </div>
                 ))}
               </div>
+              <p className="mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 20, letterSpacing: '0.04em' }}>
+                Reputación real de nuestra tienda en Mercado Libre.
+              </p>
             </Reveal>
           </div>
         </div>
@@ -208,10 +214,10 @@ export default function NosotrosPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 36 }}>
                 {([
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>, label: 'Cl. 1 #10, Soacha, Cundinamarca' },
+                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>, label: 'Calle 6 # 3c-08, Soacha, Cundinamarca' },
                   { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: 'Lunes a sábado 7 AM — 4 PM' },
                   { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>, label: '+57 320 555 0102' },
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>, label: 'hola@verde.co' },
+                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>, label: 'fabianlds2019@gmail.com' },
                 ] as { svg: JSX.Element; label: string }[]).map((item) => (
                   <div key={item.label} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 15, color: 'var(--fg-dim)' }}>
                     <span style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex' }}>{item.svg}</span>

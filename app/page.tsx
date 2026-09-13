@@ -224,13 +224,15 @@ export default async function HomePage() {
           </Reveal>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, marginTop: 64, borderTop: '1px solid var(--border)' }} className="agro-stats-grid">
             {[
-              { n: '10', unit: 'ciudades', sub: 'Con envío verificado en Colombia' },
-              { n: '6', unit: 'meses', sub: 'De asesoría agronómica incluida gratis' },
-              { n: '< 24h', unit: 'respuesta', sub: 'WhatsApp o correo, siempre humano' },
+              { real: true, n: '', to: 92, suffix: '%', separator: false, unit: 'calificación positiva', sub: 'Reputación real en Mercado Libre' },
+              { real: false, n: '6', to: 0, suffix: '', separator: false, unit: 'meses', sub: 'De asesoría agronómica incluida gratis' },
+              { real: false, n: '< 24h', to: 0, suffix: '', separator: false, unit: 'respuesta', sub: 'WhatsApp o correo, siempre humano' },
             ].map((s, i) => (
               <Reveal key={i}>
                 <div style={{ padding: '48px 0 48px', paddingRight: i < 2 ? 48 : 0, paddingLeft: i > 0 ? 48 : 0, borderRight: i < 2 ? '1px solid var(--border)' : 'none' }} className={`agro-stat-${i}`}>
-                  <div className="display" style={{ fontSize: 'clamp(60px, 7vw, 100px)', color: 'var(--accent)', lineHeight: 1, letterSpacing: '-0.03em' }}>{s.n}</div>
+                  <div className="display" style={{ fontSize: 'clamp(60px, 7vw, 100px)', color: 'var(--accent)', lineHeight: 1, letterSpacing: '-0.03em' }}>
+                    {s.real ? <CountUp to={s.to} suffix={s.suffix} separator={s.separator} /> : s.n}
+                  </div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4, marginBottom: 10 }}>{s.unit}</div>
                   <div className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)', lineHeight: 1.5 }}>{s.sub.toUpperCase()}</div>
                 </div>
