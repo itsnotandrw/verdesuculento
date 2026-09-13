@@ -1,0 +1,11 @@
+# Fuerza a Nixpacks a instalar pnpm como paquete Nix directo, sin pasar por
+# Corepack. Con "packageManager" fijado en package.json, Nixpacks intentaba
+# `corepack prepare pnpm@<version>` para instalar esa versión exacta -- ese
+# paso fallaba con ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING dentro del propio
+# corepack.cjs, reproducido igual en Node 18 y Node 24 (no es un problema de
+# versión de Node, es Corepack roto en este entorno de build). Sacar
+# "packageManager" del package.json ya evita que Nixpacks intente ese
+# camino; este archivo lo deja explícito además, por si el auto-detect
+# decidiera usar Corepack de todos modos.
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm"]

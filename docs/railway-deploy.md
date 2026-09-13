@@ -157,10 +157,17 @@ apuntando al dominio viejo si no se actualizan a mano:
 
 ## 8. Problemas conocidos del build
 
-**`TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]` corriendo `pnpm i --frozen-lockfile`,
-con `Node.js v18.20.5` en el log** — bug real de Corepack bajo Node 18, no del
-proyecto. Se corrige fijando la versión de Node que Nixpacks debe usar:
-`package.json` ya trae `"engines": { "node": ">=20" }` para esto. Si Railway
-sigue picando Node 18 a pesar de eso (pasa si el build usa una imagen de
-Nixpacks cacheada vieja), forzarlo explícito con una variable de entorno del
-servicio: `NIXPACKS_NODE_VERSION=20`, y volver a desplegar.
+**`TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]` corriendo `pnpm i --frozen-lockfile`**
+— bug de Corepack, no del proyecto ni de la versión de Node: se reprodujo
+igual en Node 18.20.5 y en Node 24.10.0, siempre reventando dentro del
+propio `corepack.cjs` al intentar preparar la versión exacta de pnpm fijada
+en `packageManager` de `package.json`. La causa es ese campo: le pide a
+Nixpacks usar Corepack para descargar esa versión puntual, y Corepack está
+roto en este entorno de build sin importar la versión de Node.
+
+Arreglado sacando `"packageManager"` de `package.json` (ya no está) y
+agregando `nixpacks.toml` con `nixPkgs = ["nodejs_20", "pnpm"]`, que le da a
+Nixpacks un pnpm instalado directo como paquete Nix, sin pasar por Corepack
+para nada. Si algún día hace falta pinear una versión exacta de pnpm otra
+vez, hacerlo así (`nixPkgs = ["pnpm_10"]` o el paquete Nix específico) en vez
+de con `packageManager`, para no reactivar el mismo bug.
