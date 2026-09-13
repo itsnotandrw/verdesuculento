@@ -145,10 +145,12 @@ export async function crearPedido(
   const total = subtotal + quote.cost + codFee;
   const ahora = new Date();
   const reference = nuevaReferenciaPedido();
+  const orderNumber = await orders.siguienteNumero();
 
   const order: Order = {
     id: nuevoOrderId(),
     reference,
+    orderNumber,
     createdAt: ahora.toISOString(),
     updatedAt: ahora.toISOString(),
     expiresAt: new Date(ahora.getTime() + env.payments.intentTtlMinutes * 60_000).toISOString(),

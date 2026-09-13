@@ -106,6 +106,22 @@ export const archivoRepository: OrderRepository = {
     });
   },
 
+  // Sin un contador aparte: se deriva del máximo orderNumber ya guardado.
+  // Correcto porque enCola serializa todo -- dos llamadas nunca leen el
+  // mismo máximo a la vez. Un proceso de un vivero chico, no hace falta más.
+  async siguienteNumero() {
+    return enCola(async () => {
+      const st = await cargar();
+      let maximo = 0;
+      for (const pedido of st.pedidos.values()) {
+        if (typeof pedido.orderNumber === 'number' && pedido.orderNumber > maximo) {
+          maximo = pedido.orderNumber;
+        }
+      }
+      return maximo + 1;
+    });
+  },
+
   async byId(id) {
     return (await cargar()).pedidos.get(id) ?? null;
   },

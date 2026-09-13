@@ -28,6 +28,7 @@ function resumen(order: Order) {
   return {
     id: order.id,
     reference: order.reference,
+    orderNumber: order.orderNumber ?? null,
     createdAt: order.createdAt,
     expiresAt: order.expiresAt,
     status: order.status,

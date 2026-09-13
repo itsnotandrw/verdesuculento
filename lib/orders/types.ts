@@ -134,8 +134,18 @@ export interface OrderEvent {
 
 export interface Order {
   id: string;
-  /** Código corto que ve el cliente: VS-A7K4M2. */
+  /** Código corto que ve el cliente: VS-A7K4M2. Es también la llave de acceso
+   * a /pedido/[reference] — a propósito aleatorio e imposible de adivinar,
+   * nunca lo vuelvas secuencial (cualquiera podría ver pedidos ajenos
+   * cambiando el número en la URL). Para un identificador fácil de decir por
+   * WhatsApp o de ordenar, usa `orderNumber`. */
   reference: string;
+  /**
+   * Número de pedido secuencial (1, 2, 3…), solo para uso humano/admin — no
+   * es llave de acceso a nada, así que sí puede ser consecutivo sin riesgo.
+   * `undefined` en pedidos creados antes de que este campo existiera.
+   */
+  orderNumber?: number;
   createdAt: string;
   updatedAt: string;
   /** Si no hay pago confirmado antes de esta fecha, el pedido expira. */

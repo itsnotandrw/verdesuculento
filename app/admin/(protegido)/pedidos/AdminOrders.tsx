@@ -37,6 +37,7 @@ interface Evento {
 interface Pedido {
   id: string;
   reference: string;
+  orderNumber: number | null;
   createdAt: string;
   status: string;
   statusLabel: string;
@@ -220,6 +221,11 @@ export default function AdminOrders() {
                   style={{ width: '100%', textAlign: 'left', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', cursor: 'none' }}
                   aria-expanded={expandido}
                 >
+                  {pedido.orderNumber != null && (
+                    <span className="mono" style={{ fontSize: 13, fontWeight: 700, flexShrink: 0, color: 'var(--accent)' }}>
+                      #{pedido.orderNumber}
+                    </span>
+                  )}
                   <span className="mono" style={{ fontSize: 13, fontWeight: 600, flexShrink: 0 }}>{pedido.reference}</span>
                   <span className="status-pill" data-tone={TONO[pedido.status] ?? 'wait'}>{pedido.statusLabel}</span>
                   <span style={{ fontSize: 13, color: 'var(--fg-dim)', minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

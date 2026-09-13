@@ -28,6 +28,8 @@ export interface OrderRepository {
   readonly durable: boolean;
 
   create(order: Order): Promise<Order>;
+  /** Siguiente número de pedido consecutivo (1, 2, 3…) — solo para mostrar, no es llave de nada. */
+  siguienteNumero(): Promise<number>;
   byId(id: string): Promise<Order | null>;
   byReference(reference: string): Promise<Order | null>;
   byPaymentReference(reference: string): Promise<Order | null>;

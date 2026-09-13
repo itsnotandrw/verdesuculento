@@ -77,6 +77,7 @@ const claveRef = (ref: string) => `ref:${ref.trim().toUpperCase()}`;
 const clavePagoRef = (ref: string) => `pagoref:${ref.trim().toUpperCase()}`;
 const claveGuia = (n: string) => `guia:${n}`;
 const LISTA = 'pedidos';
+const CONTADOR = 'pedidos:contador';
 
 /**
  * Escribe los índices secundarios. Se llama en cada escritura porque la
@@ -150,6 +151,10 @@ export const kvRepository: OrderRepository = {
     ]);
     return order;
   },
+
+  // INCR es atómico en Redis: dos pedidos creándose a la vez nunca reciben
+  // el mismo número, sin necesidad de cerrojo.
+  siguienteNumero: () => cmd<number>(['INCR', CONTADOR]),
 
   byId: leer,
 
