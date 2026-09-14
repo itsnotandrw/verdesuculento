@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CATEGORIES, PRICE_RANGES, DIFFICULTY_LEVELS, SUN_OPTIONS, formatCOP } from '@/data/catalog';
+import { CATEGORIES, CATEGORY_PHOTOS, PRICE_RANGES, DIFFICULTY_LEVELS, SUN_OPTIONS, formatCOP } from '@/data/catalog';
 import ProductCard from '@/components/ProductCard';
+import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
+import BlurText from '@/components/BlurText';
 import type { Product } from '@/types';
 
 const CLIMATE_OPTIONS = [
@@ -90,6 +92,9 @@ export default function CatalogContent({ products }: { products: Product[] }) {
 
   const activeFilterCount = selectedCats.length + selectedDifficulty.length + selectedSun.length + (selectedPrice ? 1 : 0) + selectedClimate.length + selectedObjective.length;
 
+  const bestsellers = useMemo(() => products.filter((p) => p.badge === 'Bestseller'), [products]);
+  const showBestsellers = bestsellers.length > 0 && activeFilterCount === 0 && !search;
+
   const clearAll = () => {
     setSelectedCats([]);
     setSelectedDifficulty([]);
@@ -118,9 +123,12 @@ export default function CatalogContent({ products }: { products: Product[] }) {
         {/* Header */}
         <div style={{ marginBottom: 36 }}>
           <div className="eyebrow" style={{ marginBottom: 16 }}>CATÁLOGO COMPLETO</div>
-          <h1 className="display" style={{ fontSize: 'clamp(48px, 7vw, 110px)' }}>
-            Todo para <em style={{ color: 'var(--accent)' }}>tu cultivo.</em>
-          </h1>
+          <BlurText
+            text="Todo para tu cultivo."
+            className="display"
+            style={{ fontSize: 'clamp(48px, 7vw, 110px)' }}
+            emphasizeLast={2}
+          />
         </div>
 
         {/* Marquee — categorías reales del vivero */}
@@ -133,6 +141,45 @@ export default function CatalogContent({ products }: { products: Product[] }) {
             ))}
           </div>
         </div>
+
+        {/* Mosaico de categorías — filtro visual, un click activa/desactiva */}
+        <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8, marginBottom: 48 }} className="catalog-cat-tiles">
+          {CATEGORIES.map((cat) => {
+            const active = selectedCats.includes(cat.id);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => toggleCat(cat.id)}
+                className="catalog-cat-tile"
+                data-active={active ? 'true' : 'false'}
+                aria-pressed={active}
+              >
+                <div
+                  className="catalog-cat-tile-photo"
+                  style={{ backgroundImage: CATEGORY_PHOTOS[cat.id] ? `url(${CATEGORY_PHOTOS[cat.id]})` : undefined }}
+                />
+                <span className="catalog-cat-tile-name">{cat.name}</span>
+                <span className="catalog-cat-tile-count mono">{cat.count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Destacados — solo cuando no hay filtros ni búsqueda activa */}
+        {showBestsellers && (
+          <div style={{ marginBottom: 56 }}>
+            <div className="eyebrow" style={{ marginBottom: 20 }}>MÁS VENDIDOS</div>
+            <HorizontalScrollerClient>
+              <div style={{ display: 'flex', gap: 20, width: 'max-content' }}>
+                {bestsellers.map((p) => (
+                  <div key={p.id} style={{ width: 260 }}>
+                    <ProductCard product={p} sizes="260px" />
+                  </div>
+                ))}
+              </div>
+            </HorizontalScrollerClient>
+          </div>
+        )}
 
         {/* Search + Toolbar */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 32, flexWrap: 'wrap', alignItems: 'center' }}>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { CATEGORIES, TESTIMONIALS, ARTICLES, formatCOP } from '@/data/catalog';
+import { CATEGORIES, CATEGORY_PHOTOS, TESTIMONIALS, ARTICLES, formatCOP } from '@/data/catalog';
 import { getAllProducts } from '@/lib/catalog/store';
 import ProductCard from '@/components/ProductCard';
 import ProductShape from '@/components/ProductShape';
@@ -337,18 +337,6 @@ function FloatingBotanicals() {
   );
 }
 
-const CAT_PHOTOS: Record<string, string> = {
-  'frutales-calido':   'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80',
-  'frutales-exoticos': 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=600&q=80',
-  'frutales-frio':     'https://images.unsplash.com/photo-1591189864121-f64e1060793b?auto=format&fit=crop&w=600&q=80',
-  citricos:      'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=600&q=80',
-  berries:       'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=600&q=80',
-  suculentas:    'https://images.unsplash.com/photo-1526397751294-331021109fbd?auto=format&fit=crop&w=600&q=80',
-  agroinsumos:   'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80',
-  especias:      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=600&q=80',
-  otros:         'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80',
-};
-
 const ARTICLE_PHOTOS: Record<string, string> = {
   'cultivar-arandanos': 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=800&q=80',
   'limon-tahiti':       'https://images.unsplash.com/photo-1590502160462-58b41354f588?auto=format&fit=crop&w=800&q=80',
@@ -426,11 +414,11 @@ function HorizontalScroller({ products }: { products: Product[] }) {
                 transition: 'transform 0.5s var(--ease-out)',
               }}
             >
-              {CAT_PHOTOS[cat.id] && (
+              {CATEGORY_PHOTOS[cat.id] && (
                 <div
                   className="cat-card-photo"
                   style={{
-                    backgroundImage: `url(${CAT_PHOTOS[cat.id]})`,
+                    backgroundImage: `url(${CATEGORY_PHOTOS[cat.id]})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}

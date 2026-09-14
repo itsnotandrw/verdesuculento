@@ -1286,6 +1286,46 @@ input, select, textarea { cursor: text; }
   background: radial-gradient(circle, color-mix(in oklab, var(--accent) 15%, transparent), transparent 70%);
   pointer-events: none;
 }
+
+/* Mosaico de categorías del catálogo */
+.catalog-cat-tiles { scrollbar-width: none; }
+.catalog-cat-tiles::-webkit-scrollbar { display: none; }
+.catalog-cat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 92px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.catalog-cat-tile-photo {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-elev-2);
+  border: 2px solid var(--border);
+  transition: border-color 0.3s, transform 0.3s var(--ease-out), box-shadow 0.3s;
+}
+.catalog-cat-tile:hover .catalog-cat-tile-photo { transform: scale(1.06); }
+.catalog-cat-tile[data-active="true"] .catalog-cat-tile-photo {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+.catalog-cat-tile-name {
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--fg-dim);
+  max-width: 92px;
+}
+.catalog-cat-tile[data-active="true"] .catalog-cat-tile-name { color: var(--fg); font-weight: 600; }
+.catalog-cat-tile-count { font-size: 10px; color: var(--fg-mute); }
 .article-card-img {
   aspect-ratio: 16/9;
   position: relative;
