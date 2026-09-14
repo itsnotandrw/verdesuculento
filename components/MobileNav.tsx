@@ -10,6 +10,7 @@ export default function MobileNav() {
   const pathname = usePathname();
   const { count, setOpen } = useCart();
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   const isActive = (href: string) => {
@@ -19,13 +20,14 @@ export default function MobileNav() {
 
   useEffect(() => {
     setCatalogOpen(false);
+    setMoreOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (catalogOpen) document.body.classList.add('scroll-locked');
+    if (catalogOpen || moreOpen) document.body.classList.add('scroll-locked');
     else document.body.classList.remove('scroll-locked');
     return () => document.body.classList.remove('scroll-locked');
-  }, [catalogOpen]);
+  }, [catalogOpen, moreOpen]);
 
   // Mide la altura real del tab bar (varia por safe-area entre dispositivos)
   // para que el panel de catalogo y la barra sticky de "anadir" encajen justo encima.
@@ -44,7 +46,10 @@ export default function MobileNav() {
 
   return (
     <>
-      <div className={`mobile-catalog-overlay ${catalogOpen ? 'open' : ''}`} onClick={() => setCatalogOpen(false)} />
+      <div
+        className={`mobile-catalog-overlay ${(catalogOpen || moreOpen) ? 'open' : ''}`}
+        onClick={() => { setCatalogOpen(false); setMoreOpen(false); }}
+      />
       <div className={`mobile-catalog-panel ${catalogOpen ? 'open' : ''}`} aria-hidden={!catalogOpen}>
         <div className="mobile-catalog-panel-header">
           <span className="eyebrow">Catálogo</span>
@@ -72,6 +77,28 @@ export default function MobileNav() {
         </div>
       </div>
 
+      <div className={`mobile-catalog-panel ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>
+        <div className="mobile-catalog-panel-header">
+          <span className="eyebrow">Más</span>
+          <button className="nav-icon-btn" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        <div className="mobile-catalog-panel-list">
+          <Link href="/diario" className="nav-dropdown-item" onClick={() => setMoreOpen(false)}>
+            <span>Diario</span>
+          </Link>
+          <Link href="/asesoria" className="nav-dropdown-item" onClick={() => setMoreOpen(false)}>
+            <span>Asesoría</span>
+          </Link>
+          <Link href="/nosotros" className="nav-dropdown-item" onClick={() => setMoreOpen(false)}>
+            <span>Nosotros</span>
+          </Link>
+        </div>
+      </div>
+
       <nav className="mobile-nav" ref={navRef}>
       <Link href="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -83,7 +110,7 @@ export default function MobileNav() {
 
       <button
         className={`mobile-nav-item ${isActive('/catalogo') || catalogOpen ? 'active' : ''}`}
-        onClick={() => setCatalogOpen((v) => !v)}
+        onClick={() => { setCatalogOpen((v) => !v); setMoreOpen(false); }}
         aria-haspopup="true"
         aria-expanded={catalogOpen}
       >
@@ -126,11 +153,16 @@ export default function MobileNav() {
         <span>Carrito</span>
       </button>
 
-      <button className="mobile-nav-item">
+      <button
+        className={`mobile-nav-item ${moreOpen || isActive('/diario') || isActive('/asesoria') || isActive('/nosotros') ? 'active' : ''}`}
+        onClick={() => { setMoreOpen((v) => !v); setCatalogOpen(false); }}
+        aria-haspopup="true"
+        aria-expanded={moreOpen}
+      >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
+          <circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" />
         </svg>
-        <span>Cuenta</span>
+        <span>Más</span>
       </button>
       </nav>
     </>
