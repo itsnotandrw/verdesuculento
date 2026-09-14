@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
+import FadeImage from './FadeImage';
 import Lightbox from './Lightbox';
 
 interface ImageCarouselProps {
@@ -72,7 +73,7 @@ export default function ImageCarousel({ images, alt, thumbnails = false, priorit
             className="carousel-slide"
             onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
           >
-            <Image
+            <FadeImage
               src={img}
               alt={alt}
               fill

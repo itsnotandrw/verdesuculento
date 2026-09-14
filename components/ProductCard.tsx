@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import FadeImage from './FadeImage';
 import { useCart } from '@/context/CartContext';
 import { useQuickView } from '@/context/QuickViewContext';
 import { formatCOP } from '@/data/catalog';
@@ -38,7 +38,7 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
 
       <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
         {product.images.length > 0 ? (
-          <Image
+          <FadeImage
             src={product.images[0]}
             alt={product.name}
             fill
