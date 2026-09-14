@@ -6,12 +6,14 @@ import { useCart } from '@/context/CartContext';
 import { formatCOP, FREE_SHIPPING_FROM } from '@/data/catalog';
 import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
 import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
+import { DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
 import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from '@/components/ProductShape';
 
 export default function CartPage() {
   const { items, subtotal, count, updateQty, remove, shipping, setShipping } = useCart();
   const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
+  const [modoEntrega, setModoEntrega] = useState<'domicilio' | 'recoger'>('domicilio');
   const [departamento, setDepartamento] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [ciudadOtra, setCiudadOtra] = useState('');
@@ -32,7 +34,23 @@ export default function CartPage() {
    * un número distinto al que salía después en el checkout.
    */
   useEffect(() => {
-    if (!departamento || !ciudadEfectiva || items.length === 0) {
+    if (items.length === 0) {
+      setShipping(null);
+      return;
+    }
+
+    if (modoEntrega === 'recoger') {
+      setErrorEnvio(null);
+      setShipping({
+        dept: DIRECCION_RECOGIDA.departamento,
+        city: DIRECCION_RECOGIDA.ciudad,
+        cost: 0,
+        days: 'Te avisamos por WhatsApp/correo cuando esté listo',
+      });
+      return;
+    }
+
+    if (!departamento || !ciudadEfectiva) {
       setShipping(null);
       return;
     }
@@ -80,7 +98,7 @@ export default function CartPage() {
       clearTimeout(temporizador);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departamento, ciudadEfectiva, items.length]);
+  }, [modoEntrega, departamento, ciudadEfectiva, items.length]);
 
   if (count === 0) {
     return (
@@ -148,41 +166,67 @@ export default function CartPage() {
             <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)', marginBottom: 10, color: 'var(--fg-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Calcular envío</div>
 
-              <select
-                value={departamento}
-                onChange={(e) => {
-                  setDepartamento(e.target.value);
-                  setCiudad('');
-                  setCiudadOtra('');
-                }}
-                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none', marginBottom: 10 }}
-              >
-                <option value="">Selecciona tu departamento</option>
-                {DEPARTAMENTOS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                <button
+                  type="button"
+                  className={`chip ${modoEntrega === 'domicilio' ? 'active' : ''}`}
+                  onClick={() => setModoEntrega('domicilio')}
+                >
+                  Envío a domicilio
+                </button>
+                <button
+                  type="button"
+                  className={`chip ${modoEntrega === 'recoger' ? 'active' : ''}`}
+                  onClick={() => setModoEntrega('recoger')}
+                >
+                  Recoger en tienda
+                </button>
+              </div>
 
-              <select
-                value={ciudad}
-                onChange={(e) => setCiudad(e.target.value)}
-                disabled={!departamento}
-                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none' }}
-              >
-                <option value="">{departamento ? 'Selecciona tu ciudad' : 'Elige primero el departamento'}</option>
-                {departamento && ciudadesDe(departamento).map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              {modoEntrega === 'recoger' ? (
+                <p style={{ fontSize: 12.5, color: 'var(--fg-dim)', lineHeight: 1.5 }}>
+                  Recoges gratis en {DIRECCION_RECOGIDA.direccion}, {DIRECCION_RECOGIDA.ciudad}, {DIRECCION_RECOGIDA.departamento}.
+                  Te avisamos por WhatsApp o correo cuando esté listo.
+                </p>
+              ) : (
+                <>
+                  <select
+                    value={departamento}
+                    onChange={(e) => {
+                      setDepartamento(e.target.value);
+                      setCiudad('');
+                      setCiudadOtra('');
+                    }}
+                    style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none', marginBottom: 10 }}
+                  >
+                    <option value="">Selecciona tu departamento</option>
+                    {DEPARTAMENTOS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
 
-              {eligiendoOtro && (
-                <input
-                  type="text"
-                  value={ciudadOtra}
-                  onChange={(e) => setCiudadOtra(e.target.value)}
-                  placeholder="Escribe el nombre de tu municipio"
-                  style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none', marginTop: 10 }}
-                />
+                  <select
+                    value={ciudad}
+                    onChange={(e) => setCiudad(e.target.value)}
+                    disabled={!departamento}
+                    style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none' }}
+                  >
+                    <option value="">{departamento ? 'Selecciona tu ciudad' : 'Elige primero el departamento'}</option>
+                    {departamento && ciudadesDe(departamento).map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+
+                  {eligiendoOtro && (
+                    <input
+                      type="text"
+                      value={ciudadOtra}
+                      onChange={(e) => setCiudadOtra(e.target.value)}
+                      placeholder="Escribe el nombre de tu municipio"
+                      style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 14, outline: 'none', marginTop: 10 }}
+                    />
+                  )}
+                </>
               )}
 
               {cotizando && (
@@ -193,7 +237,7 @@ export default function CartPage() {
               {errorEnvio && !cotizando && (
                 <p style={{ marginTop: 12, fontSize: 12.5, color: '#ef4444', lineHeight: 1.5 }}>{errorEnvio}</p>
               )}
-              {shipping && !cotizando && (
+              {shipping && !cotizando && modoEntrega === 'domicilio' && (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13 }}>
                     <span style={{ color: 'var(--fg-dim)', minWidth: 0 }}>Envío a {shipping.city}</span>
