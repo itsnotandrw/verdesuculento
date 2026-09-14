@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ARTICLES } from '@/data/catalog';
+import { FEATURED_VIDEOS } from '@/data/videos';
 import ArticleSwapper from '@/components/ArticleSwapper';
+import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
+import FacebookVideoEmbed from '@/components/FacebookVideoEmbed';
 
 const ARTICLE_PHOTOS: Record<string, string> = {
   'cultivar-arandanos': 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=1200&q=80',
@@ -103,6 +106,44 @@ export default function BlogPage() {
             <div style={{ height: 500, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ArticleSwapper articles={rest} photos={ARTICLE_PHOTOS} />
             </div>
+          </div>
+        </section>
+
+        {/* Videos del vivero — reels reales de Facebook */}
+        <section style={{ marginBottom: 96, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
+          <div style={{ marginBottom: 32 }}>
+            <div className="eyebrow" style={{ marginBottom: 16 }}>DESDE NUESTRO FACEBOOK</div>
+            <h2 className="display" style={{ fontSize: 'clamp(36px, 5vw, 64px)', letterSpacing: '-0.02em' }}>
+              Míralo <em style={{ color: 'var(--accent)' }}>crecer.</em>
+            </h2>
+            <p style={{ color: 'var(--fg-dim)', maxWidth: 480, marginTop: 14, fontSize: 16, lineHeight: 1.6 }}>
+              Videos reales del vivero, planta por planta — los mismos que publicamos en Facebook.
+            </p>
+          </div>
+          <HorizontalScrollerClient>
+            <div style={{ display: 'flex', gap: 24, width: 'max-content' }}>
+              {FEATURED_VIDEOS.map((v) => (
+                <div key={v.id} style={{ width: 240 }}>
+                  <div style={{
+                    aspectRatio: '9/16',
+                    borderRadius: 'var(--radius-lg)',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-elev)',
+                    marginBottom: 14,
+                  }}>
+                    <FacebookVideoEmbed url={v.url} title={v.title} />
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, lineHeight: 1.3 }}>{v.title}</h3>
+                  <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', letterSpacing: '0.05em' }}>{v.stat}</div>
+                </div>
+              ))}
+            </div>
+          </HorizontalScrollerClient>
+          <div style={{ marginTop: 32 }}>
+            <a href="https://www.facebook.com/p/Verde-Suculento-100091965755148/" target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+              Ver más en Facebook <span className="btn-arrow">→</span>
+            </a>
           </div>
         </section>
 
