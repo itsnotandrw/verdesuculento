@@ -127,7 +127,7 @@ input, select, textarea { font: inherit; color: inherit; cursor: text; }
 body { cursor: none; }
 a, button, [role="button"] { cursor: none; }
 input, select, textarea { cursor: text; }
-@media (max-width: 900px) {
+@media (max-width: 980px), (hover: none), (pointer: coarse) {
   body, a, button, [role="button"] { cursor: auto; }
   .cursor-tip, .cursor-leaf { display: none !important; }
 }
@@ -905,6 +905,7 @@ input, select, textarea { cursor: text; }
   }
   [data-sidebar].sidebar-open { transform: translateX(0); }
   [data-mobile-filter-btn] { display: inline-flex !important; }
+  [data-sidebar-close] { display: inline-flex !important; }
 }
 @media (max-width: 720px) {
   [data-product-grid] { grid-template-columns: repeat(2, 1fr) !important; }
@@ -1287,45 +1288,86 @@ input, select, textarea { cursor: text; }
   pointer-events: none;
 }
 
+/* Bleed del marquee del catálogo fuera del padding de .container, sin usar
+   100vw: en iOS Safari 100vw puede ser más ancho que el viewport visual
+   (no cuenta la barra de direcciones/scrollbar), lo que provoca scroll
+   horizontal fantasma en todo el sitio. Usar el padding real de .container
+   como referencia evita ese problema por completo. */
+.catalog-marquee-bleed {
+  width: calc(100% + 64px);
+  margin-left: -32px;
+  margin-right: -32px;
+}
+@media (max-width: 720px) {
+  .catalog-marquee-bleed { width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; }
+}
+
 /* Mosaico de categorías del catálogo */
-.catalog-cat-tiles { scrollbar-width: none; }
-.catalog-cat-tiles::-webkit-scrollbar { display: none; }
+.catalog-cat-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px 20px;
+  padding: 32px 16px;
+  margin-bottom: 48px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
 .catalog-cat-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  width: 92px;
+  gap: 12px;
+  width: 128px;
   padding: 0;
   background: none;
   border: none;
   cursor: pointer;
 }
 .catalog-cat-tile-photo {
-  width: 76px;
-  height: 76px;
+  width: 108px;
+  height: 108px;
   border-radius: 50%;
   background-size: cover;
   background-position: center;
   background-color: var(--bg-elev-2);
-  border: 2px solid var(--border);
-  transition: border-color 0.3s, transform 0.3s var(--ease-out), box-shadow 0.3s;
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--border);
+  transition: box-shadow 0.3s, transform 0.3s var(--ease-out);
 }
-.catalog-cat-tile:hover .catalog-cat-tile-photo { transform: scale(1.06); }
+.catalog-cat-tile:hover .catalog-cat-tile-photo {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--accent), 0 12px 28px -10px color-mix(in oklab, var(--accent) 45%, transparent);
+}
 .catalog-cat-tile[data-active="true"] .catalog-cat-tile-photo {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--accent), 0 12px 28px -10px color-mix(in oklab, var(--accent) 45%, transparent);
 }
 .catalog-cat-tile-name {
-  font-size: 12px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.5em;
+  font-size: 13px;
+  font-weight: 500;
   text-align: center;
   line-height: 1.25;
   color: var(--fg-dim);
-  max-width: 92px;
+  transition: color 0.2s;
 }
+.catalog-cat-tile:hover .catalog-cat-tile-name,
 .catalog-cat-tile[data-active="true"] .catalog-cat-tile-name { color: var(--fg); font-weight: 600; }
-.catalog-cat-tile-count { font-size: 10px; color: var(--fg-mute); }
+.catalog-cat-tile-count {
+  font-size: 11px;
+  color: var(--fg-mute);
+  margin-top: -6px;
+}
+@media (max-width: 600px) {
+  .catalog-cat-tiles { gap: 20px 14px; padding: 24px 12px; }
+  .catalog-cat-tile { width: 92px; }
+  .catalog-cat-tile-photo { width: 80px; height: 80px; }
+  .catalog-cat-tile-name { font-size: 12px; }
+}
 .article-card-img {
   aspect-ratio: 16/9;
   position: relative;

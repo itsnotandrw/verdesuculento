@@ -132,7 +132,7 @@ export default function CatalogContent({ products }: { products: Product[] }) {
         </div>
 
         {/* Marquee — categorías reales del vivero */}
-        <div className="marquee" aria-label="Categorías del catálogo" style={{ marginBottom: 40, width: '100vw', marginLeft: 'calc(50% - 50vw)', marginRight: 'calc(50% - 50vw)' }}>
+        <div className="marquee catalog-marquee-bleed" aria-label="Categorías del catálogo" style={{ marginBottom: 40 }}>
           <div className="marquee-track">
             {[...CATEGORIES, ...CATEGORIES].map((cat, i) => (
               <span className="marquee-item" key={i}>
@@ -143,7 +143,7 @@ export default function CatalogContent({ products }: { products: Product[] }) {
         </div>
 
         {/* Mosaico de categorías — filtro visual, un click activa/desactiva */}
-        <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8, marginBottom: 48 }} className="catalog-cat-tiles">
+        <div className="catalog-cat-tiles">
           {CATEGORIES.map((cat) => {
             const active = selectedCats.includes(cat.id);
             return (
