@@ -239,10 +239,14 @@ input, select, textarea { cursor: text; }
   line-height: 1.1;
   white-space: nowrap;
 }
-/* El nombre completo no cabe cómodo en una barra angosta -- el ícono ya
-   carga la identidad de marca ahí, el texto se puede sacrificar. */
-@media (max-width: 480px) {
-  .nav-logo-text { display: none; }
+/* En vez de ocultar el nombre en pantallas angostas, se libera espacio
+   ocultando buscar/carrito del nav de arriba (ya están en el tab bar de
+   abajo, serían duplicados) y se reduce el tamaño del texto en pasos. */
+@media (max-width: 620px) {
+  .nav-logo-text { font-size: 16px; }
+}
+@media (max-width: 400px) {
+  .nav-logo-text { font-size: 14px; }
 }
 
 .nav-links {
@@ -252,7 +256,14 @@ input, select, textarea { cursor: text; }
   position: relative; /* pill needs this */
   align-items: center;
 }
-@media (max-width: 800px) { .nav-links { display: none; } }
+@media (max-width: 800px) {
+  .nav-links { display: none; }
+  /* Buscar y Carrito ya viven en el tab bar de abajo en móvil — quitarlos
+     de arriba libera espacio para que el nombre completo de la marca quepa.
+     Selector .nav-actions .x (no solo .x) para ganarle en especificidad a
+     .nav-icon-btn{display:grid}, que aparece después en el archivo. */
+  .nav-actions .nav-search-btn, .nav-actions .nav-cart-btn { display: none; }
+}
 
 /* Sliding pill background */
 .nav-pill {

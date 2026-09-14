@@ -148,13 +148,13 @@ export default function Nav() {
 
       <div className="nav-actions">
         <ThemeToggle />
-        <Link href="/catalogo" className="nav-icon-btn" aria-label="Buscar">
+        <Link href="/catalogo" className="nav-icon-btn nav-search-btn" aria-label="Buscar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
           </svg>
         </Link>
         <button
-          className="nav-icon-btn"
+          className="nav-icon-btn nav-cart-btn"
           aria-label="Carrito"
           onClick={() => setOpen(true)}
           style={{ position: 'relative' }}
