@@ -7,7 +7,7 @@
  *
  * Hay dos adaptadores y el que se use lo decide la configuración:
  *
- *   kv       Redis por REST (Upstash / Vercel KV). **Producción.** Es el único
+ *   kv       Redis propio por TCP (ioredis, REDIS_URL). **Producción.** Es el único
  *            que sirve en serverless, donde cada ruta corre en una función
  *            distinta con su propia memoria y su propio disco efímero.
  *   archivo  JSON local. Desarrollo y servidor propio de un solo proceso.
@@ -43,7 +43,7 @@ export interface OrderRepository {
  * Punto único de cambio para migrar a otra base:
  * implementar `OrderRepository` y devolverlo aquí.
  */
-export const orders: OrderRepository = env.kv.url && env.kv.token ? kvRepository : archivoRepository;
+export const orders: OrderRepository = env.redisUrl ? kvRepository : archivoRepository;
 
 export interface EstadoAlmacenamiento {
   id: string;
@@ -71,8 +71,8 @@ export function almacenamiento(): EstadoAlmacenamiento {
     motivo: apto
       ? undefined
       : 'Los pedidos se están guardando en disco local, pero esta plataforma no comparte ' +
-        'disco entre rutas: el pedido se crearía y desaparecería. Configura KV_REST_API_URL ' +
-        'y KV_REST_API_TOKEN (ver lib/README.md).',
+        'disco entre rutas: el pedido se crearía y desaparecería. Configura REDIS_URL ' +
+        '(ver docs/redis-local.md).',
   };
 }
 

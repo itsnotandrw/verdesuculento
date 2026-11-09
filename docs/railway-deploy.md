@@ -40,11 +40,26 @@ Cambian con la migración:
   la contraseña — la contraseña real nunca va en una variable de entorno,
   solo su hash.
 
+### Variables del Dashboard (panel nuevo)
+
+Además de las anteriores, el Dashboard de `/admin` necesita:
+
+| Variable | Valor | Para qué |
+|---|---|---|
+| `REDIS_URL` | `${{Redis.REDIS_URL}}` (referencia al servicio Redis) | Pedidos, catálogo, promociones, cupones, imágenes subidas, cuentas y rate limit |
+| `ADMIN_EMAIL` | correo del cliente | Login de `/admin/login` |
+| `ADMIN_PASSWORD_HASH` | hash scrypt (ver `.env.example`) | Nunca la contraseña en texto plano |
+| `ADMIN_SESSION_SECRET` | `openssl rand -hex 32` | Firma la cookie de sesión |
+| `ML_APP_ID`, `ML_CLIENT_SECRET` | app de Mercado Libre | Botón "Revisar Mercado Libre" (precios y pausadas) |
+
+**No** definir `ADMIN_DEV_OPEN` en Railway: abre el panel sin login y el código lo ignora
+cuando `NODE_ENV=production`, pero no tiene por qué existir. Tampoco reutilizar la
+contraseña ni el correo de prueba del `.env.local`.
+
 ## 3. Almacenamiento de pedidos: la decisión que no se puede saltar
 
-El código guarda los pedidos en Redis (Upstash) si `KV_REST_API_URL` /
-`KV_REST_API_TOKEN` existen, y si no, en un archivo local
-(`.data/orders.json`).
+El código guarda los pedidos en tu Redis propio si existe `REDIS_URL` (ver
+`docs/redis-local.md`), y si no, en un archivo local (`.data/orders.json`).
 
 En Vercel (serverless), sin Redis el checkout **se niega a crear pedidos** —
 es una protección explícita en el código porque ahí cada request es una
@@ -57,14 +72,10 @@ archivo de pedidos vuelve a nacer vacío. Elegir una de las dos:
 
 **Opción A — Redis (recomendada, es la misma decisión que ya está probada en Vercel):**
 
-1. `upstash.com` → Create Database → Redis → copiar `REST URL` y `REST
-   TOKEN`.
-2. Pegarlos en Railway como `KV_REST_API_URL` y `KV_REST_API_TOKEN`.
+1. En el proyecto de Railway: **New → Database → Redis** (con volumen para que persista).
+2. En el servicio web definir `REDIS_URL=${{Redis.REDIS_URL}}`.
 3. Listo — funciona igual sin importar cuántas veces se redeploye.
 
-Si Vercel ya tenía Upstash conectado (vía la integración de KV), esa misma
-base de Upstash es reutilizable: se administra directo desde
-`console.upstash.com` con la misma cuenta, sin depender de Vercel para nada.
 
 **Opción B — Volume (más simple, pero atada a este único servicio):**
 
@@ -72,7 +83,7 @@ base de Upstash es reutilizable: se administra directo desde
 2. Mount path: la carpeta donde vive `ORDERS_FILE` relativa a la raíz del
    proyecto — con el valor por defecto (`.data/orders.json`), el mount path
    es `/app/.data`.
-3. Sin `KV_REST_API_URL`/`TOKEN` configurados, el archivo cae ahí y sí
+3. Sin `REDIS_URL` configurado, el archivo cae ahí y sí
    sobrevive a redeploys.
 
 No dejar ninguna de las dos sin configurar: es la diferencia entre perder
@@ -80,7 +91,7 @@ pedidos reales en el primer redeploy o no.
 
 **El catálogo editable del admin (`/admin/catalogo`) solo funciona con la
 Opción A.** A diferencia de los pedidos, el catálogo no tiene fallback a
-archivo/Volume — sin `KV_REST_API_URL`/`TOKEN` configurados, `/admin/catalogo`
+archivo/Volume — sin `REDIS_URL` configurado, `/admin/catalogo`
 sigue mostrando el catálogo (de solo lectura) pero cualquier intento de
 guardar un cambio falla con un aviso claro, nunca en silencio. Si vas a usar
 el admin para editar productos, la Opción A no es opcional.

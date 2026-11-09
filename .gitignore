@@ -27,3 +27,8 @@ Thumbs.db
 
 # artefacto de compilacion incremental de TypeScript
 tsconfig.tsbuildinfo
+
+# logs de MCP locales y artefactos de TypeScript
+mcp-server*.log
+*.tsbuildinfo
+_*.mjs

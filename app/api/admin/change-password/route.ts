@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   try {
     if (!passwordEditable()) {
-      return fail('No se puede cambiar la contraseña: falta configurar Redis (KV_REST_API_URL/TOKEN).', 503);
+      return fail('No se puede cambiar la contraseña: falta configurar Redis (REDIS_URL).', 503);
     }
 
     const credenciales = await getCredenciales();

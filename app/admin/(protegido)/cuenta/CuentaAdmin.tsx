@@ -79,7 +79,7 @@ export default function CuentaAdmin() {
 
         {!editable && (
           <div className="admin-alerta" role="alert" style={{ marginBottom: 20 }}>
-            Falta configurar Redis (KV_REST_API_URL/KV_REST_API_TOKEN) — sin eso, la contraseña
+            Falta configurar Redis (REDIS_URL) — sin eso, la contraseña
             solo se puede cambiar actualizando ADMIN_PASSWORD_HASH directo en Railway.
           </div>
         )}

@@ -1,30 +1,38 @@
 /**
- * Layout de las páginas admin que requieren sesión (todo lo que vive bajo
- * este route group `(protegido)` — el paréntesis no aparece en la URL, así
- * que /admin/pedidos sigue siendo /admin/pedidos).
+ * Layout de las páginas del panel (todo lo que vive bajo este route group
+ * `(protegido)`; el paréntesis no aparece en la URL).
  *
- * El chequeo acá es la parte de UX: entrar a /admin/pedidos sin sesión
- * redirige a /admin/login antes de mandar nada al navegador, en vez de
- * mostrar la página y que falle después. La barrera REAL sigue viviendo en
- * cada route handler de /api/admin/* (`autorizarAdmin`, ver lib/api.ts) —
- * un layout es un gate de conveniencia, nunca el único guardián. Mismo
- * principio que ya aplica el middleware de auth en el proyecto de
- * referencia: el filtrado en la capa de UI es cosmético, la verificación
- * server-side en cada mutación es la que de verdad importa.
+ * La barrera REAL sigue en cada route handler de /api/admin/* (`autorizarAdmin`).
+ * Con ADMIN_DEV_OPEN=1 (solo desarrollo) el panel abre sin login para revisar lo visual.
  */
 
 import { redirect } from 'next/navigation';
 import { sesionActual } from '@/lib/admin/session';
-import AdminNav from './AdminNav';
+import { env } from '@/lib/env';
+import { orders } from '@/lib/orders/store';
+import { getPromoConfig } from '@/lib/promotions-store';
+import { estadoDe } from '@/lib/promotions';
+import AdminShell, { type Aviso } from '@/components/admin/AdminShell';
+import '../admin.css';
 
-export default function AdminProtegidoLayout({ children }: { children: React.ReactNode }) {
-  if (!sesionActual()) redirect('/admin/login');
-  return (
-    <div className="page-section" style={{ paddingTop: 100 }}>
-      <div className="container" style={{ maxWidth: 1000 }}>
-        <AdminNav />
-        {children}
-      </div>
-    </div>
-  );
+export const dynamic = 'force-dynamic';
+
+export default async function AdminProtegidoLayout({ children }: { children: React.ReactNode }) {
+  if (!env.adminOpen && !sesionActual()) redirect('/admin/login');
+
+  let pendientesVentas = 0;
+  const avisos: Aviso[] = [];
+  try {
+    const [lista, promos] = await Promise.all([orders.list({ limite: 300 }), getPromoConfig()]);
+    const porVerificar = lista.filter((o) => o.status === 'payment_in_review').length;
+    const porEnviar = lista.filter((o) => o.status === 'paid').length;
+    pendientesVentas = porVerificar + porEnviar;
+    if (porVerificar) avisos.push({ label: `${porVerificar} pago(s) por verificar`, href: '/admin/pedidos' });
+    if (porEnviar) avisos.push({ label: `${porEnviar} pedido(s) pagados por enviar`, href: '/admin/pedidos' });
+    const ahora = new Date();
+    const porVencer = [...promos.coupons, ...promos.campaigns].filter((x) => estadoDe(x, ahora) === 'activa' && x.endsAt && new Date(x.endsAt).getTime() - ahora.getTime() < 3 * 86400000).length;
+    if (porVencer) avisos.push({ label: `${porVencer} promoción(es) o cupón(es) vencen en menos de 3 días`, href: '/admin/promociones' });
+  } catch { /* el panel abre aunque Redis no responda */ }
+
+  return <AdminShell avisos={avisos} pendientesVentas={pendientesVentas}>{children}</AdminShell>;
 }

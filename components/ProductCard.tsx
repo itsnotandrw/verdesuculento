@@ -11,21 +11,27 @@ import { useSpotlight } from '@/hooks/useSpotlight';
 import ProductShape from './ProductShape';
 import StarRating from './StarRating';
 import SoldCount from './SoldCount';
+import { PROMO_DISCOUNT_BY_CATEGORY } from '@/lib/promotions';
+import { CUTOUTS } from '@/data/cutouts';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
   product: Product;
   compact?: boolean;
   sizes?: string;
+  /** Sobrescribe la etiqueta de descuento (catálogos exclusivos de ofertas). */
+  discountPct?: number;
 }
 
-export default function ProductCard({ product, compact = false, sizes = '(max-width: 480px) 94vw, (max-width: 720px) 47vw, 25vw' }: ProductCardProps) {
+export default function ProductCard({ product, compact = false, discountPct: pctOverride, sizes = '(max-width: 480px) 94vw, (max-width: 720px) 47vw, 25vw' }: ProductCardProps) {
   const { add } = useCart();
   const { open } = useQuickView();
   const [activeColor, setActiveColor] = useState(product.colors[0]);
   const rating = RATINGS[product.id];
   const badgeLabel = rating?.bestsellerRank ? 'Más vendido' : product.badge;
   const spotlight = useSpotlight<HTMLElement>();
+  const tieneRecorte = CUTOUTS.has(product.id) && product.images[0]?.startsWith(`/images/productos/${product.id}/`);
+  const discountPct = pctOverride ?? PROMO_DISCOUNT_BY_CATEGORY[product.category];
 
   return (
     <article
@@ -35,16 +41,33 @@ export default function ProductCard({ product, compact = false, sizes = '(max-wi
       data-compact={compact ? 'true' : 'false'}
     >
       {badgeLabel && <span className="product-badge">{badgeLabel}</span>}
+      {discountPct && <span className="product-discount">Hasta {discountPct}% OFF</span>}
 
-      <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
+      <Link href={`/producto/${product.id}`} className={`product-card-media${tieneRecorte ? ' has-cut' : ''}`} style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
         {product.images.length > 0 ? (
-          <FadeImage
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            sizes={sizes}
-            style={{ objectFit: 'cover' }}
-          />
+          <>
+            <FadeImage
+              className="img-orig"
+              src={product.images[0]}
+              alt={product.name}
+              fill
+              sizes={sizes}
+              quality={90}
+              style={{ objectFit: 'cover' }}
+            />
+            {tieneRecorte && (
+              <FadeImage
+                className="img-cut"
+                src={`/images/productos/${product.id}/cut/1.webp`}
+                alt=""
+                aria-hidden
+                fill
+                sizes={sizes}
+                quality={92}
+                style={{ objectFit: 'cover' }}
+              />
+            )}
+          </>
         ) : (
           <ProductShape product={product} activeColorHex={activeColor.hex} />
         )}

@@ -1,16 +1,23 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { CATEGORIES, CATEGORY_PHOTOS, TESTIMONIALS, ARTICLES, formatCOP } from '@/data/catalog';
+import { CATEGORIES, CATEGORY_PHOTOS, ARTICLES, formatCOP } from '@/data/catalog';
 import { getAllProducts } from '@/lib/catalog/store';
 import ProductCard from '@/components/ProductCard';
 import ProductShape from '@/components/ProductShape';
 import Reveal from '@/components/Reveal';
 import NewsletterForm from '@/components/NewsletterForm';
 import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
-import TestimonialCard from '@/components/TestimonialCard';
 import CountUp from '@/components/CountUp';
 import BlurText from '@/components/BlurText';
+import ShopTheLook from '@/components/ShopTheLook';
+import PromoHero from '@/components/PromoHero';
+import { getPromoConfig } from '@/lib/promotions-store';
+import { vigente } from '@/lib/promotions';
+import WhyBuySection from '@/components/WhyBuySection';
+import ReviewsGallery, { type ReviewItem } from '@/components/ReviewsGallery';
+import { RESENAS } from '@/data/resenas';
+import { RATINGS } from '@/data/ratings';
 import type { Product } from '@/types';
 
 export const metadata: Metadata = {
@@ -20,14 +27,33 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
+// Relleno vertical entre secciones: lo mínimo que deja respirar.
+const PAD = 'clamp(16px, 2vw, 28px)';
+
+// Secciones ocultas a pedido del cliente (código conservado).
+const SHOW_HIDDEN = false;
+
 export default async function HomePage() {
   const products = await getAllProducts();
+  const config = await getPromoConfig();
+  const promotions = config.promotions.filter((p) => vigente(p));
+  const promoCoupons = promotions.length > 0 ? config.coupons.filter((c) => vigente(c)) : [];
   const featured = products.filter((p) => p.badge).slice(0, 4);
+
+  // Reseñas reales de compradores (Mercado Libre) con su foto; solo de productos que siguen visibles.
+  const reseñas: ReviewItem[] = RESENAS.flatMap((r) => {
+    const p = products.find((x) => x.id === r.productId);
+    if (!p) return [];
+    const fecha = new Date(r.fecha).toLocaleDateString('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    return [{ id: r.id, productId: p.id, productName: p.name, rating: r.rating, contenido: r.contenido, fecha, foto: r.foto }];
+  });
+  const plantasVendidas = Math.floor(Object.values(RATINGS).reduce((s, x) => s + (x.soldCount ?? 0), 0) / 100) * 100;
 
   return (
     <main>
       {/* ── HERO ─────────────────────────────────────── */}
-      <HeroSection />
+      {/* Con promociones vigentes se oculta el hero principal y se muestran ellas. */}
+      {promotions.length > 0 ? <PromoHero promotions={promotions} coupons={promoCoupons} /> : <HeroSection />}
 
       {/* ── MARQUEE ──────────────────────────────────── */}
       <div className="marquee" aria-label="Beneficios de Vivero Verde Suculento">
@@ -42,18 +68,13 @@ export default async function HomePage() {
       </div>
 
       {/* ── FEATURED PRODUCTS ────────────────────────── */}
-      <section style={{ padding: '140px 0' }}>
+      <section style={{ padding: `${PAD} 0` }}>
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 56, flexWrap: 'wrap', gap: 24 }}>
-            <div>
-              <div className="eyebrow" style={{ marginBottom: 16 }}>SELECCIÓN DEL VIVERO</div>
-              <h2 className="display" style={{ fontSize: 'clamp(48px, 8vw, 120px)' }}>
-                Productos <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>destacados.</em>
-              </h2>
-            </div>
-            <Link href="/catalogo" className="btn btn-ghost">
-              Ver todo <span className="btn-arrow">→</span>
-            </Link>
+          <div style={{ marginBottom: 28 }}>
+            <div className="eyebrow" style={{ marginBottom: 12 }}>SELECCIÓN DEL VIVERO</div>
+            <h2 className="display" style={{ fontSize: 'clamp(40px, 6vw, 88px)' }}>
+              Productos <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>destacados.</em>
+            </h2>
           </div>
           <Reveal stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
             {featured.map((p) => (
@@ -63,6 +84,9 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* OCULTO: cambiar SHOW_HIDDEN a true para volver a mostrar */}
+      {SHOW_HIDDEN && (
+<>
       {/* ── EDITORIAL — Del campo a tu cultivo ──────── */}
       <section className="editorial-immersive" style={{ padding: '120px 0' }}>
         <div className="editorial-immersive-overlay" />
@@ -120,45 +144,28 @@ export default async function HomePage() {
         <style>{`@media (max-width: 760px) { .editorial-grid { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
+</>
+      )}
+
+      {/* ── IMAGEN INTERACTIVA (frutales clima cálido) ── */}
+
+      <ShopTheLook products={products} looks={config.looks.filter((l) => l.active)} />
+
+
       {/* ── HORIZONTAL CATEGORY SCROLL ───────────────── */}
-      <section style={{ padding: '100px 0' }}>
-        <div className="container" style={{ marginBottom: 48 }}>
-          <div className="eyebrow" style={{ marginBottom: 16 }}>OCHO FAMILIAS</div>
-          <h2 className="display" style={{ fontSize: 'clamp(48px, 8vw, 120px)', maxWidth: 1100 }}>
+      <section id="categorias" style={{ padding: `${PAD} 0`, scrollMarginTop: 80 }}>
+        <div className="container" style={{ marginBottom: 24 }}>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>{categoriasVisibles(products).length} FAMILIAS</div>
+          <h2 className="display" style={{ fontSize: 'clamp(40px, 6vw, 88px)', maxWidth: 1100 }}>
             Categorías <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>destacadas.</em>
           </h2>
         </div>
         <HorizontalScroller products={products} />
       </section>
 
-      {/* ── MANIFESTO / BENEFITS ─────────────────────── */}
-      <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
-        <div className="container">
-          <Reveal>
-            <div className="eyebrow" style={{ marginBottom: 24 }}>POR QUÉ COMPRAR CON NOSOTROS</div>
-            <h2 className="display" style={{ fontSize: 'clamp(40px, 6vw, 92px)', maxWidth: 1100, marginBottom: 64, letterSpacing: '-0.02em' }}>
-              Una planta no es un objeto cualquiera. Es{' '}
-              <em style={{ color: 'var(--accent)' }}>un ser vivo que confiamos a tus manos.</em>{' '}
-              Por eso hacemos esto bien.
-            </h2>
-          </Reveal>
-          <Reveal stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 36, paddingTop: 32, borderTop: '1px solid var(--border)' }}>
-            {[
-              { n: '01', t: 'Envíos a toda Colombia', d: 'Empaque especializado para plantas vivas. Llegada garantizada en 2 a 5 días hábiles.' },
-              { n: '02', t: 'Plantas seleccionadas', d: 'Material genético certificado. Cada plántula pasa por inspección agronómica antes del despacho.' },
-              { n: '03', t: 'Asesoría especializada', d: 'Acompañamiento de un agrónomo desde la compra hasta la primera cosecha. Sin costo adicional.' },
-              { n: '04', t: 'Garantía planta viva', d: 'Si tu planta no sobrevive al envío, la reponemos sin preguntas. Es nuestra promesa.' },
-            ].map((item) => (
-              <div key={item.n}>
-                <div className="mono" style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 24, letterSpacing: '0.1em' }}>{item.n} ─</div>
-                <h3 className="display" style={{ fontSize: 30, marginBottom: 12, letterSpacing: '-0.01em' }}>{item.t}</h3>
-                <p style={{ color: 'var(--fg-dim)', lineHeight: 1.55 }}>{item.d}</p>
-              </div>
-            ))}
-          </Reveal>
-        </div>
-      </section>
-
+      {/* OCULTO: cambiar SHOW_HIDDEN a true para volver a mostrar */}
+      {SHOW_HIDDEN && (
+<>
       {/* ── PARALLAX SHOWCASE ────────────────────────── */}
       <section style={{ padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
         <div className="container">
@@ -195,23 +202,12 @@ export default async function HomePage() {
         <style>{`@media (max-width: 760px) { .parallax-grid { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
-      {/* ── TESTIMONIALS ─────────────────────────────── */}
-      <section style={{ padding: '120px 0', borderTop: '1px solid var(--border)' }}>
-        <div className="container">
-          <div style={{ marginBottom: 56 }}>
-            <div className="eyebrow" style={{ marginBottom: 16 }}>LO QUE DICEN NUESTROS CLIENTES</div>
-            <h2 className="display" style={{ fontSize: 'clamp(40px, 6vw, 88px)', letterSpacing: '-0.02em' }}>
-              Confianza <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>cultivada.</em>
-            </h2>
-          </div>
-          <Reveal stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-            {TESTIMONIALS.map((t, i) => (
-              <TestimonialCard key={i} testimonial={t} />
-            ))}
-          </Reveal>
-        </div>
-      </section>
+</>
+      )}
 
+      {/* OCULTO: cambiar SHOW_HIDDEN a true para volver a mostrar */}
+      {SHOW_HIDDEN && (
+<>
       {/* ── EDITORIAL — Cultiva en Colombia ──────────── */}
       <section style={{ padding: '100px 0', borderTop: '1px solid var(--border)' }}>
         <div className="container">
@@ -240,7 +236,7 @@ export default async function HomePage() {
             ))}
           </div>
           <div style={{ marginTop: 48 }}>
-            <Link href="/diario" className="btn btn-ghost">Leer el diario agronómico <span className="btn-arrow">→</span></Link>
+            <Link href="/asesoria" className="btn btn-primary">Hablar con un agrónomo <span className="btn-arrow">→</span></Link>
           </div>
         </div>
         <style>{`@media (max-width: 760px) { .agro-stats-grid { grid-template-columns: 1fr !important; } .agro-stat-0, .agro-stat-1 { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding-right: 0 !important; padding-left: 0 !important; } }`}</style>
@@ -251,7 +247,7 @@ export default async function HomePage() {
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 56, flexWrap: 'wrap', gap: 24 }}>
             <div>
-              <div className="eyebrow" style={{ marginBottom: 16 }}>DEL DIARIO</div>
+              <div className="eyebrow" style={{ marginBottom: 16 }}>DIARIO</div>
               <h2 className="display" style={{ fontSize: 'clamp(40px, 6vw, 88px)', letterSpacing: '-0.02em' }}>
                 Aprende <em style={{ color: 'var(--accent)' }}>a cultivar.</em>
               </h2>
@@ -300,6 +296,33 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+</>
+      )}
+
+
+      {/* ── CLIENTES REALES: reseñas con foto, galería acordeón ── */}
+      {reseñas.length >= 3 && (
+        <section style={{ padding: `${PAD} 0` }} aria-labelledby="resenas-titulo">
+          <div className="container">
+            <div style={{ marginBottom: 28, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <div>
+                <div className="eyebrow" style={{ marginBottom: 12 }}>LO QUE DICEN NUESTROS CLIENTES</div>
+                <h2 id="resenas-titulo" className="display" style={{ fontSize: 'clamp(40px, 6vw, 88px)' }}>
+                  Confianza <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>cultivada.</em>
+                </h2>
+              </div>
+              <p style={{ maxWidth: 380, color: 'var(--fg-mute)', fontSize: 15, lineHeight: 1.5 }}>
+                Reseñas y fotos que nuestros compradores publicaron en Mercado Libre, sin editar.
+                {plantasVendidas > 0 && <> Más de <b style={{ color: 'var(--fg)' }}>{plantasVendidas.toLocaleString('es-CO')}</b> plantas vendidas.</>}
+              </p>
+            </div>
+            <ReviewsGallery items={reseñas} />
+          </div>
+        </section>
+      )}
+
+      {/* ── POR QUÉ COMPRAR CON NOSOTROS (mensaje final) ── */}
+      <WhyBuySection />
     </main>
   );
 }
@@ -374,8 +397,8 @@ function HeroSection() {
             Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos. Envío a toda Colombia con garantía de plantas vivas.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', pointerEvents: 'auto', flexWrap: 'wrap' }}>
-            <Link href="/catalogo" className="btn btn-primary">
-              Ver catálogo <span className="btn-arrow">→</span>
+            <Link href="/#categorias" className="btn btn-primary">
+              Ver categorías <span className="btn-arrow">→</span>
             </Link>
             <Link href="/asesoria" className="btn btn-ghost">Contactar asesor</Link>
           </div>
@@ -389,11 +412,16 @@ function HeroSection() {
   );
 }
 
+/** Solo las categorías que hoy tienen productos visibles. */
+function categoriasVisibles(products: Product[]) {
+  return CATEGORIES.filter((c) => products.some((p) => p.category === c.id));
+}
+
 function HorizontalScroller({ products }: { products: Product[] }) {
   return (
     <HorizontalScrollerClient>
       <div style={{ display: 'flex', gap: 20, padding: '0 32px', width: 'max-content' }}>
-        {CATEGORIES.map((cat, i) => {
+        {categoriasVisibles(products).map((cat, i) => {
           const product = products.find((p) => p.category === cat.id);
           const accent = i % 2 === 0 ? 'var(--accent)' : 'var(--accent-2)';
           return (
@@ -431,13 +459,9 @@ function HorizontalScroller({ products }: { products: Product[] }) {
                 <h3 className="display" style={{ fontSize: 42, marginBottom: 10, letterSpacing: '-0.02em' }}>{cat.name}</h3>
                 <p style={{ color: 'var(--fg-dim)', maxWidth: 240, lineHeight: 1.5 }}>{cat.blurb}</p>
               </div>
-              {product && (
-                <div style={{ display: 'grid', placeItems: 'center', flex: 1 }}>
-                  <ProductShape product={product} />
-                </div>
-              )}
+              <div style={{ flex: 1 }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)' }}>{cat.count} productos</span>
+                <span className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)' }}>{products.filter((p) => p.category === cat.id).length} productos</span>
                 <span style={{ width: 44, height: 44, borderRadius: '50%', background: accent, color: 'var(--accent-fg)', display: 'grid', placeItems: 'center', fontSize: 16 }}>→</span>
               </div>
             </Link>

@@ -1,7 +1,7 @@
 /**
  * Repositorio del catálogo de productos. SOLO SERVIDOR.
  *
- * Mismo criterio que lib/orders/store.ts (Redis por REST cuando está
+ * Mismo criterio que lib/orders/store.ts (Redis propio cuando está
  * configurado), pero MUCHO más simple a propósito: los pedidos necesitan
  * updates atómicos por id porque llegan concurrentes de verdad (webhooks,
  * clientes, cron). El catálogo lo edita una sola persona de vez en cuando —
@@ -11,19 +11,16 @@
  * vuelve un problema real, ese es el momento de partirlo por producto, no
  * antes.
  *
- * Sin `KV_REST_API_URL`/`KV_REST_API_TOKEN` configurados (desarrollo local
+ * Sin `REDIS_URL` configurado (desarrollo local
  * típico), el catálogo cae al array estático de `data/catalog.ts`, de solo
  * lectura — el sitio funciona igual sin configurar nada, pero el admin no
  * puede guardar cambios (`catalogoEditable()` lo indica explícito en vez de
  * fallar en silencio).
  */
 
-import { Redis } from '@upstash/redis';
-import { env } from '@/lib/env';
+import { redis, getJson, setJson } from '@/lib/redis';
 import { CATALOG as CATALOGO_ESTATICO } from '@/data/catalog';
 import type { Product } from '@/types';
-
-const redis = env.kv.url && env.kv.token ? new Redis({ url: env.kv.url, token: env.kv.token }) : null;
 
 const CLAVE_CATALOGO = 'verde:catalog:v1';
 
@@ -41,11 +38,11 @@ let siembra: Promise<Product[]> | null = null;
 async function todosSinFiltrar(): Promise<Product[]> {
   if (!redis) return CATALOGO_ESTATICO;
 
-  const guardado = await redis.get<Product[]>(CLAVE_CATALOGO);
+  const guardado = await getJson<Product[]>(CLAVE_CATALOGO);
   if (guardado) return guardado;
 
   if (!siembra) {
-    siembra = redis.set(CLAVE_CATALOGO, CATALOGO_ESTATICO).then(() => CATALOGO_ESTATICO);
+    siembra = setJson(CLAVE_CATALOGO, CATALOGO_ESTATICO).then(() => CATALOGO_ESTATICO);
   }
   return siembra;
 }
@@ -63,10 +60,10 @@ export async function getAllProducts(incluirInactivos = false): Promise<Product[
 async function guardarCatalogo(productos: Product[]): Promise<void> {
   if (!redis) {
     throw new Error(
-      'El catálogo es de solo lectura: falta configurar KV_REST_API_URL/KV_REST_API_TOKEN.'
+      'El catálogo es de solo lectura: falta configurar REDIS_URL.'
     );
   }
-  await redis.set(CLAVE_CATALOGO, productos);
+  await setJson(CLAVE_CATALOGO, productos);
 }
 
 /**

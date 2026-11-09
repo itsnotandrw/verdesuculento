@@ -1,14 +1,10 @@
 /**
- * Repositorio de pedidos sobre Redis por API REST (Upstash / Vercel KV).
+ * Repositorio de pedidos sobre Redis propio (TCP, ioredis).
  *
  * Es el adaptador de producción. En serverless cada ruta es una función
  * distinta —`/api/orders` y `/pedido/[referencia]` no comparten memoria ni
  * disco—, así que guardar en un archivo local significa que el pedido se crea
  * en una función y desaparece para todas las demás.
- *
- * Se habla el protocolo REST directamente con `fetch` en vez de instalar un
- * SDK: son dos endpoints y así el proyecto no gana una dependencia por algo
- * que cabe en 200 líneas.
  *
  * Claves:
  *   pedido:{id}        el pedido completo en JSON
@@ -20,57 +16,11 @@
  */
 
 import { randomUUID } from 'crypto';
-import { env } from '@/lib/env';
-import type { Order } from '../types';
-import type { OrderRepository } from '../store';
+import { cmd, tuberia } from '@/lib/redis';
 
 type Comando = (string | number)[];
-
-function credenciales() {
-  const { url, token } = env.kv;
-  if (!url || !token) {
-    throw new Error(
-      '[orders/kv] faltan las credenciales de Redis. Configura KV_REST_API_URL y ' +
-        'KV_REST_API_TOKEN (o UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN).'
-    );
-  }
-  return { url: url.replace(/\/$/, ''), token };
-}
-
-async function pedir<T>(ruta: string, cuerpo: unknown): Promise<T> {
-  const { url, token } = credenciales();
-
-  const respuesta = await fetch(`${url}${ruta}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(cuerpo),
-    cache: 'no-store',
-  });
-
-  if (!respuesta.ok) {
-    const detalle = await respuesta.text().catch(() => '');
-    throw new Error(`[orders/kv] ${respuesta.status} ${detalle.slice(0, 300)}`);
-  }
-
-  return (await respuesta.json()) as T;
-}
-
-/** Un solo comando. */
-async function cmd<T = unknown>(comando: Comando): Promise<T> {
-  const salida = await pedir<{ result?: T; error?: string }>('', comando);
-  if (salida.error) throw new Error(`[orders/kv] ${salida.error}`);
-  return salida.result as T;
-}
-
-/** Varios comandos en una sola ida y vuelta. */
-async function tuberia<T = unknown>(comandos: Comando[]): Promise<T[]> {
-  if (comandos.length === 0) return [];
-  const salida = await pedir<Array<{ result?: T; error?: string }>>('/pipeline', comandos);
-  return salida.map((r) => {
-    if (r.error) throw new Error(`[orders/kv] ${r.error}`);
-    return r.result as T;
-  });
-}
+import type { Order } from '../types';
+import type { OrderRepository } from '../store';
 
 const clavePedido = (id: string) => `pedido:${id}`;
 const claveRef = (ref: string) => `ref:${ref.trim().toUpperCase()}`;

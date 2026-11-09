@@ -1,0 +1,100 @@
+/* GooeyNav (React Bits) — adaptado a los colores y la tipografía del sitio. */
+.gooey-nav-container {
+  --gn-color-1: #7ddc9a;
+  --gn-color-2: #f3efe4;
+  --gn-color-3: #e8a86b;
+  --gn-color-4: #4fb877;
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  --gn-bg: #0b110d;
+  --gn-fg: #f3efe4;
+  --gn-pill: #f3efe4;
+  --gn-pill-fg: #0d130f;
+  background: var(--gn-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 100vw;
+  padding: 6px;
+  font-family: var(--font-ui);
+}
+.gooey-nav-container nav { display: flex; position: relative; }
+.gooey-nav-container nav ul {
+  display: flex; flex-wrap: wrap; gap: 4px; list-style: none; padding: 0; margin: 0;
+  position: relative; z-index: 3; color: var(--gn-fg);
+}
+.gooey-nav-container nav ul li {
+  border-radius: 100vw; position: relative; cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease; color: var(--gn-fg);
+}
+.gooey-nav-container nav ul li button {
+  display: inline-block; padding: 0.7em 1.4em; background: none; border: 0; color: inherit;
+  font: inherit; font-size: 14px; line-height: 1.2; letter-spacing: 0.02em; cursor: pointer; border-radius: 100vw; outline: none;
+}
+.gooey-nav-container nav ul li:focus-within:has(:focus-visible) { box-shadow: 0 0 0.5px 1.5px var(--gn-fg); }
+.gooey-nav-container nav ul li::after {
+  content: ''; position: absolute; inset: 0; border-radius: 100vw; background: var(--gn-pill);
+  opacity: 0; transform: scale(0); transition: all 0.3s ease; z-index: -1;
+}
+.gooey-nav-container nav ul li.active { color: var(--gn-pill-fg); }
+.gooey-nav-container nav ul li.active::after { opacity: 1; transform: scale(1); }
+
+.gooey-nav-container .effect {
+  position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 1; pointer-events: none;
+  display: grid; place-items: center; z-index: 1; font-size: 14px; line-height: 1.2; letter-spacing: 0.02em;
+}
+.gooey-nav-container .effect.text { display: none; }
+/* Efecto gooey con filtro SVG que umbraliza solo la transparencia (sin tocar los colores): contrast() original dejaba flecos amarillos en los bordes. */
+.gooey-nav-container .effect.filter { filter: url(#gn-goo); opacity: 0; transition: opacity 0.25s ease; }
+/* Solo se ve mientras dura la animacion; despues queda la pildora solida (li.active::after) sin halo ni manchas. */
+.gooey-nav-container .effect.filter.show { opacity: 1; }
+.gooey-nav-container .effect.filter::after {
+  content: ''; position: absolute; inset: 0; background: var(--gn-pill); transform: scale(0);
+  opacity: 0; z-index: -1; border-radius: 100vw;
+}
+.gooey-nav-container .effect.active::after { animation: gn-pill 0.3s ease both; }
+@keyframes gn-pill { to { transform: scale(1); opacity: 1; } }
+
+.gooey-nav-container .particle,
+.gooey-nav-container .point { display: block; opacity: 0; width: 20px; height: 20px; border-radius: 100%; transform-origin: center; }
+.gooey-nav-container .particle {
+  --time: 5s; position: absolute; top: calc(50% - 8px); left: calc(50% - 8px);
+  animation: gn-particle calc(var(--time)) ease 1 -350ms;
+}
+.gooey-nav-container .point { background: var(--color); opacity: 1; animation: gn-point calc(var(--time)) ease 1 -350ms; }
+@keyframes gn-particle {
+  0% { transform: rotate(0deg) translate(calc(var(--start-x)), calc(var(--start-y))); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  70% { transform: rotate(calc(var(--rotate) * 0.5)) translate(calc(var(--end-x) * 1.2), calc(var(--end-y) * 1.2)); opacity: 1; animation-timing-function: ease; }
+  85% { transform: rotate(calc(var(--rotate) * 0.66)) translate(calc(var(--end-x)), calc(var(--end-y))); opacity: 1; }
+  100% { transform: rotate(calc(var(--rotate) * 1.2)) translate(calc(var(--end-x) * 0.5), calc(var(--end-y) * 0.5)); opacity: 1; }
+}
+@keyframes gn-point {
+  0% { transform: scale(0); opacity: 0; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  25% { transform: scale(calc(var(--scale) * 0.25)); }
+  38% { opacity: 1; }
+  65% { transform: scale(var(--scale)); opacity: 1; animation-timing-function: ease; }
+  85% { transform: scale(var(--scale)); opacity: 1; }
+  100% { transform: scale(calc(var(--scale) * 0.2)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gooey-nav-container .particle, .gooey-nav-container .point { animation: none; }
+}
+
+@media (max-width: 520px) {
+  .gooey-nav-container { display: block; }
+  .gooey-nav-container nav ul { flex-wrap: nowrap; }
+  .gooey-nav-container nav ul li { flex: 1 1 auto; text-align: center; }
+  .gooey-nav-container nav ul li button { width: 100%; padding: 0.75em 0.6em; font-size: 12.5px; white-space: nowrap; line-height: 1.2; }
+  .gooey-nav-container .effect { font-size: 12.5px; white-space: nowrap; line-height: 1.2; }
+}
+
+/* Modo claro: contenedor claro, píldora oscura (el efecto gooey usa darken en vez de lighten) */
+[data-theme='light'] .gooey-nav-container {
+  --gn-bg: #ffffff;
+  --gn-fg: #0d130f;
+  --gn-pill: #0d130f;
+  --gn-pill-fg: #f3efe4;
+  --gn-color-1: #1f9d55;
+  --gn-color-2: #0d130f;
+  --gn-color-3: #d9731f;
+  --gn-color-4: #2f7fb8;
+}

@@ -21,7 +21,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   try {
     if (!catalogoEditable()) {
-      return fail('El catálogo es de solo lectura: falta configurar Redis (KV_REST_API_URL/TOKEN).', 503);
+      return fail('El catálogo es de solo lectura: falta configurar Redis (REDIS_URL).', 503);
     }
 
     const existente = await getProductById(params.id);
@@ -43,7 +43,7 @@ export async function DELETE(request: Request, { params }: Params) {
 
   try {
     if (!catalogoEditable()) {
-      return fail('El catálogo es de solo lectura: falta configurar Redis (KV_REST_API_URL/TOKEN).', 503);
+      return fail('El catálogo es de solo lectura: falta configurar Redis (REDIS_URL).', 503);
     }
 
     const existente = await getProductById(params.id);

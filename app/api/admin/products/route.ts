@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   try {
     if (!catalogoEditable()) {
-      return fail('El catálogo es de solo lectura: falta configurar Redis (KV_REST_API_URL/TOKEN).', 503);
+      return fail('El catálogo es de solo lectura: falta configurar Redis (REDIS_URL).', 503);
     }
 
     const body = await cuerpo(request);

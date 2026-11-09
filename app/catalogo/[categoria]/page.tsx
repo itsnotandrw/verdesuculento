@@ -40,7 +40,7 @@ export default async function CategoryPage({ params }: Props) {
         </nav>
 
         <div style={{ marginBottom: 64 }}>
-          <div className="eyebrow" style={{ marginBottom: 16 }}>{cat.count} PRODUCTOS</div>
+          <div className="eyebrow" style={{ marginBottom: 16 }}>{products.length} PRODUCTOS</div>
           <h1 className="display" style={{ fontSize: 'clamp(56px, 8vw, 120px)' }}>
             {cat.name}<em style={{ color: 'var(--accent)' }}>.</em>
           </h1>

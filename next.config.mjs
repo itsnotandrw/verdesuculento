@@ -25,7 +25,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
           // HSTS: el sitio va a vivir en un dominio propio detrás de HTTPS
           // (Railway lo termina solo). Sin preload a propósito -- eso es
           // irreversible sin pasar por el proceso de remoción de la lista de

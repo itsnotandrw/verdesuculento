@@ -84,7 +84,7 @@ Dos adaptadores, y el que se usa lo decide la configuración:
 
 | Adaptador | Cuándo | Requiere |
 |---|---|---|
-| `kv` | **Producción.** Redis por REST (Upstash / Vercel KV) | `KV_REST_API_URL` + `KV_REST_API_TOKEN` |
+| `kv` | **Producción.** Redis propio por TCP (ioredis) | `REDIS_URL` |
 | `archivo` | Desarrollo y servidor propio de un solo proceso | nada |
 
 **En serverless el archivo no sirve, y no es una preferencia de estilo.** En

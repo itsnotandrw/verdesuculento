@@ -95,8 +95,18 @@ const TONO: Record<string, 'wait' | 'ok' | 'bad'> = {
   expired: 'bad',
 };
 
+const FILTROS: { id: string; label: string; estados: string[] | null }[] = [
+  { id: 'todos', label: 'Todos', estados: null },
+  { id: 'verificar', label: 'Por verificar', estados: ['awaiting_payment', 'payment_in_review'] },
+  { id: 'enviar', label: 'Por enviar', estados: ['paid'] },
+  { id: 'camino', label: 'En camino', estados: ['shipped'] },
+  { id: 'entregados', label: 'Entregados', estados: ['delivered'] },
+  { id: 'cerrados', label: 'Cancelados / vencidos', estados: ['cancelled', 'expired'] },
+];
+
 export default function AdminOrders() {
   const router = useRouter();
+  const [filtro, setFiltro] = useState('todos');
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [sistema, setSistema] = useState<Sistema | null>(null);
@@ -206,12 +216,25 @@ export default function AdminOrders() {
           </p>
         )}
 
+        <div role="tablist" aria-label="Estado de los pedidos" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          {FILTROS.map((f) => {
+            const n = f.estados ? pedidos.filter((p) => f.estados!.includes(p.status)).length : pedidos.length;
+            const activo = filtro === f.id;
+            return (
+              <button key={f.id} role="tab" aria-selected={activo} className="chip" onClick={() => setFiltro(f.id)}
+                style={activo ? { background: 'var(--accent)', color: 'var(--accent-fg)', borderColor: 'var(--accent)' } : undefined}>
+                {f.label} · {n}
+              </button>
+            );
+          })}
+        </div>
+
         {pedidos.length === 0 && !cargando && (
           <p style={{ color: 'var(--fg-dim)' }}>Todavía no hay pedidos.</p>
         )}
 
         <div style={{ display: 'grid', gap: 12 }}>
-          {pedidos.map((pedido) => {
+          {pedidos.filter((p) => { const e = FILTROS.find((f) => f.id === filtro)?.estados; return !e || e.includes(p.status); }).map((pedido) => {
             const expandido = abierto === pedido.id;
             const trabajando = ocupado === pedido.id;
 

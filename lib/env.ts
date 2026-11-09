@@ -110,6 +110,12 @@ export const env = {
   adminToken: str('ADMIN_API_TOKEN'),
 
   /**
+   * SOLO DESARROLLO: abre el panel sin login (para revisar lo visual). Se ignora en producción.
+   * Cuando exista el proveedor de identidad (IDP), esta variable desaparece.
+   */
+  adminOpen: bool('ADMIN_DEV_OPEN', false) && process.env.NODE_ENV !== 'production',
+
+  /**
    * Login del panel /admin (navegador humano, no scripts). Los tres hacen
    * falta juntos para que el login funcione — ver .env.example para cómo
    * generar `ADMIN_PASSWORD_HASH` (con scrypt, no en texto plano) y
@@ -130,18 +136,21 @@ export const env = {
    */
   cronSecret: str('CRON_SECRET'),
 
+  /** Mercado Libre (API oficial, solo lectura de publicaciones) para sincronizar el catálogo. */
+  mercadolibre: {
+    appId: str('ML_APP_ID'),
+    clientSecret: str('ML_CLIENT_SECRET'),
+  },
+
   /** Ruta del archivo donde persisten los pedidos (ver lib/orders/store.ts). */
   ordersFile: str('ORDERS_FILE', '.data/orders.json'),
 
   /**
-   * Redis por REST para guardar los pedidos. Se aceptan los dos juegos de
-   * nombres: los que inyecta la integración de Vercel (`KV_*`) y los que da
-   * Upstash directamente (`UPSTASH_*`), para no tener que renombrar nada.
+   * Redis propio (TCP) donde viven pedidos, catálogo, promociones, cuentas y
+   * rate limiting. Autoalojado y sin límites (ver docs/redis-local.md).
+   * Ej.: redis://127.0.0.1:6379 — en Railway, `${{Redis.REDIS_URL}}`.
    */
-  kv: {
-    url: str('KV_REST_API_URL') || str('UPSTASH_REDIS_REST_URL'),
-    token: str('KV_REST_API_TOKEN') || str('UPSTASH_REDIS_REST_TOKEN'),
-  },
+  redisUrl: str('REDIS_URL'),
 
   /**
    * ¿Corremos donde el disco local no se comparte entre rutas? En serverless
@@ -154,8 +163,8 @@ export const env = {
    * no es persistente por defecto — un redeploy crea un contenedor nuevo con
    * disco vacío. Este flag no puede detectar eso (Railway no expone una
    * variable equivalente a VERCEL=1), así que en Railway la responsabilidad
-   * de no perder pedidos es 100% operativa: o se configura Redis (KV_* /
-   * UPSTASH_*, igual que en serverless) o se monta un Volume en el
+   * de no perder pedidos es 100% operativa: o se configura Redis (REDIS_URL,
+   * igual que en serverless) o se monta un Volume en el
    * directorio de `ORDERS_FILE`. Ver docs/railway-deploy.md.
    */
   serverless: Boolean(

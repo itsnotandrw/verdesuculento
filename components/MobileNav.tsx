@@ -5,9 +5,13 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { CATEGORIES } from '@/data/catalog';
+import { useCategoryCounts } from '@/context/CategoryCountsContext';
+import { useOffers } from '@/context/OffersContext';
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const counts = useCategoryCounts();
+  const offers = useOffers();
   const { count, setOpen } = useCart();
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -60,7 +64,7 @@ export default function MobileNav() {
           </button>
         </div>
         <div className="mobile-catalog-panel-list">
-          {CATEGORIES.map((cat) => (
+          {CATEGORIES.filter((cat) => (counts[cat.id] ?? cat.count) > 0).map((cat) => (
             <Link
               key={cat.id}
               href={`/catalogo/${cat.id}`}
@@ -68,12 +72,20 @@ export default function MobileNav() {
               onClick={() => setCatalogOpen(false)}
             >
               <span>{cat.name}</span>
-              <span className="nav-dropdown-count">{cat.count}</span>
+              <span className="nav-dropdown-count">{counts[cat.id] ?? cat.count}</span>
             </Link>
           ))}
-          <Link href="/catalogo" className="nav-dropdown-item nav-dropdown-all" onClick={() => setCatalogOpen(false)}>
-            Ver todo el catálogo →
-          </Link>
+          {offers.length > 0 && (
+            <>
+              <div className="nav-dropdown-group">Ofertas y cupones</div>
+              {offers.map((o) => (
+                <Link key={o.slug} href={`/ofertas/${o.slug}`} className="nav-dropdown-item" onClick={() => setCatalogOpen(false)}>
+                  <span>{o.label}</span>
+                  <span className="nav-dropdown-count nav-dropdown-offer">{o.pct}% OFF</span>
+                </Link>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
@@ -109,7 +121,7 @@ export default function MobileNav() {
       </Link>
 
       <button
-        className={`mobile-nav-item ${isActive('/catalogo') || catalogOpen ? 'active' : ''}`}
+        className={`mobile-nav-item ${isActive('/catalogo') || isActive('/ofertas') || catalogOpen ? 'active' : ''}`}
         onClick={() => { setCatalogOpen((v) => !v); setMoreOpen(false); }}
         aria-haspopup="true"
         aria-expanded={catalogOpen}

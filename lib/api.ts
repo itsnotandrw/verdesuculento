@@ -119,6 +119,7 @@ export async function cuerpo(request: Request): Promise<Record<string, unknown>>
  * autenticación opcional.
  */
 export function autorizarAdmin(request: Request): NextResponse | null {
+  if (env.adminOpen) return null; // solo desarrollo (ver lib/env.ts)
   const sesion = sesionActual();
   if (sesion) return null;
 

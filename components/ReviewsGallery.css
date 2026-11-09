@@ -1,0 +1,53 @@
+/* Galería acordeón de reseñas (ReviewsGallery.tsx). Los textos sobre foto son siempre claros sobre degradado oscuro. */
+.rg { display: flex; gap: 10px; height: clamp(440px, 62vh, 580px); }
+
+.rg-panel {
+  position: relative; flex: 1 1 0; min-width: 0; overflow: hidden; isolation: isolate; cursor: pointer;
+  border-radius: 20px; border: 1px solid var(--border); background: var(--bg-elev); outline: none;
+  transition: flex-grow 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rg-panel.on { flex-grow: 7; cursor: default; }
+.rg-panel:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+
+.rg-img { object-fit: cover; transform: scale(1.14); filter: saturate(0.8) brightness(0.7); transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease; }
+.rg-panel:hover .rg-img { filter: saturate(0.95) brightness(0.85); }
+.rg-panel.on .rg-img { transform: scale(1); filter: none; }
+
+.rg-shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(6, 12, 8, 0) 38%, rgba(6, 12, 8, 0.9) 100%); }
+
+/* Etiqueta vertical del panel cerrado */
+.rg-tag {
+  position: absolute; z-index: 2; left: 50%; bottom: 20px; max-height: calc(100% - 40px); overflow: hidden;
+  writing-mode: vertical-rl; transform: translateX(-50%) rotate(180deg); white-space: nowrap; text-overflow: ellipsis;
+  color: #f3efe4; font-size: 13px; letter-spacing: 0.04em; transition: opacity 0.3s ease;
+}
+.rg-tag b { color: #f5b84b; font-weight: 400; letter-spacing: 0.1em; }
+.rg-panel.on .rg-tag { opacity: 0; }
+
+/* Contenido del panel abierto */
+.rg-body {
+  position: absolute; z-index: 2; left: 0; bottom: 0; width: min(560px, 92vw); display: grid; gap: 12px;
+  padding: clamp(18px, 2.4vw, 34px); color: #f3efe4; opacity: 0; transform: translateY(14px); pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rg-panel.on .rg-body { opacity: 1; transform: none; pointer-events: auto; transition-delay: 0.28s; }
+.rg-stars { color: #f5b84b; font-size: 18px; letter-spacing: 0.12em; }
+.rg-quote { margin: 0; font-family: var(--font-display); font-style: italic; font-size: clamp(21px, 2.3vw, 32px); line-height: 1.18; text-wrap: balance; }
+.rg-meta { display: grid; gap: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; color: rgba(243, 239, 228, 0.78); text-transform: uppercase; }
+.rg-link { color: #7ddc9a; text-decoration: none; width: fit-content; }
+.rg-link:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .rg { flex-direction: column; height: 660px; gap: 8px; }
+  .rg-panel { border-radius: 16px; }
+  .rg-panel.on { flex-grow: 6; }
+  .rg-tag {
+    writing-mode: horizontal-tb; transform: none; left: 16px; right: 16px; bottom: auto; top: 50%; margin-top: -9px;
+    max-height: none; line-height: 18px; font-size: 12.5px;
+  }
+  .rg-body { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-panel, .rg-img, .rg-body { transition: none; }
+}

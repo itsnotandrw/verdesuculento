@@ -8,10 +8,8 @@
  * redeploy con una variable nueva, como antes.
  */
 
-import { Redis } from '@upstash/redis';
 import { env } from '@/lib/env';
-
-const redis = env.kv.url && env.kv.token ? new Redis({ url: env.kv.url, token: env.kv.token }) : null;
+import { redis, getJson, setJson } from '@/lib/redis';
 
 const CLAVE_CREDENCIALES = 'verde:admin:credenciales';
 const CLAVE_ACCESOS = 'verde:admin:accesos';
@@ -36,7 +34,7 @@ export function passwordEditable(): boolean {
 
 export async function getCredenciales(): Promise<CredencialesAdmin | null> {
   if (redis) {
-    const guardadas = await redis.get<CredencialesAdmin>(CLAVE_CREDENCIALES);
+    const guardadas = await getJson<CredencialesAdmin>(CLAVE_CREDENCIALES);
     if (guardadas) return guardadas;
   }
   if (env.adminEmail && env.adminPasswordHash) {
@@ -47,9 +45,9 @@ export async function getCredenciales(): Promise<CredencialesAdmin | null> {
 
 export async function actualizarPassword(email: string, passwordHash: string): Promise<void> {
   if (!redis) {
-    throw new Error('No se puede guardar: falta configurar Redis (KV_REST_API_URL/TOKEN).');
+    throw new Error('No se puede guardar: falta configurar REDIS_URL.');
   }
-  await redis.set(CLAVE_CREDENCIALES, { email, passwordHash } satisfies CredencialesAdmin);
+  await setJson(CLAVE_CREDENCIALES, { email, passwordHash } satisfies CredencialesAdmin);
 }
 
 /**
@@ -71,12 +69,12 @@ export async function registrarIntentoLogin(intento: Omit<IntentoLogin, 'at'>): 
 
 export async function obtenerAccesos(): Promise<IntentoLogin[]> {
   if (!redis) return [];
-  const filas = await redis.lrange<string>(CLAVE_ACCESOS, 0, MAX_ACCESOS_GUARDADOS - 1);
+  const filas: unknown[] = await redis.lrange(CLAVE_ACCESOS, 0, MAX_ACCESOS_GUARDADOS - 1);
   return filas
     .map((f) => {
       try {
-        // El cliente de Upstash a veces ya devuelve el objeto parseado y a
-        // veces el string crudo, según la versión -- se admite cualquiera.
+        // Se admite tanto el objeto ya parseado como el string crudo (según
+        // cómo se haya guardado).
         return typeof f === 'string' ? (JSON.parse(f) as IntentoLogin) : (f as IntentoLogin);
       } catch {
         return null;

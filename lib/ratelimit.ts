@@ -1,10 +1,9 @@
 /**
  * Rate limiting por endpoint. SOLO SERVIDOR.
  *
- * Un limitador por endpoint (Upstash, sliding window), no uno genérico
- * global — cada ruta tiene un perfil de abuso distinto. Reutiliza las mismas
- * credenciales `KV_REST_API_URL`/`TOKEN` que ya usa el almacenamiento de
- * pedidos (ver lib/orders/store.ts): si ya está configurado Redis para no
+ * Un limitador por endpoint (ventana fija sobre Redis propio), no uno genérico
+ * global — cada ruta tiene un perfil de abuso distinto. Reutiliza la misma
+ * conexión `REDIS_URL` que ya usa el almacenamiento de pedidos (ver lib/orders/store.ts): si ya está configurado Redis para no
  * perder pedidos en Railway, el rate limiting sale gratis.
  *
  * **Dos políticas distintas cuando Redis no está disponible**, a propósito:
@@ -20,32 +19,33 @@
  *     tiene ningún beneficio de negocio que compense el riesgo.
  */
 
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
-import { env } from './env';
+import { redis } from './redis';
 
-const redis = env.kv.url && env.kv.token ? new Redis({ url: env.kv.url, token: env.kv.token }) : null;
-
-function crear(nombre: string, limite: number, ventana: Parameters<typeof Ratelimit.slidingWindow>[1]) {
+/**
+ * Ventana fija en Redis: INCR de una clave por (limitador, IP, ventana) con
+ * expiración. Devuelve true si todavía está dentro del límite.
+ */
+function crear(nombre: string, limite: number, ventanaMs: number) {
   if (!redis) return null;
-  return new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(limite, ventana),
-    prefix: `verde:ratelimit:${nombre}`,
-    analytics: false,
-  });
+  const cliente = redis;
+  return async (ip: string): Promise<boolean> => {
+    const bucket = Math.floor(Date.now() / ventanaMs);
+    const clave = `verde:ratelimit:${nombre}:${ip}:${bucket}`;
+    const n = await cliente.incr(clave);
+    if (n === 1) await cliente.pexpire(clave, ventanaMs);
+    return n <= limite;
+  };
 }
 
-const checkoutLimiter = crear('checkout', 10, '1 m');
-const loginLimiter = crear('admin-login', 5, '5 m');
-const busquedaPedidosLimiter = crear('order-lookup', 10, '10 m');
+const checkoutLimiter = crear('checkout', 10, 60_000);
+const loginLimiter = crear('admin-login', 5, 5 * 60_000);
+const busquedaPedidosLimiter = crear('order-lookup', 10, 10 * 60_000);
 
 /** 10 intentos de crear pedido por minuto por IP. Fail-open sin Redis. */
 export async function limitarCheckout(ip: string): Promise<boolean> {
   if (!checkoutLimiter) return true;
   try {
-    const { success } = await checkoutLimiter.limit(ip);
-    return success;
+    return await checkoutLimiter(ip);
   } catch (error) {
     // Redis configurado pero caído en este momento: mismo criterio fail-open
     // que sin configurar — no tumbar ventas por una caída de infraestructura
@@ -80,8 +80,7 @@ const limitarBusquedaEnMemoria = crearLimitadorMemoria(10, 10 * 60_000);
 export async function limitarLogin(ip: string): Promise<boolean> {
   if (!loginLimiter) return limitarLoginEnMemoria(ip);
   try {
-    const { success } = await loginLimiter.limit(ip);
-    return success;
+    return await loginLimiter(ip);
   } catch (error) {
     console.warn('[ratelimit] login: Redis falló, cayendo al limitador en memoria.', error);
     return limitarLoginEnMemoria(ip);
@@ -97,8 +96,7 @@ export async function limitarLogin(ip: string): Promise<boolean> {
 export async function limitarBusquedaPedidos(ip: string): Promise<boolean> {
   if (!busquedaPedidosLimiter) return limitarBusquedaEnMemoria(ip);
   try {
-    const { success } = await busquedaPedidosLimiter.limit(ip);
-    return success;
+    return await busquedaPedidosLimiter(ip);
   } catch (error) {
     console.warn('[ratelimit] order-lookup: Redis falló, cayendo al limitador en memoria.', error);
     return limitarBusquedaEnMemoria(ip);

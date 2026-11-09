@@ -38,6 +38,14 @@ const EDITORIAL_BREAKS: Record<number, { title: string; sub: string; link: strin
 };
 
 export default function CatalogContent({ products }: { products: Product[] }) {
+  // Conteo real de productos visibles por categoría (no el número fijo de data/catalog.ts).
+  const catCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of products) m[p.category] = (m[p.category] ?? 0) + 1;
+    return m;
+  }, [products]);
+  const categoriasConProductos = CATEGORIES.filter((c) => (catCounts[c.id] ?? 0) > 0);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
@@ -144,7 +152,7 @@ export default function CatalogContent({ products }: { products: Product[] }) {
 
         {/* Mosaico de categorías — filtro visual, un click activa/desactiva */}
         <div className="catalog-cat-tiles">
-          {CATEGORIES.map((cat) => {
+          {categoriasConProductos.map((cat) => {
             const active = selectedCats.includes(cat.id);
             return (
               <button
@@ -159,7 +167,7 @@ export default function CatalogContent({ products }: { products: Product[] }) {
                   style={{ backgroundImage: CATEGORY_PHOTOS[cat.id] ? `url(${CATEGORY_PHOTOS[cat.id]})` : undefined }}
                 />
                 <span className="catalog-cat-tile-name">{cat.name}</span>
-                <span className="catalog-cat-tile-count mono">{cat.count}</span>
+                <span className="catalog-cat-tile-count mono">{catCounts[cat.id] ?? 0}</span>
               </button>
             );
           })}
@@ -288,11 +296,11 @@ export default function CatalogContent({ products }: { products: Product[] }) {
             </div>
 
             <FilterSection title="Categoría">
-              {CATEGORIES.map((cat) => (
+              {categoriasConProductos.map((cat) => (
                 <CheckboxRow
                   key={cat.id}
                   label={cat.name}
-                  count={cat.count}
+                  count={catCounts[cat.id] ?? 0}
                   checked={selectedCats.includes(cat.id)}
                   onChange={() => toggleCat(cat.id)}
                 />
