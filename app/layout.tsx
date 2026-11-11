@@ -36,6 +36,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
+// Las páginas estáticas se regeneran cada 60 s con los datos de Redis (promociones, ofertas del menú, catálogo).
+// Necesario porque en el build no hay Redis disponible y se hornea el respaldo estático.
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: {
     default: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',

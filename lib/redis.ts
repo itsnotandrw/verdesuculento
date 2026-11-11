@@ -22,6 +22,9 @@ const globalRedis = globalThis as unknown as { __verdeRedis?: Redis | null };
 
 function crear(): Redis | null {
   if (!env.redisUrl) return null;
+  // Durante `next build` (prerender) no hay red privada: en Railway, `redis.railway.internal` solo resuelve
+  // en ejecución. Sin conexión aquí cada módulo usa su respaldo estático y el ISR trae los datos reales después.
+  if (process.env.NEXT_PHASE === 'phase-production-build') return null;
   // La red privada de Railway (`*.railway.internal`) puede ser solo IPv6 y ioredis resuelve IPv4 por defecto:
   // family 0 acepta ambas. Fuera de Railway no cambia nada.
   let host = '';
