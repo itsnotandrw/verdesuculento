@@ -153,9 +153,11 @@ export const DEFAULT_PROMO_CONFIG: PromoConfig = {
     },
   ],
   coupons: [
-    { id: 'c-bienvenida', scope: 'En productos seleccionados', pct: 10, minPurchase: 80000, code: 'BIENVENIDO10', active: true, kind: 'nuevos', maxDiscount: 18000, used: 0, slug: 'bienvenida', target: { type: 'categorias', ids: ['berries', 'suculentas', 'agroinsumos'] } },
-    { id: 'c-frutales', scope: 'En frutales y cítricos', pct: 15, minPurchase: 150000, code: 'FRUTAL15', active: true, kind: 'general', maxDiscount: 40000, used: 0, slug: 'frutales', target: { type: 'categorias', ids: ['frutales-calido', 'frutales-exoticos', 'frutales-frio', 'citricos'] } },
-    { id: 'c-bf', scope: 'Black Friday · todo el sitio', pct: 30, minPurchase: 200000, code: 'BLACK30', active: true, kind: 'general', maxDiscount: 80000, used: 0, slug: 'black30', target: { type: 'categorias', ids: ['berries', 'citricos', 'frutales-calido', 'frutales-exoticos', 'frutales-frio', 'suculentas'] } },
+    // Cupones de PRUEBA (la tienda aún no los aplica en el checkout): reemplázalos desde /admin/promociones.
+    { id: 'c-prueba-todo', scope: 'En todo el sitio', pct: 10, minPurchase: 50000, code: 'PRUEBA10', active: true, kind: 'general', maxDiscount: 15000, used: 0, slug: 'prueba10', target: { type: 'todo', ids: [] } },
+    { id: 'c-prueba-suculentas', scope: 'En suculentas y cactus', pct: 15, minPurchase: 60000, code: 'SUCULENTA15', active: true, kind: 'nuevos', maxDiscount: 20000, used: 0, slug: 'suculenta15', target: { type: 'categorias', ids: ['suculentas'] } },
+    { id: 'c-prueba-frutales', scope: 'En frutales y cítricos', pct: 20, minPurchase: 150000, code: 'FRUTAL20', active: true, kind: 'general', maxDiscount: 50000, usageLimit: 100, used: 0, slug: 'frutal20', target: { type: 'categorias', ids: ['frutales-calido', 'frutales-exoticos', 'frutales-frio', 'citricos'] } },
+    { id: 'c-prueba-berries', scope: 'En berries', pct: 12, minPurchase: 80000, code: 'BERRY12', active: true, kind: 'seguidores', maxDiscount: 25000, used: 0, slug: 'berry12', target: { type: 'categorias', ids: ['berries'] } },
   ],
   looks: [
     {
