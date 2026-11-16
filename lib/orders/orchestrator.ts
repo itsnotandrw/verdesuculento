@@ -132,6 +132,10 @@ export async function crearPedido(
   // --- contra entrega: la cobertura se valida ANTES de aceptar el pedido
   let codFee = 0;
   if (esContraEntrega) {
+    // El recaudo lo hace la transportadora: no aplica a recoger en tienda ni a la entrega el mismo día.
+    if (quote.provider === 'pickup' || quote.provider === 'local') {
+      throw new OrderError('El pago contra entrega solo está disponible con envío por transportadora.', 'cod_sin_cobertura');
+    }
     const cobertura = await shippingProvider().codCoverage(destination, subtotal + quote.cost);
     if (!cobertura.available) {
       throw new OrderError(
@@ -283,6 +287,37 @@ export async function crearGuia(orderId: string, cashOnDelivery?: number): Promi
         type: 'listo_para_recoger',
         actor: 'sistema',
         message: 'Pedido listo para recoger en tienda.',
+      });
+
+      return order;
+    });
+  }
+
+  // Entrega el mismo día: mensajería local coordinada por el vivero, sin guía de transportadora.
+  if (pedido.selectedQuote.provider === 'local') {
+    return orders.update(orderId, (order) => {
+      if (order.shipment) return order;
+
+      order.shipment = {
+        provider: 'local',
+        status: 'created',
+        carrier: order.selectedQuote.carrier,
+        service: order.selectedQuote.service,
+        cost: order.selectedQuote.cost,
+        trackingNumber: order.reference,
+        createdAt: new Date().toISOString(),
+      };
+      order.tracking.push({
+        status: 'created',
+        description: 'Entrega el mismo día: el vivero coordina el domicilio contigo por WhatsApp.',
+        occurredAt: new Date().toISOString(),
+      });
+      order.status = derivarEstado(order.payment, order.shipment);
+
+      registrar(order, {
+        type: 'guia_creada',
+        actor: 'sistema',
+        message: 'Entrega el mismo día: coordinar el domicilio con el cliente por WhatsApp.',
       });
 
       return order;

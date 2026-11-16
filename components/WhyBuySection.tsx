@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
+import { CONTACTO, TIEMPO_ENTREGA } from '@/data/contacto';
 
-const WHATSAPP = 'https://wa.me/573205550102';
-const FREE_FROM = Number(process.env.NEXT_PUBLIC_SHIPPING_FREE_FROM ?? 120000);
-const fmt = (n: number) => '$' + n.toLocaleString('es-CO');
+const WHATSAPP = CONTACTO.whatsappUrl;
 
 type Benefit = {
   n: string;
@@ -20,7 +19,7 @@ type Benefit = {
 };
 
 const BENEFITS: Benefit[] = [
-  { n: '01', t: 'Envíos a toda Colombia', d: 'Empaque especializado para plantas vivas. Llegada garantizada en 2 a 5 días hábiles.', action: 'card', cta: 'Cómo funcionan los envíos', visible: true },
+  { n: '01', t: 'Envíos a toda Colombia', d: `Empaque especializado para plantas vivas. Llegada en ${TIEMPO_ENTREGA}.`, action: 'card', cta: 'Cómo funcionan los envíos', visible: true },
   { n: '02', t: 'Plantas seleccionadas', d: 'Material genético certificado. Cada plántula pasa por inspección agronómica antes del despacho.', action: '/catalogo', cta: 'Ver productos destacados', visible: true },
   { n: '03', t: 'Asesoría especializada', d: 'Acompañamiento de un agrónomo desde la compra hasta la primera cosecha. Sin costo adicional.', action: '/asesoria', cta: 'Hablar con un asesor', visible: true },
   // OCULTO por decisión del cliente (se conserva para reactivarlo).
@@ -107,11 +106,11 @@ export default function WhyBuySection() {
               Cómo funcionan los envíos en Colombia
             </h3>
             <ol style={{ paddingLeft: 20, display: 'grid', gap: 12, color: 'var(--fg-dim)', lineHeight: 1.55, marginBottom: 24 }}>
-              <li><strong>Despachamos desde Soacha, Cundinamarca</strong>, a todo el país con transportadora.</li>
+              <li><strong>Despachamos desde Soacha, Cundinamarca</strong>, a todo el país con transportadora (Interrapidísimo).</li>
               <li><strong>Empaque especializado</strong> para plantas vivas, preparado por el vivero antes del despacho.</li>
-              <li><strong>Llega en 2 a 5 días hábiles</strong>, según la ciudad de destino.</li>
+              <li><strong>Llega en {TIEMPO_ENTREGA}</strong>, según la ciudad de destino.</li>
               <li>
-                <strong>Envío gratis desde {fmt(FREE_FROM)}</strong>; por debajo de ese valor, el costo se cotiza en el carrito según tu destino.
+                <strong>Entrega el mismo día en Bogotá, Soacha y Mosquera.</strong> El costo del envío se cotiza en el carrito según tu destino.
               </li>
               <li>Si tu planta no sobrevive al envío, la reponemos.</li>
             </ol>

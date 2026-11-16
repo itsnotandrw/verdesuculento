@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { CATEGORIES } from '@/data/catalog';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
-import { MUNICIPIOS, PISO_INFO, ZONA_KEY, masCercano, pisoDe, type Municipio } from '@/data/zonas';
+import { MUNICIPIOS, PISO_INFO, ZONA_KEY, cargarMunicipios, claveZona, masCercano, pisoDe, type Municipio } from '@/data/zonas';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const MAX_MSNM = 3000;
@@ -32,6 +32,7 @@ export default function ZoneSelector() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Municipio | null>(null);
+  const [todos, setTodos] = useState<Municipio[]>(MUNICIPIOS);
   const [activo, setActivo] = useState(0);
   const [pos, setPos] = useState({ top: 72, right: 16 });
   const [geo, setGeo] = useState<{ estado: 'idle' | 'buscando' | 'error'; msg?: string }>({ estado: 'idle' });
@@ -47,7 +48,12 @@ export default function ZoneSelector() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(ZONA_KEY);
-      if (saved) setSel(MUNICIPIOS.find((m) => m.name === saved) ?? null);
+      if (saved) {
+        const encontrar = (lista: Municipio[]) => lista.find((m) => claveZona(m) === saved) ?? lista.find((m) => m.name === saved) ?? null;
+        const rapido = encontrar(MUNICIPIOS);
+        if (rapido) setSel(rapido);
+        else cargarMunicipios().then((lista) => { setTodos(lista); setSel(encontrar(lista)); });
+      }
     } catch { /* sin storage */ }
   }, []);
 
@@ -61,6 +67,7 @@ export default function ZoneSelector() {
   useEffect(() => {
     if (!open) return;
     medir();
+    cargarMunicipios().then(setTodos);
     const onDown = (e: PointerEvent) => { const t = e.target as Node;
       if (!wrap.current?.contains(t) && !pop.current?.contains(t)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); chip.current?.focus(); } };
@@ -81,15 +88,18 @@ export default function ZoneSelector() {
 
   const results = useMemo(() => {
     const n = norm(q.trim());
-    const list = n ? MUNICIPIOS.filter((m) => norm(m.name).includes(n) || norm(m.dept).includes(n)) : MUNICIPIOS;
-    return list.slice(0, 8);
-  }, [q]);
+    if (!n) return MUNICIPIOS.slice(0, 8);
+    return todos
+      .filter((m) => norm(m.name).includes(n) || norm(m.dept).includes(n))
+      .sort((a, b) => Number(norm(b.name).startsWith(n)) - Number(norm(a.name).startsWith(n)))
+      .slice(0, 8);
+  }, [q, todos]);
 
   useEffect(() => setActivo(0), [q]);
 
   const guardar = (m: Municipio | null) => {
     try {
-      if (m) localStorage.setItem(ZONA_KEY, m.name);
+      if (m) localStorage.setItem(ZONA_KEY, claveZona(m));
       else localStorage.removeItem(ZONA_KEY);
     } catch { /* sin storage */ }
   };
@@ -112,10 +122,12 @@ export default function ZoneSelector() {
     if (!('geolocation' in navigator)) return setGeo({ estado: 'error', msg: 'Tu navegador no permite ubicación.' });
     setGeo({ estado: 'buscando' });
     navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const { municipio, km } = masCercano(p.coords.latitude, p.coords.longitude);
+      async (p) => {
+        const lista = await cargarMunicipios();
+        setTodos(lista);
+        const { municipio, km } = masCercano(p.coords.latitude, p.coords.longitude, lista);
         choose(municipio);
-        setNota(km > 60 ? `Es el municipio de la lista más cercano (a unos ${Math.round(km)} km).` : 'Detectado con tu ubicación.');
+        setNota(km > 60 ? `Es el municipio más cercano (a unos ${Math.round(km)} km).` : 'Detectado con tu ubicación.');
       },
       (e) =>
         setGeo({
@@ -225,12 +237,12 @@ export default function ZoneSelector() {
               {(!sel || q) && (
               <ul className="zone-list" id="zone-lista" role="listbox">
                 {results.map((m, i) => (
-                  <li key={m.name} role="presentation">
+                  <li key={claveZona(m)} role="presentation">
                     <button
                       type="button"
                       id={`zone-op-${i}`}
                       role="option"
-                      aria-selected={sel?.name === m.name}
+                      aria-selected={sel ? claveZona(sel) === claveZona(m) : false}
                       className={`${sel?.name === m.name ? 'on' : ''}${i === activo ? ' hi' : ''}`}
                       onMouseEnter={() => setActivo(i)}
                       onClick={() => choose(m)}

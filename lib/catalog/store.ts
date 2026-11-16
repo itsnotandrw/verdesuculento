@@ -38,7 +38,14 @@ let siembra: Promise<Product[]> | null = null;
 async function todosSinFiltrar(): Promise<Product[]> {
   if (!redis) return CATALOGO_ESTATICO;
 
-  const guardado = await getJson<Product[]>(CLAVE_CATALOGO);
+  // Si Redis no responde, el sitio sigue vendiendo con el catálogo estático (solo lectura) en vez de dar error 500.
+  let guardado: Product[] | null;
+  try {
+    guardado = await getJson<Product[]>(CLAVE_CATALOGO);
+  } catch (error) {
+    console.error('[catalogo] Redis no respondió; usando el catálogo estático:', error instanceof Error ? error.message : error);
+    return CATALOGO_ESTATICO;
+  }
   if (guardado) return guardado;
 
   if (!siembra) {

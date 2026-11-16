@@ -2,6 +2,10 @@
 // En Colombia el clima de cultivo lo define la altitud (piso térmico), no las
 // heladas, así que la zona se calcula por msnm del municipio.
 // Altitudes aproximadas de la cabecera municipal.
+//
+// MUNICIPIOS = los principales (se muestran como sugerencias y sirven de respaldo sin red).
+// El listado COMPLETO (1.122 municipios de Colombia) vive en /public/data/municipios.json, se carga solo cuando
+// el cliente abre el selector y se regenera con `node scripts/make-municipios.mjs`.
 
 export type Piso = 'calido' | 'templado' | 'frio';
 
@@ -98,12 +102,28 @@ export const PISO_INFO: Record<Piso, { label: string; rango: string; blurb: stri
 
 export const ZONA_KEY = 'verde-zona';
 
+/** Identificador estable de un municipio (hay nombres repetidos entre departamentos, p. ej. Mosquera). */
+export const claveZona = (m: Municipio) => `${m.name}|${m.dept}`;
+
+let carga: Promise<Municipio[]> | null = null;
+
+/** Descarga (una sola vez) el listado completo de municipios. Si falla, devuelve los principales. */
+export function cargarMunicipios(): Promise<Municipio[]> {
+  if (!carga) {
+    carga = fetch('/data/municipios.json')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('municipios'))))
+      .then((rows: [string, string, number, number, number][]) => rows.map(([name, dept, msnm, lat, lng]) => ({ name, dept, msnm, lat, lng })))
+      .catch(() => { carga = null; return MUNICIPIOS; });
+  }
+  return carga;
+}
+
 /** Municipio de la lista más cercano a unas coordenadas (distancia haversine, en km). */
-export function masCercano(lat: number, lng: number): { municipio: Municipio; km: number } {
+export function masCercano(lat: number, lng: number, lista: Municipio[] = MUNICIPIOS): { municipio: Municipio; km: number } {
   const rad = (g: number) => (g * Math.PI) / 180;
-  let mejor = MUNICIPIOS[0];
+  let mejor = lista[0];
   let km = Infinity;
-  for (const m of MUNICIPIOS) {
+  for (const m of lista) {
     const dLat = rad(m.lat - lat);
     const dLng = rad(m.lng - lng);
     const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat)) * Math.cos(rad(m.lat)) * Math.sin(dLng / 2) ** 2;

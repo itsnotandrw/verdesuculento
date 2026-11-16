@@ -63,11 +63,14 @@ export const env = {
     /** 'tarifa-propia' (activo hoy) | 'mipaquete' | 'envia'. */
     provider: str('SHIPPING_PROVIDER', 'tarifa-propia'),
 
-    /** Compra mínima para envío gratis. 0 lo desactiva. */
-    freeShippingFrom: num('SHIPPING_FREE_FROM', 120_000),
+    /**
+     * Sin envío gratis por decisión del cliente (2026-11-13): se ignora SHIPPING_FREE_FROM a propósito, para que una
+     * variable vieja en Railway no lo reactive. Para volver a ofrecerlo, cambiar esta línea.
+     */
+    freeShippingFrom: 0,
 
     /**
-     * Bodega de despacho (origen de todas las guías): Calle 6 # 3c-08,
+     * Bodega de despacho (origen de todas las guías): Calle 6 # 13-08,
      * Soacha, Cundinamarca — confirmada por el negocio (misma dirección de
      * su página de Facebook), no un placeholder. DANE 25754000 verificado
      * contra /locate de Envia el 2026-09-13 (ver el mismo método en
@@ -80,11 +83,20 @@ export const env = {
       cityCode: str('SHIPPING_ORIGIN_CITY_CODE', '25754000'),
       /** El esquema lo exige, pero con el DANE presente Envia no lo usa. */
       postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', ''),
-      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Calle 6 # 3c-08'),
+      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Calle 6 # 13-08'),
     },
 
     /** Contra entrega: se ofrece solo si el proveedor confirma cobertura. */
-    codEnabled: bool('SHIPPING_COD_ENABLED', false),
+    codEnabled: bool('SHIPPING_COD_ENABLED', true),
+
+    /**
+     * Porcentaje del recaudo que se le suma al cliente por pagar contra entrega. 0 = lo asume el vivero (la
+     * transportadora descuenta su comisión de lo que recauda). Confirmar la tarifa real con Interrapidísimo.
+     */
+    codFeePct: num('SHIPPING_COD_FEE_PCT', 0),
+
+    /** Costo del domicilio de entrega el mismo día (Soacha, Bogotá, Mosquera). 0 = se confirma por WhatsApp. */
+    sameDayFee: num('SHIPPING_SAME_DAY_FEE', 0),
 
     mipaquete: {
       apiKey: str('MIPAQUETE_API_KEY'),

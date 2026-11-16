@@ -16,6 +16,7 @@ import SellerTrust from '@/components/SellerTrust';
 import SellerReputation from '@/components/SellerReputation';
 import SoldCount from '@/components/SoldCount';
 import type { Product, ProductColor } from '@/types';
+import { MISMO_DIA_MUNICIPIOS, TIEMPO_ENTREGA } from '@/data/contacto';
 
 interface Props {
   product: Product;
@@ -234,6 +235,12 @@ export default function ProductContent({ product, related, crossSell }: Props) {
                 </button>
               </div>
 
+              {/* Entrega el mismo día (mensajería local) */}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', marginBottom: 20, borderRadius: 'var(--radius, 12px)', border: '1px solid color-mix(in oklab, var(--accent) 45%, transparent)', background: 'color-mix(in oklab, var(--accent) 10%, transparent)', fontSize: 13.5, lineHeight: 1.4 }}>
+                <span aria-hidden="true" style={{ fontSize: 18 }}>⚡</span>
+                <span><strong>Entrega el mismo día</strong> en {MISMO_DIA_MUNICIPIOS.join(', ')}.</span>
+              </div>
+
               <SellerTrust seller={SELLER_STATS} onNavigate={() => setActiveTab('reputacion')} />
             </div>
           </div>
@@ -247,7 +254,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
         <div className="trust-bar">
           {([
             { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 22V12"/><path d="M12 12c0 0 4-3.5 8-3.5 0 3.5-4 3.5-8 3.5"/><path d="M12 12c0 0-4-3.5-8-3.5 0 3.5 4 3.5 8 3.5"/><path d="M12 7a5 5 0 0 1 5 5"/></svg>, label: 'Planta viva garantizada', sub: 'Reposición sin preguntas' },
-            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>, label: 'Envío a Colombia', sub: '2 — 5 días hábiles' },
+            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>, label: 'Envío a Colombia', sub: TIEMPO_ENTREGA },
             { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h10a2 2 0 0 1 2 2v4"/><path d="M3 9h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 15l2 2 4-4"/></svg>, label: 'Genética certificada', sub: 'Inspección agronómica' },
             { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>, label: 'Asesoría gratis', sub: 'Primeros 6 meses' },
           ] as { icon: JSX.Element; label: string; sub: string }[]).map((item) => (

@@ -54,6 +54,8 @@ export interface ShippingQuote {
   cashOnDeliveryFee: number;
   /** Aviso para el cliente (zona especial, ruta lenta, etc.). */
   note?: string;
+  /** Si existe, se muestra en lugar del valor (p. ej. "Se confirma por WhatsApp" cuando el costo aún no se conoce). */
+  costLabel?: string;
 }
 
 export interface CodCoverage {

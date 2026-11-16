@@ -3,30 +3,33 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import CountUp from '@/components/CountUp';
 import BlurText from '@/components/BlurText';
+import { CONTACTO } from '@/data/contacto';
 
 export const metadata: Metadata = {
   title: 'Nosotros — Vivero Verde Suculento',
   description: 'Conoce el equipo detrás de Vivero Verde Suculento Agrónomos y amantes de las plantas comprometidos con la agricultura moderna en Colombia.',
 };
 
-const TEAM = [
+// Equipo real del vivero. Mientras no haya foto de cada persona se muestran sus iniciales; para agregar una foto,
+// poner el archivo en /public/images/equipo/ y escribir su ruta en `photo`.
+const TEAM: { name: string; role: string; bio: string; initials: string; photo?: string }[] = [
   {
-    name: 'Sebastián Mora',
-    role: 'Fundador & Agrónomo jefe',
-    bio: 'Ingeniero agrónomo de la Universidad Nacional, con 12 años propagando material vegetal en Antioquia. Fundó Vivero Verde Suculento para acercar la genética de vivero a los colombianos.',
-    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
+    name: 'Fabián Esteban Ramírez',
+    role: 'Fundador y Agrónomo jefe',
+    bio: 'Ingeniero agrónomo. Lidera la producción vegetal del vivero y la asesoría de cultivo para los clientes.',
+    initials: 'FR',
   },
   {
-    name: 'Valentina Ríos',
-    role: 'Directora agronómica',
-    bio: 'MSc en Horticultura Tropical. Lidera la selección varietal y los protocolos de inspección para que cada planta llegue lista para producir.',
-    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    name: 'Daniel Pinzón',
+    role: 'Logística y envíos',
+    bio: 'Se encarga del alistamiento de los pedidos, la poslogística y los despachos a todo el país.',
+    initials: 'DP',
   },
   {
-    name: 'Camilo Zapata',
-    role: 'Logística & post-venta',
-    bio: 'Especialista en packaging sostenible para material vivo. Diseñó el sistema de embalaje de Vivero Verde Suculento que garantiza la llegada en perfectas condiciones.',
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+    name: 'Karen Dayana Ramírez',
+    role: 'Atención al cliente y ventas',
+    bio: 'Asesoría comercial y atención por chat: acompaña cada pedido desde la consulta hasta la entrega.',
+    initials: 'KR',
   },
 ];
 
@@ -83,7 +86,7 @@ export default function NosotrosPage() {
               emphasizeLast={3}
             />
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 19, maxWidth: 560, margin: '0 auto', lineHeight: 1.55 }}>
-              Un vivero fundado por agrónomos, para personas que quieren cultivar en serio.
+              Un vivero fundado por un agrónomo, para personas que quieren cultivar en serio.
             </p>
           </Reveal>
         </div>
@@ -115,23 +118,18 @@ export default function NosotrosPage() {
                 Empezamos cultivando.<br />
                 Terminamos <em style={{ color: 'var(--accent)' }}>enseñando.</em>
               </h2>
-              <p style={{ color: 'var(--fg-dim)', fontSize: 17, lineHeight: 1.75, marginBottom: 20 }}>
-                Vivero Verde Suculento nació en 2019 cuando Sebastián Mora, recién egresado de la Universidad Nacional, se dio cuenta de que no existía en Colombia un vivero que combinara genética certificada con asesoría honesta.
-              </p>
-              <p style={{ color: 'var(--fg-dim)', fontSize: 17, lineHeight: 1.75, marginBottom: 20 }}>
-                La primera temporada vendimos 40 plantas de arándano a vecinos del corregimiento. Hoy despachamos a 10 ciudades del país, con el mismo protocolo de siempre: inspección agronómica antes del despacho, empaque especializado, y un agrónomo disponible durante los primeros seis meses.
-              </p>
               <p style={{ color: 'var(--fg-dim)', fontSize: 17, lineHeight: 1.75 }}>
-                No somos un intermediario. Somos el vivero.
+                Vivero Verde Suculento nació en 2019 cuando Fabián Esteban Ramírez, aún siendo estudiante de la Universidad Nacional, se dio cuenta de que en Colombia no existía un vivero que combinara material genético certificado con asesoría honesta y envíos a todo el país. Iniciamos vendiendo suculentas, posteriormente pasamos a los arándanos, ampliamos nuestra línea con berries y frutales de clima frío, y finalmente dimos el paso hacia un vivero de clima cálido, donde desarrollamos también frutales de clima cálido de gran importancia.
               </p>
               <div style={{ marginTop: 40, paddingTop: 24 }}>
-                <span className="chip">🏅 MercadoLíder Gold</span>
+                <span className="chip">🏅 MercadoLíder Gold</span>{' '}
+                <span className="chip">★ Calificación positiva en Mercado Libre</span>
               </div>
-              <div style={{ display: 'flex', gap: 48, marginTop: 20, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 20, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
                 {[
-                  { to: 92, prefix: '', suffix: '%', separator: false, label: 'Calificación positiva' },
-                  { to: 3076, prefix: '', suffix: '', separator: true, label: 'Pedidos completados' },
+                  { to: 3076, prefix: '+', suffix: '', separator: true, label: 'Pedidos completados' },
                   { to: 1200, prefix: '+', suffix: '', separator: true, label: 'Seguidores en Mercado Libre' },
+                  { to: 1000, prefix: '+', suffix: '', separator: true, label: 'Seguidores en redes sociales' },
                 ].map((s) => (
                   <div key={s.label}>
                     <div className="display" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--accent)', lineHeight: 1 }}>
@@ -183,14 +181,25 @@ export default function NosotrosPage() {
           <Reveal stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32 }}>
             {TEAM.map((member) => (
               <div key={member.name} className="team-card">
-                <div style={{
-                  width: '100%', aspectRatio: '3/4',
-                  borderRadius: 'var(--radius-lg)',
-                  backgroundImage: `url(${member.photo})`,
-                  backgroundSize: 'cover', backgroundPosition: 'center top',
-                  marginBottom: 24,
-                  overflow: 'hidden',
-                }} />
+                {member.photo ? (
+                  <div style={{
+                    width: '100%', aspectRatio: '3/4',
+                    borderRadius: 'var(--radius-lg)',
+                    backgroundImage: `url(${member.photo})`,
+                    backgroundSize: 'cover', backgroundPosition: 'center top',
+                    marginBottom: 24,
+                    overflow: 'hidden',
+                  }} />
+                ) : (
+                  <div aria-hidden="true" style={{
+                    width: '100%', aspectRatio: '3/4', marginBottom: 24, borderRadius: 'var(--radius-lg)',
+                    display: 'grid', placeItems: 'center',
+                    background: 'linear-gradient(155deg, color-mix(in oklab, var(--accent) 38%, var(--bg-elev)), var(--bg-elev))',
+                    border: '1px solid var(--border)',
+                  }}>
+                    <span className="display" style={{ fontSize: 'clamp(64px, 9vw, 110px)', color: 'var(--accent)', letterSpacing: '-0.03em' }}>{member.initials}</span>
+                  </div>
+                )}
                 <div className="mono" style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: 8 }}>{member.role.toUpperCase()}</div>
                 <h3 className="display" style={{ fontSize: 28, marginBottom: 12 }}>{member.name}</h3>
                 <p style={{ color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1.65 }}>{member.bio}</p>
@@ -205,19 +214,29 @@ export default function NosotrosPage() {
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }} className="nosotros-grid-2">
             <Reveal>
-              <div className="eyebrow" style={{ marginBottom: 20 }}>EL VIVERO</div>
+              <div className="eyebrow" style={{ marginBottom: 20 }}>DÓNDE ESTAMOS</div>
               <h2 className="display" style={{ fontSize: 'clamp(40px, 5vw, 72px)', marginBottom: 28, letterSpacing: '-0.02em' }}>
-                Visítanos en <em style={{ color: 'var(--accent)' }}>Soacha.</em>
+                Dos sedes en <em style={{ color: 'var(--accent)' }}>Cundinamarca.</em>
               </h2>
               <p style={{ color: 'var(--fg-dim)', fontSize: 16, lineHeight: 1.75, marginBottom: 28 }}>
-                Nuestro vivero está ubicado en Soacha, Cundinamarca, a minutos de Bogotá. La altura de la sabana nos da un clima estable, ideal para la aclimatación de frutales de altura y suculentas.
+                En Soacha funciona el centro de envíos y entregas, y en Santandercito el centro de producción vegetal. Atendemos de lunes a sábado.
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 36 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 36 }}>
+                {CONTACTO.sedes.map((sede) => (
+                  <div key={sede.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 15, color: 'var(--fg-dim)' }}>
+                    <span style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex', marginTop: 3 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                    </span>
+                    <span>
+                      <strong style={{ display: 'block', color: 'var(--fg)', fontWeight: 500 }}>{sede.nombre}</strong>
+                      <a href={sede.mapa} target="_blank" rel="noopener noreferrer">{sede.direccion}</a>
+                    </span>
+                  </div>
+                ))}
                 {([
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>, label: 'Calle 6 # 3c-08, Soacha, Cundinamarca' },
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: 'Lunes a sábado 7 AM — 4 PM' },
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>, label: '+57 320 555 0102' },
-                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>, label: 'fabianlds2019@gmail.com' },
+                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: CONTACTO.horario },
+                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>, label: CONTACTO.telefono },
+                  { svg: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>, label: CONTACTO.email },
                 ] as { svg: JSX.Element; label: string }[]).map((item) => (
                   <div key={item.label} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 15, color: 'var(--fg-dim)' }}>
                     <span style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex' }}>{item.svg}</span>
@@ -226,7 +245,7 @@ export default function NosotrosPage() {
                 ))}
               </div>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <a href="https://wa.me/573205550102" className="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                <a href={CONTACTO.whatsappUrl} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
                   WhatsApp <span className="btn-arrow">→</span>
                 </a>
                 <Link href="/catalogo" className="btn btn-ghost">Ver catálogo</Link>

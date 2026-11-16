@@ -14,6 +14,8 @@ for (const l of fs.readFileSync('.env.local', 'utf8').split(/\r?\n/)) {
 const CANTIDAD = Number(process.argv[2] ?? 8);
 const MAX_POR_PRODUCTO = 2;
 const MIN_CARACTERES = 25;
+// Reseñas descartadas a pedido del cliente (la foto no representa bien el producto). No volver a incluirlas.
+const EXCLUIR = new Set(['2768067140']);
 
 const ids = [...fs.readFileSync('data/ratings.ts', 'utf8').matchAll(/"(MCO\d+)":/g)].map((m) => m[1]);
 const tok = await (await fetch('https://api.mercadolibre.com/oauth/token', {
@@ -32,7 +34,7 @@ for (const productId of ids) {
     for (const rv of j.reviews ?? []) {
       const foto = (rv.media ?? []).find((m) => m.type === 'photo' && m.status === 'published' && m.variations?.length);
       const texto = (rv.content ?? '').replace(/\s+/g, ' ').trim();
-      if (!foto || rv.status !== 'published' || rv.rate < 4 || texto.length < MIN_CARACTERES) continue;
+      if (EXCLUIR.has(String(rv.id)) || !foto || rv.status !== 'published' || rv.rate < 4 || texto.length < MIN_CARACTERES) continue;
       candidatas.push({
         id: String(rv.id), productId, rating: rv.rate, titulo: (rv.title ?? '').trim(), contenido: texto,
         fecha: rv.date_created, likes: rv.likes ?? 0, url: foto.variations[0].url,

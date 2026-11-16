@@ -20,6 +20,8 @@ interface Quote {
   listCost: number;
   etaLabel: string;
   note?: string;
+  /** Texto que reemplaza al valor cuando el costo aún no se conoce (entrega el mismo día). */
+  costLabel?: string;
 }
 
 interface Metodo {
@@ -91,6 +93,8 @@ export default function CheckoutPage() {
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
 
   const quote = quotes.find((q) => q.id === quoteId) ?? null;
+  // Contra entrega: lo recauda la transportadora, así que no aplica a recoger en tienda ni a entrega el mismo día.
+  const contraEntregaPosible = codDisponible && !!quote && quote.id !== RECOGER_TIENDA_QUOTE_ID && !quote.id.startsWith('local:');
   const envio = quote?.cost ?? 0;
   const total = subtotal + envio;
 
@@ -149,9 +153,11 @@ export default function CheckoutPage() {
 
       setQuotes(datos.quotes ?? []);
       setCodDisponible(Boolean(datos.cod?.available));
-      // Se preselecciona la más barata: es la que elige casi todo el mundo.
+      // Se preselecciona la primera opción con costo conocido; la entrega el mismo día se elige a mano.
       setQuoteId((actual) =>
-        datos.quotes?.some((q: Quote) => q.id === actual) ? actual : (datos.quotes?.[0]?.id ?? null)
+        datos.quotes?.some((q: Quote) => q.id === actual)
+          ? actual
+          : ((datos.quotes?.find((q: Quote) => !q.costLabel) ?? datos.quotes?.[0])?.id ?? null)
       );
     } catch (error) {
       setQuotes([]);
@@ -175,7 +181,7 @@ export default function CheckoutPage() {
   // --- métodos de pago: los define el proveedor activo, no el checkout
   useEffect(() => {
     let vigente = true;
-    fetch(`/api/payments/methods${codDisponible ? '?cod=1' : ''}`)
+    fetch(`/api/payments/methods${contraEntregaPosible ? '?cod=1' : ''}`)
       .then((r) => r.json())
       .then((datos) => {
         if (!vigente) return;
@@ -187,7 +193,7 @@ export default function CheckoutPage() {
     return () => {
       vigente = false;
     };
-  }, [codDisponible]);
+  }, [contraEntregaPosible]);
 
   if (count === 0 && !enviando) {
     return (
@@ -466,7 +472,9 @@ export default function CheckoutPage() {
                           )}
                         </div>
                         <div className="mono" style={{ fontSize: 14, flexShrink: 0, textAlign: 'right' }}>
-                          {q.cost === 0 ? (
+                          {q.costLabel ? (
+                            <span style={{ color: 'var(--accent)', fontSize: 12 }}>{q.costLabel}</span>
+                          ) : q.cost === 0 ? (
                             <span style={{ color: 'var(--accent)' }}>Gratis</span>
                           ) : (
                             formatCOP(q.cost)
@@ -576,9 +584,7 @@ const CAMPOS: Array<{
   { field: 'documento', label: 'Cédula o NIT', type: 'text', placeholder: '1234567890', inputMode: 'numeric', autoComplete: 'off' },
   { field: 'departamento', label: 'Departamento', type: 'text', placeholder: 'Cundinamarca', autoComplete: 'address-level1', soloDomicilio: true },
   { field: 'ciudad', label: 'Ciudad', type: 'text', placeholder: 'Bogotá', autoComplete: 'address-level2', soloDomicilio: true },
-  { field: 'codigoPostal', label: 'Código postal', type: 'text', placeholder: '110111', inputMode: 'numeric', autoComplete: 'postal-code', soloDomicilio: true },
-  { field: 'direccion', label: 'Dirección', type: 'text', placeholder: 'Calle 123 # 45-67', full: true, autoComplete: 'street-address', soloDomicilio: true },
-  { field: 'barrio', label: 'Barrio', type: 'text', placeholder: 'El Poblado', autoComplete: 'address-level3', soloDomicilio: true },
+  { field: 'direccion', label: 'Dirección (con barrio)', type: 'text', placeholder: 'Calle 123 # 45-67, barrio El Poblado', full: true, autoComplete: 'street-address', soloDomicilio: true },
   // Torre/apto/piso van aparte de "barrio": la transportadora los lee de un
   // campo de instrucciones de entrega distinto, no del nombre del barrio.
   { field: 'notas', label: 'Apto, torre o punto de referencia (opcional)', type: 'text', placeholder: 'Apto 301, torre 2, edificio azul' },
@@ -623,7 +629,7 @@ function OrderSummary({
             {quote && <span className="mono" style={{ display: 'block', fontSize: 11, color: 'var(--fg-mute)' }}>{quote.etaLabel}</span>}
           </span>
           <span className="mono" style={{ flexShrink: 0 }}>
-            {quote ? (envio === 0 ? <span style={{ color: 'var(--accent)' }}>Gratis</span> : formatCOP(envio)) : '—'}
+            {quote ? (quote.costLabel ? <span style={{ color: 'var(--accent)', fontSize: 12 }}>{quote.costLabel}</span> : envio === 0 ? <span style={{ color: 'var(--accent)' }}>Gratis</span> : formatCOP(envio)) : '—'}
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>

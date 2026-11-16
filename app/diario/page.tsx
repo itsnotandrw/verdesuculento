@@ -5,12 +5,13 @@ import { FEATURED_VIDEOS } from '@/data/videos';
 import ArticleSwapper from '@/components/ArticleSwapper';
 import HorizontalScrollerClient from '@/components/HorizontalScrollerClient';
 import FacebookVideoEmbed from '@/components/FacebookVideoEmbed';
+import { CONTACTO } from '@/data/contacto';
 
 const ARTICLE_PHOTOS: Record<string, string> = {
-  'cultivar-arandanos': 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=1200&q=80',
-  'limon-tahiti':       'https://images.unsplash.com/photo-1590502160462-58b41354f588?auto=format&fit=crop&w=1200&q=80',
-  'riego-suculentas':   'https://images.unsplash.com/photo-1526397751294-331021109fbd?auto=format&fit=crop&w=1200&q=80',
-  'fertilizar-frutales':'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80',
+  'cultivar-arandanos': '/images/diario/cultivar-arandanos.webp',
+  'limon-tahiti':       '/images/diario/limon-tahiti.webp',
+  'riego-suculentas':   '/images/diario/riego-suculentas.webp',
+  'fertilizar-frutales':'/images/diario/fertilizar-frutales.webp',
 };
 
 export const metadata: Metadata = {
@@ -155,7 +156,7 @@ export default function BlogPage() {
           </h2>
           <p style={{ color: 'var(--fg-dim)', maxWidth: 480, margin: '0 auto 32px' }}>Escríbenos por WhatsApp o correo. Respondemos en menos de 24 horas.</p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="https://wa.me/573205550102" className="btn btn-primary" target="_blank" rel="noopener noreferrer">
+            <a href={CONTACTO.whatsappUrl} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
               WhatsApp <span className="btn-arrow">→</span>
             </a>
             <a href="mailto:fabianlds2019@gmail.com" className="btn btn-ghost">fabianlds2019@gmail.com</a>

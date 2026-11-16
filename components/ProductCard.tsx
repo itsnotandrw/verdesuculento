@@ -11,7 +11,6 @@ import { useSpotlight } from '@/hooks/useSpotlight';
 import ProductShape from './ProductShape';
 import StarRating from './StarRating';
 import SoldCount from './SoldCount';
-import { PROMO_DISCOUNT_BY_CATEGORY } from '@/lib/promotions';
 import { CUTOUTS } from '@/data/cutouts';
 import type { Product } from '@/types';
 
@@ -31,7 +30,8 @@ export default function ProductCard({ product, compact = false, discountPct: pct
   const badgeLabel = rating?.bestsellerRank ? 'Más vendido' : product.badge;
   const spotlight = useSpotlight<HTMLElement>();
   const tieneRecorte = CUTOUTS.has(product.id) && product.images[0]?.startsWith(`/images/productos/${product.id}/`);
-  const discountPct = pctOverride ?? PROMO_DISCOUNT_BY_CATEGORY[product.category];
+  // Solo se muestra una etiqueta de descuento donde hay una oferta real (/ofertas/<slug>). Ya no hay etiquetas fijas por categoría.
+  const discountPct = pctOverride;
 
   return (
     <article

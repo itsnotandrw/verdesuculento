@@ -1283,27 +1283,21 @@ export const CATEGORIES: Category[] = [
 ];
 
 /** Fotos de portada por categoría, compartidas entre el home y el catálogo. */
-export const CATEGORY_PHOTOS: Record<string, string> = {
-  'frutales-calido':   'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80',
-  'frutales-exoticos': 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=600&q=80',
-  'frutales-frio':     'https://images.unsplash.com/photo-1761839258671-6495fdc188b3?auto=format&fit=crop&w=600&q=80',
-  citricos:      'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=600&q=80',
-  berries:       'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=600&q=80',
-  suculentas:    'https://images.unsplash.com/photo-1526397751294-331021109fbd?auto=format&fit=crop&w=600&q=80',
-  agroinsumos:   'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80',
-  especias:      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=600&q=80',
-  otros:         'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80',
-};
-
 /**
- * Compra mínima para envío gratis, visible en el navegador.
- *
- * Espejo de `SHIPPING_FREE_FROM` (servidor): el carrito lo usa para el
- * mensaje "te faltan $X para envío gratis" sin tener que llamar a la API de
- * cotización solo para saber el umbral. La tarifa real siempre la recalcula
- * el servidor — esto es solo para el mensaje, nunca para cobrar.
+ * Foto de fondo de cada categoría en el inicio: fotos reales de productos del vivero (public/images/categorias/),
+ * una por categoría y acorde a ella. Cambiar una foto = reemplazar el archivo .webp con ese nombre.
  */
-export const FREE_SHIPPING_FROM = Number(process.env.NEXT_PUBLIC_SHIPPING_FREE_FROM) || 120_000;
+export const CATEGORY_PHOTOS: Record<string, string> = {
+  'frutales-calido':   '/images/categorias/frutales-calido.webp',   // mangos
+  'frutales-exoticos': '/images/categorias/frutales-exoticos.webp', // mangostino
+  'frutales-frio':     '/images/categorias/frutales-frio.webp',     // manzanas
+  citricos:      '/images/categorias/citricos.webp',
+  berries:       '/images/categorias/berries.webp',
+  suculentas:    '/images/categorias/suculentas.webp',
+  agroinsumos:   '/images/categorias/agroinsumos.webp',
+  especias:      '/images/categorias/especias.webp',                // laurel
+  otros:         '/images/categorias/otros.webp',
+};
 
 export const TESTIMONIALS: Testimonial[] = [
   {

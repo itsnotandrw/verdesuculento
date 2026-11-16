@@ -15,6 +15,7 @@ import MiniCart from '@/components/MiniCart';
 import CustomCursor from '@/components/CustomCursor';
 import QuickView from '@/components/QuickView';
 import ScrollToTop from '@/components/ScrollToTop';
+import SearchOverlay from '@/components/SearchOverlay';
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -96,6 +97,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </OffersProvider>
           </CategoryCountsProvider>
           <MiniCart />
+          <SearchOverlay />
           <QuickView />
           <ScrollToTop />
         </Providers>

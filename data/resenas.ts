@@ -68,18 +68,7 @@ export const RESENAS: Resena[] = [
     "ancho": 675,
     "alto": 1200
   },
-  {
-    "id": "2768067140",
-    "productId": "MCO1711526927",
-    "rating": 5,
-    "titulo": "Excelente",
-    "contenido": "Sobrevivieron todas el transporte.",
-    "fecha": "2026-02-27T04:32:21Z",
-    "foto": "/images/resenas/2768067140.webp",
-    "ancho": 904,
-    "alto": 1200
-  },
-  {
+    {
     "id": "3049411524",
     "productId": "MCO2861914254",
     "rating": 5,

@@ -3,19 +3,13 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { formatCOP, FREE_SHIPPING_FROM } from '@/data/catalog';
+import { formatCOP } from '@/data/catalog';
 import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from './ProductShape';
 
 export default function MiniCart() {
   const { items, open, setOpen, updateQty, remove, subtotal, count } = useCart();
   const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
-  // Sin destino todavía no hay forma de saber el costo real de envío — se
-  // calcula en el checkout con las dimensiones exactas del pedido. Aquí solo
-  // se muestra el umbral de envío gratis, que sí es un dato cierto sin
-  // necesitar dirección.
-  const faltaParaEnvioGratis = Math.max(0, FREE_SHIPPING_FROM - subtotal);
-  const envioGratisAplicado = faltaParaEnvioGratis === 0;
 
   // Escape key handler
   useEffect(() => {
@@ -111,11 +105,6 @@ export default function MiniCart() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>
               + envío, calculado en el checkout según tu dirección
-            </div>
-            <div style={{ fontSize: 12.5, color: envioGratisAplicado ? 'var(--accent)' : 'var(--fg-dim)', marginBottom: 16, lineHeight: 1.5 }}>
-              {envioGratisAplicado
-                ? '✓ Envío gratis aplicado'
-                : `Te faltan ${formatCOP(faltaParaEnvioGratis)} para envío gratis`}
             </div>
             <Link
               href="/checkout"

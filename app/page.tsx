@@ -15,6 +15,7 @@ import PromoHero from '@/components/PromoHero';
 import { getPromoConfig } from '@/lib/promotions-store';
 import { vigente } from '@/lib/promotions';
 import WhyBuySection from '@/components/WhyBuySection';
+import { DESTACADOS_IDS } from '@/data/destacados';
 import ReviewsGallery, { type ReviewItem } from '@/components/ReviewsGallery';
 import { RESENAS } from '@/data/resenas';
 import { RATINGS } from '@/data/ratings';
@@ -38,7 +39,8 @@ export default async function HomePage() {
   const config = await getPromoConfig();
   const promotions = config.promotions.filter((p) => vigente(p));
   const promoCoupons = promotions.length > 0 ? config.coupons.filter((c) => vigente(c)) : [];
-  const featured = products.filter((p) => p.badge).slice(0, 4);
+  // Destacados: uno por categoría (el más vendido). Ver data/destacados.ts.
+  const featured = DESTACADOS_IDS.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => Boolean(p));
 
   // Reseñas reales de compradores (Mercado Libre) con su foto; solo de productos que siguen visibles.
   const reseñas: ReviewItem[] = RESENAS.flatMap((r) => {
@@ -317,6 +319,9 @@ export default async function HomePage() {
               </p>
             </div>
             <ReviewsGallery items={reseñas} />
+            <p className="mono" style={{ marginTop: 14, fontSize: 11, letterSpacing: '0.06em', color: 'var(--fg-mute)' }}>
+              Pasa el mouse sobre cada foto (o tócala en el celular) para leer la reseña de cada comprador.
+            </p>
           </div>
         </section>
       )}
@@ -454,7 +459,7 @@ function HorizontalScroller({ products }: { products: Product[] }) {
               )}
               <div>
                 <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)', letterSpacing: '0.15em', marginBottom: 14 }}>
-                  {String(i + 1).padStart(2, '0')} / {String(CATEGORIES.length).padStart(2, '0')}
+                  {String(i + 1).padStart(2, '0')} / {String(categoriasVisibles(products).length).padStart(2, '0')}
                 </div>
                 <h3 className="display" style={{ fontSize: 42, marginBottom: 10, letterSpacing: '-0.02em' }}>{cat.name}</h3>
                 <p style={{ color: 'var(--fg-dim)', maxWidth: 240, lineHeight: 1.5 }}>{cat.blurb}</p>

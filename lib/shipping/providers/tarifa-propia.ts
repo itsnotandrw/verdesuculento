@@ -108,15 +108,15 @@ export const tarifaPropiaProvider: ShippingProvider = {
 
     return {
       available: disponible,
-      // 4% es el orden de magnitud que cobran los agregadores por recaudar.
-      // El número real lo fija el contrato; se ajusta al conectar el agregador.
-      fee: disponible ? roundToHundred(amount * 0.04) : 0,
+      // Por defecto 0: el vivero asume la comisión de recaudo de la transportadora. Si se quiere trasladar al
+      // cliente, definir SHIPPING_COD_FEE_PCT con la tarifa real del contrato.
+      fee: disponible ? roundToHundred((amount * env.shipping.codFeePct) / 100) : 0,
       settlementDays: 8,
       reason: disponible
         ? undefined
         : env.shipping.codEnabled
           ? `Sin cobertura de recaudo en ${zona.nombre}.`
-          : 'El contra entrega se habilita al conectar el agregador de envíos.',
+          : 'El contra entrega no está habilitado por ahora.',
     };
   },
 

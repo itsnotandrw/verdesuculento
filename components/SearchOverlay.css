@@ -1,0 +1,22 @@
+/* Buscador del sitio (SearchOverlay.tsx) */
+.so-backdrop { position: fixed; inset: 0; z-index: 1200; background: rgba(5, 10, 7, 0.62); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: flex-start; padding: clamp(56px, 12vh, 120px) 16px 16px; }
+.so-panel { width: min(680px, 100%); max-height: min(560px, calc(100vh - 140px)); display: flex; flex-direction: column; background: var(--bg-elev); color: var(--fg); border: 1px solid var(--border-strong, var(--border)); border-radius: 18px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); overflow: hidden; animation: so-in 0.18s ease-out; }
+@keyframes so-in { from { opacity: 0; transform: translateY(-8px) scale(0.985); } to { opacity: 1; transform: none; } }
+.so-bar { display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--border); color: var(--fg-dim); }
+.so-bar input { flex: 1; min-width: 0; height: 58px; background: none; border: 0; outline: none; color: var(--fg); font: inherit; font-size: 17px; }
+.so-bar input::placeholder { color: var(--fg-mute); }
+.so-close { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--fg-dim); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.so-body { overflow-y: auto; padding: 14px 14px 16px; }
+.so-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-mute); margin-bottom: 10px; }
+.so-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.so-msg { color: var(--fg-dim); font-size: 14px; line-height: 1.5; padding: 6px 4px; }
+.so-list { list-style: none; display: grid; gap: 4px; }
+.so-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; text-decoration: none; color: inherit; }
+.so-item.on, .so-item:hover { background: color-mix(in oklab, var(--accent) 14%, transparent); }
+.so-item img, .so-noimg { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: #fff; flex-shrink: 0; }
+.so-txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.so-txt b { font-weight: 500; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.so-txt small { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; color: var(--fg-mute); text-transform: uppercase; }
+.so-price { font-family: var(--font-mono); font-size: 13px; color: var(--accent); flex-shrink: 0; }
+@media (max-width: 600px) { .so-backdrop { padding-top: 12px; } .so-panel { max-height: calc(100vh - 24px); border-radius: 16px; } .so-close { display: none; } }
+@media (prefers-reduced-motion: reduce) { .so-panel { animation: none; } }

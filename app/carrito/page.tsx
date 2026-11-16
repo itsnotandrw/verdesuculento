@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { formatCOP, FREE_SHIPPING_FROM } from '@/data/catalog';
+import { formatCOP } from '@/data/catalog';
 import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
 import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
 import { DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
@@ -25,7 +25,6 @@ export default function CartPage() {
 
   const ship = shipping?.cost ?? 0;
   const total = subtotal + ship;
-  const faltaParaEnvioGratis = Math.max(0, FREE_SHIPPING_FROM - subtotal);
 
   /**
    * El mismo desplegable departamento → ciudad del checkout, y la misma API
@@ -79,7 +78,7 @@ export default function CartPage() {
         if (!vigente) return;
         if (!respuesta.ok) throw new Error(datos.error ?? 'No pudimos cotizar el envío.');
 
-        const mejor = datos.quotes?.[0];
+        const mejor = datos.quotes?.find((q: { costLabel?: string }) => !q.costLabel) ?? datos.quotes?.[0];
         setShipping(
           mejor ? { dept: departamento, city: ciudadEfectiva, cost: mejor.cost, days: mejor.etaLabel } : null
         );
@@ -246,11 +245,6 @@ export default function CartPage() {
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>{shipping.days}</div>
-                </div>
-              )}
-              {!shipping && !cotizando && !errorEnvio && faltaParaEnvioGratis > 0 && (
-                <div style={{ marginTop: 12, fontSize: 12, color: 'var(--fg-dim)', lineHeight: 1.5 }}>
-                  Te faltan {formatCOP(faltaParaEnvioGratis)} para envío gratis.
                 </div>
               )}
             </div>

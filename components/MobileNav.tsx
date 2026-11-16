@@ -7,12 +7,14 @@ import { useCart } from '@/context/CartContext';
 import { CATEGORIES } from '@/data/catalog';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { useOffers } from '@/context/OffersContext';
+import { useSearch } from '@/context/SearchContext';
 
 export default function MobileNav() {
   const pathname = usePathname();
   const counts = useCategoryCounts();
   const offers = useOffers();
   const { count, setOpen } = useCart();
+  const { openSearch } = useSearch();
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
@@ -133,12 +135,12 @@ export default function MobileNav() {
         <span>Catálogo</span>
       </button>
 
-      <Link href="/catalogo" className="mobile-nav-item">
+      <button type="button" className="mobile-nav-item" onClick={openSearch}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
           <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
         </svg>
         <span>Buscar</span>
-      </Link>
+      </button>
 
       <button
         className={`mobile-nav-item ${count > 0 ? 'active' : ''}`}

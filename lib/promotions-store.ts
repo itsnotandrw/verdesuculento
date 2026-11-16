@@ -33,7 +33,14 @@ function normalizar(c: Partial<PromoConfig>): PromoConfig {
 
 export async function getPromoConfig(): Promise<PromoConfig> {
   if (!redis) return DEFAULT_PROMO_CONFIG;
-  const guardada = await getJson<Partial<PromoConfig>>(CLAVE);
+  // Si Redis no responde, se muestran las promociones por defecto en vez de dar error 500.
+  let guardada: Partial<PromoConfig> | null;
+  try {
+    guardada = await getJson<Partial<PromoConfig>>(CLAVE);
+  } catch (error) {
+    console.error('[promociones] Redis no respondió; usando valores por defecto:', error instanceof Error ? error.message : error);
+    return DEFAULT_PROMO_CONFIG;
+  }
   if (guardada) return normalizar(guardada);
   if (!siembra) siembra = setJson(CLAVE, DEFAULT_PROMO_CONFIG).then(() => DEFAULT_PROMO_CONFIG);
   return siembra;

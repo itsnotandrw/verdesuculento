@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
+import { CONTACTO } from '@/data/contacto';
 
 export const metadata: Metadata = {
   title: 'Asesoría agronómica — Vivero Verde Suculento',
@@ -43,7 +44,7 @@ const FAQ = [
   },
   {
     q: '¿Quién responde mis preguntas?',
-    a: 'Un agrónomo certificado. No hay bots, ni respuestas automáticas. Cuando escribes al WhatsApp de Vivero Verde Suculento, responde Valentina, Sebastián o Camilo, según la especialidad.',
+    a: 'Un agrónomo. No hay bots, ni respuestas automáticas. Cuando escribes al WhatsApp de Vivero Verde Suculento, responde el ingeniero Fabián Esteban, agrónomo del vivero, con el apoyo del equipo de atención al cliente.',
   },
   {
     q: '¿Funciona si vivo en una ciudad?',
@@ -84,7 +85,7 @@ export default function AsesoriaPage() {
               Gratis los primeros 6 meses. Sin chatbots, sin scripts. Un agrónomo real que conoce tu planta, tu altitud y tu suelo.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href="https://wa.me/573205550102" className="btn btn-primary" target="_blank" rel="noopener noreferrer">
+              <a href={CONTACTO.whatsappUrl} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
                 Hablar con un agrónomo <span className="btn-arrow">→</span>
               </a>
               <Link href="/catalogo" className="btn btn-ghost">Ver plantas</Link>
@@ -177,13 +178,13 @@ export default function AsesoriaPage() {
             <div style={{ maxWidth: 760 }}>
               <div style={{ fontSize: 72, lineHeight: 1, color: 'var(--accent)', marginBottom: 24, fontFamily: 'var(--font-display)' }}>"</div>
               <p className="display" style={{ fontSize: 'clamp(24px, 3.5vw, 44px)', color: 'rgba(255,255,255,0.9)', lineHeight: 1.3, marginBottom: 40 }}>
-                Le escribí al WhatsApp de Vivero Verde Suculento a las 10 de la noche porque a mi arándano le salieron manchas raras. A los 20 minutos me respondió Valentina con fotos de referencia y el tratamiento exacto. Eso no lo hace ningún vivero normal.
+                Le escribí al WhatsApp de Vivero Verde Suculento a las 6:00 de la tarde porque a mis arándanos les salieron manchas raras. A los 20 minutos me respondió el ingeniero Fabián Esteban con fotos de referencia y el tratamiento exacto. Eso no lo hace ningún vivero normal.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ width: 48, height: 48, background: 'var(--accent)', borderRadius: '50% 0 50% 50%', transform: 'rotate(45deg)', flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontWeight: 600, color: '#fff', fontSize: 15 }}>María Camila Ospina</div>
-                  <div className="mono" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em' }}>CLIENTE DESDE 2023 · RIONEGRO, ANT.</div>
+                  <div style={{ fontWeight: 600, color: '#fff', fontSize: 15 }}>Cliente de Vivero Verde Suculento</div>
+                  <div className="mono" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em' }}>TESTIMONIO POR WHATSAPP</div>
                 </div>
               </div>
             </div>
@@ -238,7 +239,7 @@ export default function AsesoriaPage() {
               <Link href="/catalogo" className="btn btn-primary" style={{ fontSize: 16, padding: '16px 32px' }}>
                 Ver catálogo <span className="btn-arrow">→</span>
               </Link>
-              <a href="https://wa.me/573205550102" className="btn btn-ghost" target="_blank" rel="noopener noreferrer">
+              <a href={CONTACTO.whatsappUrl} className="btn btn-ghost" target="_blank" rel="noopener noreferrer">
                 Preguntar por WhatsApp
               </a>
             </div>

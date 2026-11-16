@@ -264,16 +264,3 @@ export function mejorCampana(campaigns: Campaign[], p: Pick<Product, 'id' | 'cat
 export function precioConDescuento(price: number, pct: number): number {
   return Math.round((price * (1 - pct / 100)) / 10) * 10;
 }
-
-/**
- * Etiqueta "HASTA X% OFF" en las tarjetas de producto, por categoría.
- * SOLO VISUAL y de ejemplo: no cambia el precio del carrito ni del checkout.
- */
-export const PROMO_DISCOUNT_BY_CATEGORY: Record<string, number> = {
-  berries: 30,
-  citricos: 20,
-  'frutales-calido': 30,
-  'frutales-exoticos': 25,
-  'frutales-frio': 30,
-  suculentas: 20,
-};

@@ -2,12 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ARTICLES } from '@/data/catalog';
+import { CONTACTO } from '@/data/contacto';
 
 const ARTICLE_PHOTOS: Record<string, string> = {
-  'cultivar-arandanos': 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?auto=format&fit=crop&w=1600&q=85',
-  'limon-tahiti':       'https://images.unsplash.com/photo-1590502160462-58b41354f588?auto=format&fit=crop&w=1600&q=85',
-  'riego-suculentas':   'https://images.unsplash.com/photo-1526397751294-331021109fbd?auto=format&fit=crop&w=1600&q=85',
-  'fertilizar-frutales':'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1600&q=85',
+  'cultivar-arandanos': '/images/diario/cultivar-arandanos.webp',
+  'limon-tahiti':       '/images/diario/limon-tahiti.webp',
+  'riego-suculentas':   '/images/diario/riego-suculentas.webp',
+  'fertilizar-frutales':'/images/diario/fertilizar-frutales.webp',
 };
 
 interface Props {
@@ -134,7 +135,7 @@ export default function ArticlePage({ params }: Props) {
             <div style={{ fontWeight: 600, marginBottom: 4 }}>Equipo agronómico Vivero Verde Suculento</div>
             <p style={{ color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
               Ingenieros agrónomos con experiencia en cultivos tropicales colombianos. ¿Tienes preguntas sobre este tema?{' '}
-              <a href="https://wa.me/573205550102" style={{ color: 'var(--accent)' }} target="_blank" rel="noopener noreferrer">Escríbenos por WhatsApp</a>.
+              <a href={CONTACTO.whatsappUrl} style={{ color: 'var(--accent)' }} target="_blank" rel="noopener noreferrer">Escríbenos por WhatsApp</a>.
             </p>
           </div>
         </div>

@@ -9,6 +9,7 @@ import {
   Settings, ShoppingBag, Sun, Tags, X,
 } from 'lucide-react';
 import type { ToastKind } from './toast';
+import { CONTACTO } from '@/data/contacto';
 
 export interface Aviso { label: string; href: string }
 interface Props { children: React.ReactNode; avisos: Aviso[]; pendientesVentas: number }
@@ -181,7 +182,7 @@ export default function AdminShell({ children, avisos, pendientesVentas }: Props
           <div className="adm-side-foot">
             <b>¿Necesitas ayuda?</b>
             Escríbenos por WhatsApp y te acompañamos con el panel.
-            <div style={{ marginTop: 8 }}><a className="adm-link" href="https://wa.me/573205550102" target="_blank" rel="noopener noreferrer">Abrir WhatsApp →</a></div>
+            <div style={{ marginTop: 8 }}><a className="adm-link" href={CONTACTO.whatsappUrl} target="_blank" rel="noopener noreferrer">Abrir WhatsApp →</a></div>
           </div>
         </aside>
         <main className="adm-main"><div className="adm-wrap">{children}</div></main>

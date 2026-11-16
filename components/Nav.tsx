@@ -10,12 +10,14 @@ import ZoneSelector from '@/components/ZoneSelector';
 import { CATEGORIES } from '@/data/catalog';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { useOffers } from '@/context/OffersContext';
+import { useSearch } from '@/context/SearchContext';
 
 export default function Nav() {
   const pathname = usePathname();
   const counts = useCategoryCounts();
   const offers = useOffers();
   const { count, setOpen } = useCart();
+  const { openSearch } = useSearch();
   const navLinksRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -163,11 +165,11 @@ export default function Nav() {
       <div className="nav-actions">
         <ZoneSelector />
         <ThemeToggle />
-        <Link href="/catalogo" className="nav-icon-btn nav-search-btn" aria-label="Buscar">
+        <button type="button" className="nav-icon-btn nav-search-btn" aria-label="Buscar productos" onClick={openSearch}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
           </svg>
-        </Link>
+        </button>
         <button
           className="nav-icon-btn nav-cart-btn"
           aria-label="Carrito"

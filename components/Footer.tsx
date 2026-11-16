@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { CATEGORIES } from '@/data/catalog';
+import { CONTACTO } from '@/data/contacto';
 
 export default function Footer() {
   return (
@@ -18,7 +19,7 @@ export default function Footer() {
               Vivero especializado en frutales, ornamentales y agricultura moderna. Envíos a toda Colombia.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href="https://wa.me/573205550102" target="_blank" rel="noopener noreferrer" className="chip">WhatsApp</a>
+              <a href={CONTACTO.whatsappUrl} target="_blank" rel="noopener noreferrer" className="chip">WhatsApp</a>
               <a href="https://www.facebook.com/p/Verde-Suculento-100091965755148/" target="_blank" rel="noopener noreferrer" className="chip">Facebook</a>
               <a href="https://www.mercadolibre.com.co/pagina/viveroverde_suculento" target="_blank" rel="noopener noreferrer" className="chip">Mercado Libre</a>
             </div>
@@ -50,14 +51,15 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Contacto</h4>
             <ul>
-              <li><a href="tel:+573205550102">+57 320 555 0102</a></li>
-              <li><a href="mailto:fabianlds2019@gmail.com">fabianlds2019@gmail.com</a></li>
-              <li><a href="#">Lun—Sáb · 8 — 6 pm</a></li>
-              <li>
-                <a href="https://www.google.com/maps/search/?api=1&query=Calle+6+%233c-08%2C+Soacha%2C+Cundinamarca" target="_blank" rel="noopener noreferrer">
-                  Calle 6 # 3c-08, Soacha, Cundinamarca
-                </a>
-              </li>
+              <li><a href={`tel:${CONTACTO.telefonoTel}`}>{CONTACTO.telefono}</a></li>
+              <li><a href={`mailto:${CONTACTO.email}`}>{CONTACTO.email}</a></li>
+              <li>{CONTACTO.horario}</li>
+              {CONTACTO.sedes.map((sede) => (
+                <li key={sede.id}>
+                  <strong style={{ display: 'block', fontWeight: 500 }}>{sede.nombre}</strong>
+                  <a href={sede.mapa} target="_blank" rel="noopener noreferrer">{sede.direccion}</a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
