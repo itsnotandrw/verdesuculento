@@ -160,7 +160,7 @@ export default function PromoCenter() {
       <div className="adm-pagehead">
         <div>
           <h1 className="adm-title">Promociones</h1>
-          <p className="adm-desc">Descuentos, ofertas relámpago, campañas de temporada y cupones para vender más.</p>
+          <p className="adm-desc">Descuentos, ofertas relámpago, campañas de temporada y cupones para vender más. Las promociones bajan el precio de los productos (se ve tachado); los cupones se escriben en el carrito. En una compra vale solo uno: si hay productos en promoción, el cupón no aplica.</p>
         </div>
         <button className="adm-btn" onClick={() => setChooser(true)} disabled={!editable}><Plus size={16} />Crear promoción</button>
       </div>

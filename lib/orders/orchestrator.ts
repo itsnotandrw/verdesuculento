@@ -21,6 +21,9 @@
  */
 
 import { getProductById } from '@/lib/catalog/store';
+import { aplicarCupon, precioProducto } from '@/lib/promo-precios';
+import { campanasVigentes, registrarUsoCupon } from '@/lib/promo-servidor';
+import { getPromoConfig } from '@/lib/promotions-store';
 import { nuevaReferenciaPago, nuevaReferenciaPedido, nuevoOrderId } from '@/lib/ids';
 import { env } from '@/lib/env';
 import { paymentProvider, type PaymentContext } from '@/lib/payments';
@@ -45,6 +48,7 @@ export class OrderError extends Error {
       | 'producto_invalido'
       | 'cotizacion_invalida'
       | 'cod_sin_cobertura'
+      | 'cupon_invalido'
       | 'pedido_no_encontrado'
       | 'estado_invalido'
       | 'almacenamiento_no_apto'
@@ -87,6 +91,8 @@ export async function crearPedido(
   }
 
   // --- líneas y subtotal, siempre con el precio del catálogo del servidor
+  const campanas = await campanasVigentes();
+  const categoriaDe = new Map<string, string>();
   const lines: OrderLine[] = [];
   for (const linea of input.lines) {
     const producto = await getProductById(linea.productId);
@@ -95,6 +101,8 @@ export async function crearPedido(
     }
 
     const qty = Math.max(1, Math.min(99, Math.floor(linea.qty)));
+    const precio = precioProducto(producto, qty, campanas);
+    categoriaDe.set(producto.id, producto.category);
 
     lines.push({
       productId: producto.id,
@@ -102,12 +110,28 @@ export async function crearPedido(
       color: linea.color || producto.colors[0]?.name || '',
       size: linea.size || producto.sizes[0] || '',
       qty,
-      unitPrice: producto.price,
+      unitPrice: precio.unit,
+      ...(precio.pct > 0 ? { listPrice: precio.list, promo: precio.etiqueta } : {}),
       weightGrams: logisticaDe(producto.id).weightGrams,
     });
   }
 
   const subtotal = lines.reduce((suma, l) => suma + l.unitPrice * l.qty, 0);
+
+  // --- cupón: lo valida y lo calcula el servidor; el navegador solo manda el código
+  let couponDiscount = 0;
+  let cuponAplicado: { id: string; code: string; pct: number } | undefined;
+  if (input.couponCode?.trim()) {
+    const config = await getPromoConfig();
+    const resultado = aplicarCupon(
+      input.couponCode,
+      lines.map((l) => ({ id: l.productId, category: categoriaDe.get(l.productId) ?? '', unit: l.unitPrice, qty: l.qty, enPromocion: l.listPrice != null })),
+      config.coupons
+    );
+    if (!resultado.ok) throw new OrderError(resultado.motivo, 'cupon_invalido');
+    couponDiscount = resultado.descuento;
+    cuponAplicado = { id: resultado.coupon.id, code: resultado.coupon.code, pct: resultado.coupon.pct };
+  }
 
   // --- envío: se re-cotiza en el servidor y se busca la opción elegida
   const destination = {
@@ -136,7 +160,7 @@ export async function crearPedido(
     if (quote.provider === 'pickup' || quote.provider === 'local') {
       throw new OrderError('El pago contra entrega solo está disponible con envío por transportadora.', 'cod_sin_cobertura');
     }
-    const cobertura = await shippingProvider().codCoverage(destination, subtotal + quote.cost);
+    const cobertura = await shippingProvider().codCoverage(destination, subtotal - couponDiscount + quote.cost);
     if (!cobertura.available) {
       throw new OrderError(
         cobertura.reason ?? `No hay contra entrega para ${input.address.ciudad}.`,
@@ -146,7 +170,7 @@ export async function crearPedido(
     codFee = cobertura.fee;
   }
 
-  const total = subtotal + quote.cost + codFee;
+  const total = subtotal - couponDiscount + quote.cost + codFee;
   const ahora = new Date();
   const reference = nuevaReferenciaPedido();
   const orderNumber = await orders.siguienteNumero();
@@ -165,6 +189,7 @@ export async function crearPedido(
     subtotal,
     shippingCost: quote.cost + codFee,
     discount: quote.listCost - quote.cost,
+    ...(cuponAplicado ? { couponDiscount, coupon: cuponAplicado } : {}),
     total,
     selectedQuote: {
       id: quote.id,
@@ -189,7 +214,7 @@ export async function crearPedido(
   registrar(order, {
     type: 'pedido_creado',
     actor: 'cliente',
-    message: `Pedido creado por ${total.toLocaleString('es-CO')} COP · ${quote.carrier} ${quote.service}.`,
+    message: `Pedido creado por ${total.toLocaleString('es-CO')} COP · ${quote.carrier} ${quote.service}${cuponAplicado ? ` · cupón ${cuponAplicado.code} (−${couponDiscount.toLocaleString('es-CO')})` : ''}.`,
     meta: { metodo: input.method, envio: quote.id },
   });
 
@@ -228,6 +253,7 @@ export async function crearPedido(
 
   order.status = derivarEstado(order.payment, order.shipment);
   await orders.create(order);
+  if (cuponAplicado) await registrarUsoCupon(cuponAplicado.id);
 
   // El contra entrega despacha inmediatamente; el resto espera el pago.
   if (esContraEntrega) {

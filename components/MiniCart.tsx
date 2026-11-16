@@ -6,9 +6,10 @@ import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
 import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from './ProductShape';
+import PrecioPromo from './PrecioPromo';
 
 export default function MiniCart() {
-  const { items, open, setOpen, updateQty, remove, subtotal, count } = useCart();
+  const { items, open, setOpen, updateQty, remove, subtotal, count, linePrice } = useCart();
   const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
 
   // Escape key handler
@@ -83,7 +84,7 @@ export default function MiniCart() {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div className="minicart-item-price">{formatCOP(item.product.price * item.qty)}</div>
+                  <div className="minicart-item-price"><PrecioPromo unit={linePrice(item).unit} list={linePrice(item).list} qty={item.qty} /></div>
                   <button
                     onClick={() => handleRemove(item.variantKey)}
                     aria-label={`Quitar ${item.product.name} del carrito`}

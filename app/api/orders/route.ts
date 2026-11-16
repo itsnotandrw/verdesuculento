@@ -53,6 +53,7 @@ export async function POST(request: Request) {
         lines: lineasCarrito(body.lines),
         quoteId: texto(body.quoteId, 'la opción de envío', { max: 80 }),
         method: metodo,
+        couponCode: texto(body.couponCode, 'el cupón', { max: 40, requerido: false }) || undefined,
       },
       contexto
     );

@@ -17,6 +17,8 @@ import SellerReputation from '@/components/SellerReputation';
 import SoldCount from '@/components/SoldCount';
 import type { Product, ProductColor } from '@/types';
 import { MISMO_DIA_MUNICIPIOS, TIEMPO_ENTREGA } from '@/data/contacto';
+import { usePromo } from '@/context/PromoContext';
+import PrecioPromo from '@/components/PrecioPromo';
 
 interface Props {
   product: Product;
@@ -31,6 +33,9 @@ export default function ProductContent({ product, related, crossSell }: Props) {
   const [activeColor, setActiveColor] = useState<ProductColor>(product.colors[0]);
   const [activeSize, setActiveSize] = useState(product.sizes[0]);
   const [qty, setQty] = useState(1);
+  const { precio } = usePromo();
+  const precioPromo = precio(product, 1);
+  const precioQty = precio(product, qty);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
@@ -162,7 +167,12 @@ export default function ProductContent({ product, related, crossSell }: Props) {
                 en una sola caja con peso visual propio en vez de quedar
                 disuelto en el resto de la página. */}
             <div className="buy-box">
-              <div className="mono" style={{ fontSize: 30, marginBottom: 24, letterSpacing: '-0.02em' }}>{formatCOP(product.price)}</div>
+              <div className="mono" style={{ fontSize: 30, marginBottom: precioPromo.pct > 0 ? 6 : 24, letterSpacing: '-0.02em' }}><PrecioPromo unit={precioPromo.unit} list={precioPromo.list} /></div>
+              {precioPromo.pct > 0 && (
+                <div style={{ marginBottom: 24, fontSize: 13, color: 'var(--accent)' }}>
+                  −{precioPromo.pct}% de descuento{precioPromo.etiqueta ? ` · ${precioPromo.etiqueta}` : ''}
+                </div>
+              )}
 
               {/* Variety selector */}
               {product.colors.length > 1 && (
@@ -216,7 +226,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
               {/* Main CTA */}
               <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
                 <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
-                  Añadir al carrito — {formatCOP(product.price * qty)} <span className="btn-arrow">→</span>
+                  Añadir al carrito — {formatCOP(precioQty.unit * qty)} <span className="btn-arrow">→</span>
                 </button>
                 <button
                   className="btn btn-ghost"
@@ -371,7 +381,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
       <div className={`sticky-atc ${stickyVisible ? 'visible' : ''}`}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</div>
-          <div className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)' }}>{formatCOP(product.price)}</div>
+          <div className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)' }}>{formatCOP(precioPromo.unit)}</div>
         </div>
         <button className="btn btn-primary btn-sm" onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
           Añadir <span className="btn-arrow">→</span>

@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, formatCOP } from '@/data/catalog';
 import { useSearch } from '@/context/SearchContext';
+import { usePromo } from '@/context/PromoContext';
+import PrecioPromo from '@/components/PrecioPromo';
 import './SearchOverlay.css';
 
 interface Item {
@@ -24,6 +26,7 @@ const normaliza = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
 export default function SearchOverlay() {
   const { open, closeSearch, openSearch } = useSearch();
   const router = useRouter();
+  const { precio } = usePromo();
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState(false);
   const [q, setQ] = useState('');
@@ -143,7 +146,7 @@ export default function SearchOverlay() {
                       <b>{p.name}</b>
                       <small>{p.categoryName}</small>
                     </span>
-                    <span className="so-price">{formatCOP(p.price)}</span>
+                    <span className="so-price"><PrecioPromo unit={precio(p).unit} list={p.price} /></span>
                   </Link>
                 </li>
               ))}

@@ -8,6 +8,7 @@
  */
 
 import { redis, getJson, setJson } from '@/lib/redis';
+import { refrescarSitio } from '@/lib/refrescar';
 import { DEFAULT_PROMO_CONFIG, ofertasDe, vigente, type PromoConfig, type PromoCoupon, type Promotion, type Campaign } from '@/lib/promotions';
 
 const CLAVE = 'verde:promos:v1';
@@ -49,6 +50,7 @@ export async function getPromoConfig(): Promise<PromoConfig> {
 export async function savePromoConfig(config: PromoConfig): Promise<void> {
   if (!redis) throw new Error('Las promociones son de solo lectura: falta configurar REDIS_URL.');
   await setJson(CLAVE, config);
+  refrescarSitio();
 }
 
 export async function getActivePromotions(now = new Date()): Promise<Promotion[]> {

@@ -20,6 +20,7 @@
 
 import { redis, getJson, setJson } from '@/lib/redis';
 import { CATALOG as CATALOGO_ESTATICO } from '@/data/catalog';
+import { refrescarSitio } from '@/lib/refrescar';
 import type { Product } from '@/types';
 
 const CLAVE_CATALOGO = 'verde:catalog:v1';
@@ -71,6 +72,7 @@ async function guardarCatalogo(productos: Product[]): Promise<void> {
     );
   }
   await setJson(CLAVE_CATALOGO, productos);
+  refrescarSitio();
 }
 
 /**

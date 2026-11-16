@@ -5,6 +5,8 @@ import { useQuickView } from '@/context/QuickViewContext';
 import { useCart } from '@/context/CartContext';
 import { formatCOP } from '@/data/catalog';
 import { RATINGS } from '@/data/ratings';
+import { usePromo } from '@/context/PromoContext';
+import PrecioPromo from '@/components/PrecioPromo';
 import ProductShape from './ProductShape';
 import ImageCarousel from './ImageCarousel';
 import StarRating from './StarRating';
@@ -12,6 +14,7 @@ import type { ProductColor } from '@/types';
 
 export default function QuickView() {
   const { product, close } = useQuickView();
+  const { precio } = usePromo();
   const { add } = useCart();
   const [activeColor, setActiveColor] = useState<ProductColor | null>(null);
   const [activeSize, setActiveSize] = useState<string | null>(null);
@@ -102,7 +105,7 @@ export default function QuickView() {
                 <StarRating rating={RATINGS[product.id].rating!} count={RATINGS[product.id].reviewCount} size={13} showValue />
               </div>
             )}
-            <div className="mono" style={{ fontSize: 18, marginBottom: 18 }}>{formatCOP(product.price)}</div>
+            <div className="mono" style={{ fontSize: 18, marginBottom: 18 }}><PrecioPromo unit={precio(product, 1).unit} list={precio(product, 1).list} /></div>
             {/* white-space: pre-line respeta los \n\n que ya trae la descripción
                 (viene del scraping de ML) — sin esto el HTML los colapsa y todo
                 el texto se ve como un solo párrafo amontonado. */}
@@ -160,7 +163,7 @@ export default function QuickView() {
                 close();
               }}
             >
-              Añadir — {formatCOP(product.price)}
+              Añadir — {formatCOP(precio(product, 1).unit)}
             </button>
           </div>
         </div>

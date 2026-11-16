@@ -9,9 +9,13 @@ import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
 import { DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
 import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from '@/components/ProductShape';
+import PrecioPromo from '@/components/PrecioPromo';
+import CuponBox from '@/components/CuponBox';
+import { useCupon } from '@/hooks/useCupon';
 
 export default function CartPage() {
-  const { items, subtotal, count, updateQty, remove, shipping, setShipping } = useCart();
+  const { items, subtotal, listSubtotal, linePrice, count, updateQty, remove, shipping, setShipping } = useCart();
+  const cupon = useCupon();
   const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
   const [modoEntrega, setModoEntrega] = useState<'domicilio' | 'recoger'>('domicilio');
   const [departamento, setDepartamento] = useState('');
@@ -24,7 +28,8 @@ export default function CartPage() {
   const ciudadEfectiva = eligiendoOtro ? ciudadOtra.trim() : ciudad;
 
   const ship = shipping?.cost ?? 0;
-  const total = subtotal + ship;
+  const descuentoCupon = cupon.valido ? cupon.descuento : 0;
+  const total = subtotal - descuentoCupon + ship;
 
   /**
    * El mismo desplegable departamento → ciudad del checkout, y la misma API
@@ -149,7 +154,7 @@ export default function CartPage() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div className="mono" style={{ fontSize: 18, marginBottom: 8 }}>{formatCOP(item.product.price * item.qty)}</div>
+                    <div className="mono" style={{ fontSize: 18, marginBottom: 8 }}><PrecioPromo unit={linePrice(item).unit} list={linePrice(item).list} qty={item.qty} /></div>
                     <button onClick={() => handleRemove(item.variantKey)} style={{ fontSize: 11, color: 'var(--fg-mute)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quitar</button>
                   </div>
                 </div>
@@ -249,10 +254,24 @@ export default function CartPage() {
               )}
             </div>
 
+            <CuponBox />
+
             <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
               <span style={{ color: 'var(--fg-dim)' }}>Subtotal</span>
-              <span className="mono">{formatCOP(subtotal)}</span>
+              <span className="mono">{formatCOP(listSubtotal)}</span>
             </div>
+            {listSubtotal > subtotal && (
+              <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--accent)' }}>
+                <span>Promociones</span>
+                <span className="mono">−{formatCOP(listSubtotal - subtotal)}</span>
+              </div>
+            )}
+            {descuentoCupon > 0 && (
+              <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--accent)' }}>
+                <span>Cupón {cupon.code}</span>
+                <span className="mono">−{formatCOP(descuentoCupon)}</span>
+              </div>
+            )}
             <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 14 }}>
               <span style={{ color: 'var(--fg-dim)' }}>Envío</span>
               <span className="mono" style={{ flexShrink: 0 }}>

@@ -16,6 +16,7 @@ import CustomCursor from '@/components/CustomCursor';
 import QuickView from '@/components/QuickView';
 import ScrollToTop from '@/components/ScrollToTop';
 import SearchOverlay from '@/components/SearchOverlay';
+import { campanasVigentes } from '@/lib/promo-servidor';
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -66,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const visibles = await getAllProducts();
   const counts: Record<string, number> = {};
   for (const p of visibles) counts[p.category] = (counts[p.category] ?? 0) + 1;
+  const campanas = await campanasVigentes().catch(() => []);
   const ofertas = (await getOfertas().catch(() => [])).map((o) => ({ slug: o.slug, label: o.title, pct: o.pct, kind: o.kind }));
 
   return (
@@ -80,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ` }} />
       </head>
       <body>
-        <Providers>
+        <Providers campanas={campanas}>
           <CategoryCountsProvider counts={counts}>
           <OffersProvider offers={ofertas}>
           <a href="#main-content" className="skip-to-content">Saltar al contenido principal</a>

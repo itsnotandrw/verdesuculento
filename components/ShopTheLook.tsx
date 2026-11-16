@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatCOP } from '@/data/catalog';
 import GooeyNav from '@/components/GooeyNav';
+import PrecioPromo from '@/components/PrecioPromo';
+import { usePromo } from '@/context/PromoContext';
 import type { Look, LookSpot } from '@/lib/promotions';
 import type { Product } from '@/types';
 
@@ -19,13 +21,23 @@ interface Resolved {
   image: string;
   href: string;
   external: boolean;
+  /** Solo para productos del catálogo: sirven para calcular la promoción. */
+  pid?: string;
+  category?: string;
+}
+
+function PrecioSpot({ s }: { s: Resolved }) {
+  const { precio } = usePromo();
+  if (!s.pid || !s.category) return <>{formatCOP(s.price)}</>;
+  const p = precio({ id: s.pid, category: s.category, price: s.price }, 1);
+  return <PrecioPromo unit={p.unit} list={p.list} />;
 }
 
 function resolve(spots: LookSpot[], products: Product[]): Resolved[] {
   const out: Resolved[] = [];
   for (const s of spots) {
     const p = products.find((q) => q.id === s.productId);
-    if (p) out.push({ id: s.id, x: s.x, y: s.y, name: p.name, price: p.price, image: p.images[0], href: `/producto/${p.id}`, external: false });
+    if (p) out.push({ id: s.id, x: s.x, y: s.y, name: p.name, price: p.price, image: p.images[0], href: `/producto/${p.id}`, external: false, pid: p.id, category: p.category });
     else if (s.fallback) out.push({ id: s.id, x: s.x, y: s.y, ...s.fallback, external: true });
   }
   return out;
@@ -78,7 +90,7 @@ function HotspotBanner({ banner, products }: { banner: Look; products: Product[]
               <img src={s.image} alt={s.name} width={72} height={72} />
               <span className="stl-info">
                 <span className="stl-name">{s.name}</span>
-                <span className="stl-price">{formatCOP(s.price)}</span>
+                <span className="stl-price"><PrecioSpot s={s} /></span>
                 <span className="stl-cta">Ver producto →</span>
               </span>
             </>
@@ -119,13 +131,13 @@ function HotspotBanner({ banner, products }: { banner: Look; products: Product[]
           <a key={current.id} href={current.href} target="_blank" rel="noopener noreferrer" className="stl-sheet">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={current.image} alt={current.name} width={64} height={64} />
-            <span className="stl-info"><span className="stl-name">{current.name}</span><span className="stl-price">{formatCOP(current.price)}</span><span className="stl-cta">Ver producto →</span></span>
+            <span className="stl-info"><span className="stl-name">{current.name}</span><span className="stl-price"><PrecioSpot s={current} /></span><span className="stl-cta">Ver producto →</span></span>
           </a>
         ) : (
           <Link key={current.id} href={current.href} className="stl-sheet">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={current.image} alt={current.name} width={64} height={64} />
-            <span className="stl-info"><span className="stl-name">{current.name}</span><span className="stl-price">{formatCOP(current.price)}</span><span className="stl-cta">Ver producto →</span></span>
+            <span className="stl-info"><span className="stl-name">{current.name}</span><span className="stl-price"><PrecioSpot s={current} /></span><span className="stl-cta">Ver producto →</span></span>
           </Link>
         )
       )}

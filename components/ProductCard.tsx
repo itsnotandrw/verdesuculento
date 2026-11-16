@@ -12,6 +12,8 @@ import ProductShape from './ProductShape';
 import StarRating from './StarRating';
 import SoldCount from './SoldCount';
 import { CUTOUTS } from '@/data/cutouts';
+import { usePromo } from '@/context/PromoContext';
+import PrecioPromo from '@/components/PrecioPromo';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -31,7 +33,9 @@ export default function ProductCard({ product, compact = false, discountPct: pct
   const spotlight = useSpotlight<HTMLElement>();
   const tieneRecorte = CUTOUTS.has(product.id) && product.images[0]?.startsWith(`/images/productos/${product.id}/`);
   // Solo se muestra una etiqueta de descuento donde hay una oferta real (/ofertas/<slug>). Ya no hay etiquetas fijas por categoría.
-  const discountPct = pctOverride;
+  const discountPct = pctOverride; // solo para ofertas por cupón (el descuento se aplica al escribir el código)
+  const { precio } = usePromo();
+  const promo = precio(product, 1);
 
   return (
     <article
@@ -41,7 +45,11 @@ export default function ProductCard({ product, compact = false, discountPct: pct
       data-compact={compact ? 'true' : 'false'}
     >
       {badgeLabel && <span className="product-badge">{badgeLabel}</span>}
-      {discountPct && <span className="product-discount">Hasta {discountPct}% OFF</span>}
+      {promo.pct > 0 ? (
+        <span className="product-discount">−{promo.pct}%{promo.etiqueta ? ` · ${promo.etiqueta}` : ''}</span>
+      ) : discountPct ? (
+        <span className="product-discount">Cupón −{discountPct}%</span>
+      ) : null}
 
       <Link href={`/producto/${product.id}`} className={`product-card-media${tieneRecorte ? ' has-cut' : ''}`} style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
         {product.images.length > 0 ? (
@@ -142,7 +150,7 @@ export default function ProductCard({ product, compact = false, discountPct: pct
             </div>
           )}
         </div>
-        <div className="product-card-price">{formatCOP(product.price)}</div>
+        <div className="product-card-price"><PrecioPromo unit={promo.unit} list={promo.list} /></div>
       </div>
     </article>
   );

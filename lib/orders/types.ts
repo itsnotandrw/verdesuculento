@@ -64,7 +64,12 @@ export interface OrderLine {
   color: string;
   size: string;
   qty: number;
+  /** Precio unitario cobrado (ya con la campaña vigente, si había una). */
   unitPrice: number;
+  /** Precio de lista, solo si una campaña lo rebajó. */
+  listPrice?: number;
+  /** Nombre corto de la campaña aplicada (p. ej. "Black Friday"). */
+  promo?: string;
   /** Peso del paquete declarado en ML, por unidad. */
   weightGrams: number;
 }
@@ -156,9 +161,14 @@ export interface Order {
   address: OrderAddress;
   lines: OrderLine[];
 
+  /** Suma de las líneas, ya con campañas, antes del cupón. */
   subtotal: number;
   shippingCost: number;
+  /** Descuento de ENVÍO (cotización de lista menos la cobrada). */
   discount: number;
+  /** Descuento del cupón sobre los productos. */
+  couponDiscount?: number;
+  coupon?: { id: string; code: string; pct: number };
   total: number;
 
   /** Cotización elegida en el checkout, congelada al crear el pedido. */
@@ -191,6 +201,8 @@ export interface CreateOrderInput {
   }>;
   quoteId: string;
   method: PaymentMethodId;
+  /** Código de cupón escrito por el cliente (el servidor lo valida y calcula el descuento). */
+  couponCode?: string;
 }
 
 /** Vista pública del pedido: lo que puede leer cualquiera con la referencia. */
@@ -209,7 +221,11 @@ export interface PublicOrder {
   total: number;
   subtotal: number;
   shippingCost: number;
-  lines: Array<{ name: string; qty: number; unitPrice: number; color: string; size: string }>;
+  couponDiscount?: number;
+  couponCode?: string;
+  /** Entrega el mismo día sin valor definido: el vivero lo confirma por WhatsApp (no es "gratis"). */
+  envioPorConfirmar?: boolean;
+  lines: Array<{ name: string; qty: number; unitPrice: number; listPrice?: number; promo?: string; color: string; size: string }>;
   destino: string;
   tracking: TrackingEvent[];
 }
@@ -304,10 +320,15 @@ export function toPublicOrder(order: Order): PublicOrder {
     total: order.total,
     subtotal: order.subtotal,
     shippingCost: order.shippingCost,
+    couponDiscount: order.couponDiscount,
+    couponCode: order.coupon?.code,
+    envioPorConfirmar: order.selectedQuote.provider === 'local' && order.selectedQuote.cost === 0,
     lines: order.lines.map((l) => ({
       name: l.name,
       qty: l.qty,
       unitPrice: l.unitPrice,
+      listPrice: l.listPrice,
+      promo: l.promo,
       color: l.color,
       size: l.size,
     })),

@@ -44,18 +44,18 @@ export default async function OfertaPage({ params }: Props) {
           <p style={{ color: 'var(--fg-dim)', maxWidth: 560, marginTop: 18, fontSize: 17, lineHeight: 1.6 }}>
             {oferta.kind === 'cupon'
               ? `Productos seleccionados con ${oferta.pct}% de descuento${oferta.minPurchase ? ` en compras desde ${formatCOP(oferta.minPurchase)}` : ''}${oferta.maxDiscount ? ` (descuento máximo ${formatCOP(oferta.maxDiscount)})` : ''}.`
-              : `Selección especial de la campaña con ${oferta.pct}% de descuento.`}
+              : `Selección especial con ${oferta.pct}% de descuento: ya está aplicado en el precio de cada producto.`}
             {hasta ? ` Disponible hasta el ${hasta}.` : ''}
           </p>
           {oferta.code && (
             <p className="mono" style={{ marginTop: 16, fontSize: 12.5, color: 'var(--fg-dim)' }}>
-              Tu cupón: <b style={{ color: 'var(--accent)', letterSpacing: '0.12em' }}>{oferta.code}</b>
+              Tu cupón: <b style={{ color: 'var(--accent)', letterSpacing: '0.12em' }}>{oferta.code}</b> · escríbelo en el carrito. No se suma a las promociones: en una compra vale uno solo.
             </p>
           )}
         </header>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-          {productos.map((p) => <ProductCard key={p.id} product={p} discountPct={oferta.pct} />)}
+          {productos.map((p) => <ProductCard key={p.id} product={p} discountPct={oferta.kind === 'cupon' ? oferta.pct : undefined} />)}
         </div>
         {productos.length === 0 && <p style={{ color: 'var(--fg-dim)' }}>Por ahora no hay productos en esta oferta.</p>}
       </div>

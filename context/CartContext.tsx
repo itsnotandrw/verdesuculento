@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useState } from 'react';
 import type { CartItem, Product, ProductColor } from '@/types';
+import { usePromo } from '@/context/PromoContext';
+import type { PrecioProducto } from '@/lib/promo-precios';
 
 interface AddOptions {
   color?: ProductColor;
@@ -12,7 +14,15 @@ interface AddOptions {
 interface CartContextValue {
   items: CartItem[];
   count: number;
+  /** Suma de las líneas con las campañas vigentes (antes del cupón). */
   subtotal: number;
+  /** Suma a precio de lista, sin promociones. */
+  listSubtotal: number;
+  /** Precio de una línea del carrito (con campañas). */
+  linePrice: (item: CartItem) => PrecioProducto;
+  /** Código de cupón escrito por el cliente (se valida contra el servidor). */
+  couponCode: string;
+  setCouponCode: (codigo: string) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
   shipping: { dept: string; city: string; cost: number; days: string } | null;
@@ -29,6 +39,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [open, setOpen] = useState(false);
   const [shipping, setShipping] = useState<CartContextValue['shipping']>(null);
+  const [couponCode, setCouponCode] = useState('');
+  const { precio } = usePromo();
+  const linePrice = useCallback((item: CartItem) => precio(item.product, item.qty), [precio]);
 
   const add = useCallback((product: Product, opts: AddOptions = {}) => {
     const color = opts.color ?? product.colors[0];
@@ -60,13 +73,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => prev.filter((i) => i.variantKey !== variantKey));
   }, []);
 
-  const clear = useCallback(() => setItems([]), []);
+  const clear = useCallback(() => { setItems([]); setCouponCode(''); }, []);
 
-  const subtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
+  const subtotal = items.reduce((s, i) => s + precio(i.product, i.qty).unit * i.qty, 0);
+  const listSubtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <CartContext.Provider value={{ items, count, subtotal, open, setOpen, shipping, setShipping, add, updateQty, remove, clear }}>
+    <CartContext.Provider value={{ items, count, subtotal, listSubtotal, linePrice, couponCode, setCouponCode, open, setOpen, shipping, setShipping, add, updateQty, remove, clear }}>
       {children}
     </CartContext.Provider>
   );

@@ -9,6 +9,9 @@ import { DEPARTAMENTOS } from '@/lib/shipping/zonas';
 import { ciudadesDe, OTRO_MUNICIPIO } from '@/lib/shipping/ciudades';
 import { RECOGER_TIENDA_QUOTE_ID, DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
 import ProductShape from '@/components/ProductShape';
+import PrecioPromo from '@/components/PrecioPromo';
+import CuponBox from '@/components/CuponBox';
+import { useCupon } from '@/hooks/useCupon';
 
 const STEPS = ['Envío', 'Pago'];
 
@@ -73,7 +76,7 @@ const CAMPOS_REQUERIDOS_RECOGER: Array<keyof FormData> = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal, count, clear } = useCart();
+  const { items, subtotal, count, clear, couponCode } = useCart();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
@@ -93,10 +96,12 @@ export default function CheckoutPage() {
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
 
   const quote = quotes.find((q) => q.id === quoteId) ?? null;
+  const cupon = useCupon();
+  const descuentoCupon = cupon.valido ? cupon.descuento : 0;
   // Contra entrega: lo recauda la transportadora, así que no aplica a recoger en tienda ni a entrega el mismo día.
   const contraEntregaPosible = codDisponible && !!quote && quote.id !== RECOGER_TIENDA_QUOTE_ID && !quote.id.startsWith('local:');
   const envio = quote?.cost ?? 0;
-  const total = subtotal + envio;
+  const total = subtotal - descuentoCupon + envio;
 
   // El desplegable guarda el municipio elegido, o el centinela "Otro
   // municipio…" si el cliente no lo encontró en la lista. La ciudad real a
@@ -275,6 +280,7 @@ export default function CheckoutPage() {
           ...direccionFinal,
           method: metodo,
           quoteId,
+          couponCode: cupon.valido ? couponCode : undefined,
           lines: items.map((i) => ({
             productId: i.product.id,
             color: i.color.name,
@@ -496,7 +502,7 @@ export default function CheckoutPage() {
               </button>
             </div>
 
-            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} />
+            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} />
           </div>
         )}
 
@@ -557,7 +563,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} />
+            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} />
           </div>
         )}
       </div>
@@ -591,14 +597,17 @@ const CAMPOS: Array<{
 ];
 
 function OrderSummary({
-  items, subtotal, envio, total, quote,
+  items, subtotal, envio, total, quote, descuentoCupon, cuponCode,
 }: {
   items: ReturnType<typeof useCart>['items'];
   subtotal: number;
   envio: number;
   total: number;
   quote: Quote | null;
+  descuentoCupon: number;
+  cuponCode?: string;
 }) {
+  const { listSubtotal, linePrice } = useCart();
   return (
     <aside className="checkout-summary">
       <div className="eyebrow" style={{ marginBottom: 20 }}>Tu pedido</div>
@@ -613,16 +622,30 @@ function OrderSummary({
               <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
               <div className="mono" style={{ fontSize: 11, color: 'var(--fg-dim)' }}>×{item.qty}</div>
             </div>
-            <div className="mono" style={{ fontSize: 13, flexShrink: 0 }}>{formatCOP(item.product.price * item.qty)}</div>
+            <div className="mono" style={{ fontSize: 13, flexShrink: 0 }}><PrecioPromo unit={linePrice(item).unit} list={linePrice(item).list} qty={item.qty} /></div>
           </div>
         ))}
       </div>
 
+      <CuponBox />
+
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8, fontSize: 14 }}>
           <span style={{ color: 'var(--fg-dim)' }}>Subtotal</span>
-          <span className="mono">{formatCOP(subtotal)}</span>
+          <span className="mono">{formatCOP(listSubtotal)}</span>
         </div>
+        {listSubtotal > subtotal && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8, fontSize: 14, color: 'var(--accent)' }}>
+            <span>Promociones</span>
+            <span className="mono">−{formatCOP(listSubtotal - subtotal)}</span>
+          </div>
+        )}
+        {descuentoCupon > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8, fontSize: 14, color: 'var(--accent)' }}>
+            <span>Cupón {cuponCode}</span>
+            <span className="mono">−{formatCOP(descuentoCupon)}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 16, fontSize: 14 }}>
           <span style={{ color: 'var(--fg-dim)', minWidth: 0 }}>
             Envío

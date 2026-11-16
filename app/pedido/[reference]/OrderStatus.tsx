@@ -20,7 +20,10 @@ interface PublicOrder {
   total: number;
   subtotal: number;
   shippingCost: number;
-  lines: Array<{ name: string; qty: number; unitPrice: number; color: string; size: string }>;
+  couponDiscount?: number;
+  couponCode?: string;
+  envioPorConfirmar?: boolean;
+  lines: Array<{ name: string; qty: number; unitPrice: number; listPrice?: number; promo?: string; color: string; size: string }>;
   destino: string;
   tracking: Array<{ status: string; description: string; occurredAt: string; location?: string }>;
 }
@@ -343,13 +346,19 @@ export default function OrderStatus({
               <span style={{ color: 'var(--fg-dim)' }}>Subtotal</span>
               <span className="mono">{formatCOP(pedido.subtotal)}</span>
             </div>
+            {!!pedido.couponDiscount && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 14, marginBottom: 8, color: 'var(--accent)' }}>
+                <span>Cupón {pedido.couponCode}</span>
+                <span className="mono">−{formatCOP(pedido.couponDiscount)}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 14, marginBottom: 16 }}>
               <span style={{ color: 'var(--fg-dim)', minWidth: 0 }}>
                 {esRecogerEnTienda ? 'Recoger en tienda' : `Envío a ${pedido.destino}`}
                 <span className="mono" style={{ display: 'block', fontSize: 11, color: 'var(--fg-mute)' }}>{pedido.etaLabel}</span>
               </span>
               <span className="mono" style={{ flexShrink: 0 }}>
-                {pedido.shippingCost === 0 ? <span style={{ color: 'var(--accent)' }}>Gratis</span> : formatCOP(pedido.shippingCost)}
+                {pedido.envioPorConfirmar ? <span style={{ color: 'var(--accent)', fontSize: 12 }}>Se confirma por WhatsApp</span> : pedido.shippingCost === 0 ? <span style={{ color: 'var(--accent)' }}>Gratis</span> : formatCOP(pedido.shippingCost)}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>
