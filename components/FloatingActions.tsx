@@ -34,11 +34,13 @@ export default function FloatingActions() {
 
       <style>{`
         .fa-wa{position:fixed;right:18px;bottom:22px;z-index:90;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#25d366;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-        .fa-wa-ring{position:absolute;inset:0;border-radius:50%;border:2px solid #25d366;animation:fapulse 2.6s ease-out infinite;pointer-events:none}
+        .fa-wa-ring{display:none}
+        .fa-wa{animation:fapulsesombra 2.6s ease-out infinite}
+        @keyframes fapulsesombra{0%{box-shadow:0 10px 30px rgba(0,0,0,.4),0 0 0 0 rgba(37,211,102,.55)}70%,100%{box-shadow:0 10px 30px rgba(0,0,0,.4),0 0 0 16px rgba(37,211,102,0)}}
         @keyframes fapulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
-        @media (max-width:900px){.fa-wa{bottom:calc(86px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px}.fa-wa-ring{animation-name:fapulsem}.fa-wa-pdp{bottom:calc(var(--mobile-nav-height,70px) + 84px + env(safe-area-inset-bottom))}}
+        @media (max-width:900px){.fa-wa{bottom:calc(86px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px}.fa-wa-pdp{bottom:calc(var(--mobile-nav-height,70px) + 84px + env(safe-area-inset-bottom))}}
         @keyframes fapulsem{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.28);opacity:0}}
-        @media (prefers-reduced-motion:reduce){.fa-wa-ring{animation:none}}
+        @media (prefers-reduced-motion:reduce){.fa-wa{animation:none}}
       `}</style>
     </>
   );
