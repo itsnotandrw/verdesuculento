@@ -39,6 +39,10 @@ export default function ProductForm({ modo, inicial }: Props) {
   const [colors, setColors] = useState<ProductColor[]>(
     inicial?.colors?.length ? inicial.colors : [{ name: '', hex: '#7a9a8a' }]
   );
+  const [peso, setPeso] = useState(inicial?.logistica ? String(inicial.logistica.weightGrams / 1000) : '');
+  const [largo, setLargo] = useState(inicial?.logistica ? String(inicial.logistica.lengthCm) : '');
+  const [ancho, setAncho] = useState(inicial?.logistica ? String(inicial.logistica.widthCm) : '');
+  const [alto, setAlto] = useState(inicial?.logistica ? String(inicial.logistica.heightCm) : '');
   const [images, setImages] = useState<string[]>(inicial?.images ?? []);
   const [nuevaImagen, setNuevaImagen] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -75,6 +79,9 @@ export default function ProductForm({ modo, inicial }: Props) {
         sizes: sizes.map((s) => s.trim()).filter(Boolean),
         colors: colors.filter((c) => c.name.trim() && c.hex.trim()),
         images,
+        logistica: peso && largo && ancho && alto
+          ? { weightGrams: Math.round(Number(peso.replace(',', '.')) * 1000), lengthCm: Math.round(Number(largo)), widthCm: Math.round(Number(ancho)), heightCm: Math.round(Number(alto)) }
+          : undefined,
       };
 
       const url = modo === 'crear' ? '/api/admin/products' : `/api/admin/products/${inicial!.id}`;
@@ -188,6 +195,31 @@ export default function ProductForm({ modo, inicial }: Props) {
             </div>
           ))}
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSizes((prev) => [...prev, ''])}>+ Agregar presentación</button>
+        </div>
+
+        {/* --- Datos de envío (los pide la transportadora) --- */}
+        <div>
+          <div className="checkout-label" style={{ marginBottom: 4 }}>Datos de envío del paquete (por unidad)</div>
+          <p style={{ fontSize: 12.5, color: 'var(--fg-dim)', margin: '0 0 10px', lineHeight: 1.5 }}>
+            Servientrega, Interrapidísimo, Coordinadora y Envía cobran por el mayor entre el peso real y el peso volumétrico (largo × ancho × alto ÷ 6000), y exigen
+            las medidas del paquete ya empacado. El valor declarado (seguro) se toma del precio del producto.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }} className="adm-logi-grid">
+            <div><label className="checkout-label" htmlFor="p-peso">Peso real (kg)</label><input id="p-peso" className="checkout-input" inputMode="decimal" value={peso} onChange={(e) => setPeso(e.target.value)} placeholder="0,5" /></div>
+            <div><label className="checkout-label" htmlFor="p-largo">Largo (cm)</label><input id="p-largo" className="checkout-input" inputMode="numeric" value={largo} onChange={(e) => setLargo(e.target.value)} placeholder="30" /></div>
+            <div><label className="checkout-label" htmlFor="p-ancho">Ancho (cm)</label><input id="p-ancho" className="checkout-input" inputMode="numeric" value={ancho} onChange={(e) => setAncho(e.target.value)} placeholder="20" /></div>
+            <div><label className="checkout-label" htmlFor="p-alto">Alto (cm)</label><input id="p-alto" className="checkout-input" inputMode="numeric" value={alto} onChange={(e) => setAlto(e.target.value)} placeholder="15" /></div>
+          </div>
+          {(() => {
+            const kg = Number(peso.replace(',', '.'));
+            const vol = (Number(largo) * Number(ancho) * Number(alto)) / 6000;
+            if (!kg || !vol) return <p style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: 8 }}>Si lo dejas vacío se usan las medidas que vienen de Mercado Libre.</p>;
+            return (
+              <p style={{ fontSize: 12.5, marginTop: 8 }}>
+                Peso volumétrico: <b>{vol.toFixed(2)} kg</b> · Peso a cobrar: <b>{Math.max(kg, vol).toFixed(2)} kg</b>
+              </p>
+            );
+          })()}
         </div>
 
         {/* --- Variedades/colores --- */}

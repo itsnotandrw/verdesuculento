@@ -57,7 +57,7 @@ export default function AdminShell({ children, avisos, pendientesVentas }: Props
       const d = (e as CustomEvent<{ message: string; kind: ToastKind }>).detail;
       const id = ++n;
       setToasts((t) => [...t, { id, ...d }]);
-      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3800);
+      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), Math.min(16000, Math.max(3800, d.message.length * 70)));
     };
     window.addEventListener('adm-toast', on);
     return () => window.removeEventListener('adm-toast', on);

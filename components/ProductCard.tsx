@@ -46,7 +46,7 @@ export default function ProductCard({ product, compact = false, discountPct: pct
     >
       {badgeLabel && <span className="product-badge">{badgeLabel}</span>}
       {promo.pct > 0 ? (
-        <span className="product-discount">−{promo.pct}%{promo.etiqueta ? ` · ${promo.etiqueta}` : ''}</span>
+        <span className="product-discount" title={promo.etiqueta}>−{promo.pct}%</span>
       ) : discountPct ? (
         <span className="product-discount">Cupón −{discountPct}%</span>
       ) : null}

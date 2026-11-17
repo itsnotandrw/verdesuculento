@@ -11,6 +11,7 @@ import { CATEGORIES } from '@/data/catalog';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { useOffers } from '@/context/OffersContext';
 import { useSearch } from '@/context/SearchContext';
+import CatalogStack from '@/components/CatalogStack';
 
 export default function Nav() {
   const pathname = usePathname();
@@ -22,6 +23,7 @@ export default function Nav() {
   const pillRef = useRef<HTMLSpanElement>(null);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const openCatalogMenu = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -124,27 +126,21 @@ export default function Nav() {
             </svg>
           </button>
 
-          <div className={`nav-dropdown-panel ${catalogOpen ? 'open' : ''}`}>
-            {CATEGORIES.filter((cat) => (counts[cat.id] ?? cat.count) > 0).map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/catalogo/${cat.id}`}
-                className="nav-dropdown-item"
-                onClick={() => setCatalogOpen(false)}
-              >
-                <span>{cat.name}</span>
-                <span className="nav-dropdown-count">{counts[cat.id] ?? cat.count}</span>
-              </Link>
-            ))}
+          <div ref={panelRef} className={`nav-dropdown-panel nav-dropdown-stack ${catalogOpen ? 'open' : ''}`}>
+            <CatalogStack
+              scrollerRef={panelRef}
+              onNavigate={() => setCatalogOpen(false)}
+              items={CATEGORIES.filter((cat) => (counts[cat.id] ?? cat.count) > 0).map((cat) => ({ id: cat.id, name: cat.name, count: counts[cat.id] ?? cat.count }))}
+            />
             {offers.length > 0 && (
               <>
                 <div className="nav-dropdown-group">Ofertas y cupones</div>
-                {offers.map((o) => (
-                  <Link key={o.slug} href={`/ofertas/${o.slug}`} className="nav-dropdown-item" onClick={() => setCatalogOpen(false)}>
-                    <span>{o.label}</span>
-                    <span className="nav-dropdown-count nav-dropdown-offer">{o.pct}% OFF</span>
-                  </Link>
-                ))}
+                <CatalogStack
+                  variant="oferta"
+                  scrollerRef={panelRef}
+                  onNavigate={() => setCatalogOpen(false)}
+                  items={offers.map((o) => ({ id: o.slug, name: o.label, href: `/ofertas/${o.slug}`, pct: o.pct }))}
+                />
               </>
             )}
           </div>

@@ -39,7 +39,10 @@ export async function POST(request: Request) {
         size: linea.size,
         qty: linea.qty,
         unitPrice: producto.price,
-        weightGrams: logisticaDe(producto.id).weightGrams,
+        weightGrams: logisticaDe(producto.id, producto).weightGrams,
+        lengthCm: logisticaDe(producto.id, producto).lengthCm,
+        widthCm: logisticaDe(producto.id, producto).widthCm,
+        heightCm: logisticaDe(producto.id, producto).heightCm,
       });
     }
 

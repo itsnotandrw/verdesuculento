@@ -78,11 +78,12 @@ export default async function HomePage() {
               Productos <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>destacados.</em>
             </h2>
           </div>
-          <Reveal stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+          <Reveal stagger className="feat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
             {featured.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </Reveal>
+          <p className="feat-hint" aria-hidden="true">Desliza para ver más →</p>
         </div>
       </section>
 

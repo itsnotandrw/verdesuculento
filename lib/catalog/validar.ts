@@ -57,6 +57,17 @@ export function parseProducto(body: Record<string, unknown>, idExistente?: strin
     dificultad: texto(specsBody.dificultad, 'la dificultad', { max: 60, requerido: false }),
   };
 
+  let logistica: Product['logistica'];
+  const lg = body.logistica as Record<string, unknown> | undefined;
+  if (lg && typeof lg === 'object' && [lg.weightGrams, lg.lengthCm, lg.widthCm, lg.heightCm].some((v) => v != null && v !== '')) {
+    logistica = {
+      weightGrams: entero(lg.weightGrams, 'el peso (gramos)', 1, 100_000),
+      lengthCm: entero(lg.lengthCm, 'el largo (cm)', 1, 300),
+      widthCm: entero(lg.widthCm, 'el ancho (cm)', 1, 300),
+      heightCm: entero(lg.heightCm, 'el alto (cm)', 1, 300),
+    };
+  }
+
   const badge = texto(body.badge, 'la insignia', { max: 40, requerido: false });
   const accent = texto(body.accent, 'el acento', { max: 40, requerido: false });
 
@@ -74,5 +85,6 @@ export function parseProducto(body: Record<string, unknown>, idExistente?: strin
     specs,
     images,
     activo: body.activo !== false,
+    ...(logistica ? { logistica } : {}),
   };
 }

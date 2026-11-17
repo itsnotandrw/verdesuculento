@@ -14,8 +14,8 @@ import type { OrderLine } from '@/lib/orders/types';
 import type { ShippingParcel } from './types';
 
 /** Peso y dimensiones declarados en ML para un producto. */
-export function logisticaDe(productId: string) {
-  return LOGISTICS[productId] ?? LOGISTICS_FALLBACK;
+export function logisticaDe(productId: string, producto?: { logistica?: { weightGrams: number; lengthCm: number; widthCm: number; heightCm: number } }) {
+  return producto?.logistica ?? LOGISTICS[productId] ?? LOGISTICS_FALLBACK;
 }
 
 /**
@@ -39,7 +39,11 @@ export function armarPaquete(lines: OrderLine[], declaredValue: number): Shippin
   let altoMinimo = 0;
 
   for (const linea of lines) {
-    const l = logisticaDe(linea.productId);
+    const base = logisticaDe(linea.productId);
+    // Las medidas guardadas en la línea del pedido (del producto) mandan sobre el dato genérico.
+    const l = linea.lengthCm && linea.widthCm && linea.heightCm
+      ? { weightGrams: linea.weightGrams || base.weightGrams, lengthCm: linea.lengthCm, widthCm: linea.widthCm, heightCm: linea.heightCm }
+      : base;
 
     // Se normaliza la orientación (largo ≥ ancho ≥ alto) para que dos productos
     // con las mismas medidas declaradas en distinto orden apilen igual.

@@ -19,6 +19,7 @@ import type { Product, ProductColor } from '@/types';
 import { MISMO_DIA_MUNICIPIOS, TIEMPO_ENTREGA } from '@/data/contacto';
 import { usePromo } from '@/context/PromoContext';
 import PrecioPromo from '@/components/PrecioPromo';
+import { Truck } from 'lucide-react';
 
 interface Props {
   product: Product;
@@ -84,10 +85,10 @@ export default function ProductContent({ product, related, crossSell }: Props) {
   };
 
   return (
-    <div className="page-section" style={{ paddingTop: 100 }}>
+    <div className="page-section" style={{ paddingTop: 88 }}>
       <div className="container">
         {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 40, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <nav aria-label="Breadcrumb" style={{ marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link href="/catalogo" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</Link>
           <span style={{ color: 'var(--fg-mute)' }}>/</span>
           {category && (
@@ -102,7 +103,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
         </nav>
 
         {/* Main PDP grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, marginBottom: 100 }} className="pdp-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, marginBottom: 56 }} className="pdp-grid">
           {/* Image */}
           <div className="pdp-media" style={{
             position: 'sticky' as const, top: 100, height: 'fit-content',
@@ -127,8 +128,8 @@ export default function ProductContent({ product, related, crossSell }: Props) {
 
           {/* Info */}
           <div>
-            <div className="eyebrow" style={{ marginBottom: 14 }}>{category?.name}</div>
-            <h1 className="display" style={{ fontSize: 'clamp(44px, 5vw, 80px)', marginBottom: 8, letterSpacing: '-0.025em' }}>{product.name}</h1>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>{category?.name}</div>
+            <h1 className="display" style={{ fontSize: 'clamp(36px, 4vw, 60px)', marginBottom: 8, letterSpacing: '-0.025em' }}>{product.name}</h1>
             {social && (social.rating != null || social.soldCount > 0) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
                 {social.rating != null && (
@@ -149,14 +150,14 @@ export default function ProductContent({ product, related, crossSell }: Props) {
                 <SoldCount count={social.soldCount} size={13} />
               </div>
             )}
-            <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 20 }}>{product.tagline}</p>
+            <p style={{ fontStyle: 'italic', fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-dim)', marginBottom: 12 }}>{product.tagline}</p>
 
             {/* Descripción recortada a 4 líneas con "Ver más": el texto que
                 trae el scraping de ML es largo y antes ocupaba una caja con
                 scroll propio, incómoda tanto en PC como en móvil. Ahora es
                 una vista previa y el resto vive en una ventana aparte, para
                 llegar más rápido a la compra. */}
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 14 }}>
               <p className="desc-preview">{product.description}</p>
               <button className="desc-more-btn" onClick={() => setDescOpen(true)}>
                 Ver descripción completa →
@@ -166,18 +167,25 @@ export default function ProductContent({ product, related, crossSell }: Props) {
             {/* Buy box: todo lo necesario para decidir y comprar, agrupado
                 en una sola caja con peso visual propio en vez de quedar
                 disuelto en el resto de la página. */}
-            <div className="buy-box">
-              <div className="mono" style={{ fontSize: 30, marginBottom: precioPromo.pct > 0 ? 6 : 24, letterSpacing: '-0.02em' }}><PrecioPromo unit={precioPromo.unit} list={precioPromo.list} /></div>
-              {precioPromo.pct > 0 && (
-                <div style={{ marginBottom: 24, fontSize: 13, color: 'var(--accent)' }}>
-                  −{precioPromo.pct}% de descuento{precioPromo.etiqueta ? ` · ${precioPromo.etiqueta}` : ''}
-                </div>
-              )}
+            <div
+              className="buy-box spot"
+              onMouseMove={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+                e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+              }}
+            >
+              <div className="bb-price">
+                <div className="mono" style={{ fontSize: 30, letterSpacing: '-0.02em' }}><PrecioPromo unit={precioPromo.unit} list={precioPromo.list} /></div>
+                {precioPromo.pct > 0 && (
+                  <span className="bb-off">−{precioPromo.pct}%{precioPromo.etiqueta ? ` · ${precioPromo.etiqueta}` : ''}</span>
+                )}
+              </div>
 
               {/* Variety selector */}
               {product.colors.length > 1 && (
-                <div style={{ marginBottom: 24 }}>
-                  <div className="eyebrow" style={{ marginBottom: 12 }}>
+                <div style={{ marginBottom: 14 }}>
+                  <div className="eyebrow" style={{ marginBottom: 8 }}>
                     Variedad:{' '}
                     <span style={{ color: 'var(--fg)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--font-ui)' }}>{activeColor.name}</span>
                   </div>
@@ -195,9 +203,10 @@ export default function ProductContent({ product, related, crossSell }: Props) {
                 </div>
               )}
 
-              {/* Presentation / size selector */}
-              <div style={{ marginBottom: 24 }}>
-                <div className="eyebrow" style={{ marginBottom: 12 }}>Presentación</div>
+              {/* Presentación y cantidad en la misma fila */}
+              <div className="bb-row">
+              <div>
+                <div className="eyebrow" style={{ marginBottom: 8 }}>Presentación</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {product.sizes.map((s) => (
                     <button key={s} onClick={() => setActiveSize(s)} className={`chip ${activeSize === s ? 'active' : ''}`}>{s}</button>
@@ -206,8 +215,8 @@ export default function ProductContent({ product, related, crossSell }: Props) {
               </div>
 
               {/* Quantity */}
-              <div style={{ marginBottom: 28 }}>
-                <div className="eyebrow" style={{ marginBottom: 12 }}>Cantidad</div>
+              <div>
+                <div className="eyebrow" style={{ marginBottom: 8 }}>Cantidad</div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, border: '1px solid var(--border-strong)', borderRadius: 999, padding: '6px 6px' }}>
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -222,9 +231,10 @@ export default function ProductContent({ product, related, crossSell }: Props) {
                   >+</button>
                 </div>
               </div>
+              </div>
 
               {/* Main CTA */}
-              <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                 <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
                   Añadir al carrito — {formatCOP(precioQty.unit * qty)} <span className="btn-arrow">→</span>
                 </button>
@@ -246,9 +256,9 @@ export default function ProductContent({ product, related, crossSell }: Props) {
               </div>
 
               {/* Entrega el mismo día (mensajería local) */}
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', marginBottom: 20, borderRadius: 'var(--radius, 12px)', border: '1px solid color-mix(in oklab, var(--accent) 45%, transparent)', background: 'color-mix(in oklab, var(--accent) 10%, transparent)', fontSize: 13.5, lineHeight: 1.4 }}>
-                <span aria-hidden="true" style={{ fontSize: 18 }}>⚡</span>
-                <span><strong>Entrega el mismo día</strong> en {MISMO_DIA_MUNICIPIOS.join(', ')}.</span>
+              <div className="bb-delivery">
+                <span className="bb-rider" aria-hidden="true"><i /><i /><Truck size={18} /></span>
+                <span><strong>Llega hoy</strong> en {MISMO_DIA_MUNICIPIOS.join(', ')} <em>· mensajería local</em></span>
               </div>
 
               <SellerTrust seller={SELLER_STATS} onNavigate={() => setActiveTab('reputacion')} />
@@ -280,7 +290,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
 
         {/* Spec table — igual, a todo el ancho, en dos columnas en vez de
             una sola angosta que sobraba en la columna de info. */}
-        <section style={{ marginBottom: 80 }}>
+        <section style={{ marginBottom: 44 }}>
           <div className="eyebrow" style={{ marginBottom: 18 }}>Ficha técnica agronómica</div>
           <div className="spec-grid spec-grid-wide">
             {(
@@ -305,7 +315,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
             secciones apiladas de punta a punta que obligaban a bajar mucho
             para llegar a las reseñas o las preguntas. Comparten un solo
             bloque y el usuario elige qué mirar. */}
-        <section id="pdp-tabs" style={{ marginBottom: 80, paddingTop: 64, borderTop: '1px solid var(--border)' }}>
+        <section id="pdp-tabs" style={{ marginBottom: 44, paddingTop: 36, borderTop: '1px solid var(--border)' }}>
           <div className="pdp-tabs-nav" role="tablist" aria-label="Información del producto">
             <button
               role="tab"
@@ -345,9 +355,9 @@ export default function ProductContent({ product, related, crossSell }: Props) {
 
         {/* Cross-sell */}
         {crossSell.length > 0 && (
-          <section style={{ marginBottom: 80, paddingTop: 64, borderTop: '1px solid var(--border)' }}>
+          <section style={{ marginBottom: 44, paddingTop: 36, borderTop: '1px solid var(--border)' }}>
             <div className="eyebrow" style={{ marginBottom: 16 }}>COMPLEMENTA TU COMPRA</div>
-            <h2 className="display" style={{ fontSize: 'clamp(36px, 5vw, 64px)', marginBottom: 40 }}>
+            <h2 className="display" style={{ fontSize: 'clamp(36px, 5vw, 64px)', marginBottom: 24 }}>
               También necesitas<em style={{ color: 'var(--accent)' }}>.</em>
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 20 }}>
@@ -358,8 +368,8 @@ export default function ProductContent({ product, related, crossSell }: Props) {
 
         {/* Related products */}
         {related.length > 0 && (
-          <section style={{ marginBottom: 80, paddingTop: 64, borderTop: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, flexWrap: 'wrap', gap: 16 }}>
+          <section style={{ marginBottom: 44, paddingTop: 36, borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
               <div>
                 <div className="eyebrow" style={{ marginBottom: 12 }}>MÁS EN {category?.name.toUpperCase()}</div>
                 <h2 className="display" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
@@ -467,19 +477,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
       <style>{`
         @media (max-width: 760px) {
           .pdp-grid { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 48px !important; }
-          /* relative, no static: el carrusel de fotos usa <Image fill> por
-             dentro, que se posiciona con position:absolute esperando que
-             este contenedor sea su ancla (position no-static). Con static
-             perdía esa ancla y se salía a posicionarse contra el siguiente
-             ancestro con position — se metía debajo del navbar y dejaba la
-             caja de la imagen vacía. relative desactiva el sticky (ya no
-             hace falta: en una sola columna cada item es su propia fila, así
-             que sticky no tenía margen para "pegarse" a nada) sin romper esa
-             ancla. top:0 es imprescindible: el estilo inline trae top:100
-             (el offset del sticky de escritorio), y position:relative +
-             top:100 desplaza la caja 100px hacia abajo sin reservarle ese
-             espacio en el flujo — dejaba el hueco arriba y la imagen se
-             montaba 100px sobre el título de abajo. */
+          /* relative (no static) para mantener el ancla del carrusel de fotos; top 0 anula el offset del sticky de escritorio */
           .pdp-media { position: relative !important; top: 0 !important; height: auto !important; }
         }
       `}</style>

@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CATEGORIES } from '@/data/catalog';
 import { CONTACTO } from '@/data/contacto';
+import ContactCard, { IconoWhatsApp } from '@/components/ContactCard';
+import { ShoppingBag } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -19,48 +20,27 @@ export default function Footer() {
               Vivero especializado en frutales, ornamentales y agricultura moderna. Envíos a toda Colombia.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href={CONTACTO.whatsappUrl} target="_blank" rel="noopener noreferrer" className="chip">WhatsApp</a>
-              <a href="https://www.facebook.com/p/Verde-Suculento-100091965755148/" target="_blank" rel="noopener noreferrer" className="chip">Facebook</a>
-              <a href="https://www.mercadolibre.com.co/pagina/viveroverde_suculento" target="_blank" rel="noopener noreferrer" className="chip">Mercado Libre</a>
+              <a href={CONTACTO.whatsappUrl} target="_blank" rel="noopener noreferrer" className="chip"><IconoWhatsApp size={15} /> WhatsApp</a>
+              <a href="https://www.facebook.com/p/Verde-Suculento-100091965755148/" target="_blank" rel="noopener noreferrer" className="chip">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.6c0-.9.3-1.5 1.6-1.5H16.7V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.4H8.3v3h2.5V21h2.7Z" /></svg> Facebook
+              </a>
+              <a href="https://www.mercadolibre.com.co/pagina/viveroverde_suculento" target="_blank" rel="noopener noreferrer" className="chip"><ShoppingBag size={15} aria-hidden="true" /> Mercado Libre</a>
             </div>
           </div>
 
           <div className="footer-col">
-            <h4>Catálogo</h4>
-            <ul>
-              {CATEGORIES.slice(0, 6).map((cat) => (
-                <li key={cat.id}>
-                  <Link href={`/catalogo/${cat.id}`}>{cat.name}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="footer-col">
             <h4>Servicio</h4>
-            <ul>
+            <ul className="footer-links-2">
               <li><Link href="/mis-pedidos">Mis pedidos</Link></li>
-              <li><a href="#">Envíos a Colombia</a></li>
-              <li><a href="#">Garantía de plantas</a></li>
-              <li><a href="#">Política de cambios</a></li>
-              <li><a href="#">Asesoría agronómica</a></li>
-              <li><a href="#">Mayoristas</a></li>
+              <li><Link href="/asesoria">Asesoría agronómica</Link></li>
+              <li><a href={`${CONTACTO.whatsappUrl}?text=${encodeURIComponent('Hola, quisiera información para compras al por mayor.')}`} target="_blank" rel="noopener noreferrer">Mayoristas</a></li>
+              <li><Link href="/nosotros">Nosotros</Link></li>
+              <li><Link href="/diario">Diario</Link></li>
             </ul>
           </div>
 
-          <div className="footer-col">
-            <h4>Contacto</h4>
-            <ul>
-              <li><a href={`tel:${CONTACTO.telefonoTel}`}>{CONTACTO.telefono}</a></li>
-              <li><a href={`mailto:${CONTACTO.email}`}>{CONTACTO.email}</a></li>
-              <li>{CONTACTO.horario}</li>
-              {CONTACTO.sedes.map((sede) => (
-                <li key={sede.id}>
-                  <strong style={{ display: 'block', fontWeight: 500 }}>{sede.nombre}</strong>
-                  <a href={sede.mapa} target="_blank" rel="noopener noreferrer">{sede.direccion}</a>
-                </li>
-              ))}
-            </ul>
+          <div className="footer-col footer-contact">
+            <ContactCard />
           </div>
         </div>
 

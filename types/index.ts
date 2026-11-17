@@ -27,6 +27,8 @@ export interface Product {
   images: string[];
   /** false = oculto de listados y home, pero sigue siendo buscable por id (pedidos viejos, carritos abiertos). Ausente = activo. */
   activo?: boolean;
+  /** Peso y medidas del paquete para cotizar el envío (las pide la transportadora). Si falta, se usa el dato de Mercado Libre. */
+  logistica?: ProductLogistics;
 }
 
 export interface Category {

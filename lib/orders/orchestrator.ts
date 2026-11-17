@@ -112,7 +112,10 @@ export async function crearPedido(
       qty,
       unitPrice: precio.unit,
       ...(precio.pct > 0 ? { listPrice: precio.list, promo: precio.etiqueta } : {}),
-      weightGrams: logisticaDe(producto.id).weightGrams,
+      weightGrams: logisticaDe(producto.id, producto).weightGrams,
+      lengthCm: logisticaDe(producto.id, producto).lengthCm,
+      widthCm: logisticaDe(producto.id, producto).widthCm,
+      heightCm: logisticaDe(producto.id, producto).heightCm,
     });
   }
 

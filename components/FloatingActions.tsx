@@ -33,6 +33,8 @@ export default function FloatingActions() {
       </motion.a>
 
       <style>{`
+        .fa-wa{position:fixed;right:18px;bottom:22px;z-index:90;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#25d366;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+        .fa-wa-ring{position:absolute;inset:0;border-radius:50%;border:2px solid #25d366;animation:fapulse 2.6s ease-out infinite;pointer-events:none}
         @keyframes fapulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
         @media (max-width:900px){.fa-wa{bottom:calc(86px + env(safe-area-inset-bottom));right:12px;width:52px;height:52px}}
         @media (prefers-reduced-motion:reduce){.fa-wa-ring{animation:none}}

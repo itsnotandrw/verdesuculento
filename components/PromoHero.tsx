@@ -19,6 +19,36 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
   const touchX = useRef<number | null>(null);
   const n = promotions.length;
 
+  // Cinta de cupones: si no caben, aparecen flechas y un difuminado en el borde con más contenido.
+  const cintaRef = useRef<HTMLDivElement>(null);
+  const [verde, setVerde] = useState({ izq: false, der: false });
+  const medir = useCallback(() => {
+    const el = cintaRef.current;
+    if (!el) return;
+    setVerde({ izq: el.scrollLeft > 4, der: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    const el = cintaRef.current;
+    if (!el) return;
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    window.addEventListener('resize', medir);
+    // Empujón inicial: insinúa que la cinta se desliza (solo si hay desborde y se permiten animaciones).
+    let t1: ReturnType<typeof setTimeout> | undefined;
+    let t2: ReturnType<typeof setTimeout> | undefined;
+    const sobra = el.scrollWidth - el.clientWidth;
+    if (sobra > 8 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      t1 = setTimeout(() => el.scrollTo({ left: Math.min(90, sobra), behavior: 'smooth' }), 1800);
+      t2 = setTimeout(() => el.scrollTo({ left: 0, behavior: 'smooth' }), 2700);
+    }
+    return () => { ro.disconnect(); window.removeEventListener('resize', medir); clearTimeout(t1); clearTimeout(t2); };
+  }, [coupons.length, medir]);
+  const deslizar = (dir: 1 | -1) => {
+    const el = cintaRef.current;
+    if (el) el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: 'smooth' });
+  };
+
   const go = useCallback((to: number) => setI(((to % n) + n) % n), [n]);
 
   useEffect(() => {
@@ -38,7 +68,9 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
           transition={{ duration: 0.8, ease: EASE, delay: 0.25 }}
         >
           <h2 className="promo-band-title">¡Aprovecha estos <strong>descuentos imperdibles!</strong></h2>
-          <div className="promo-band-cards">
+          <div className={`promo-band-wrap${verde.izq ? ' can-left' : ''}${verde.der ? ' can-right' : ''}`}>
+            {verde.izq && <button type="button" className="pcc-arrow prev" onClick={() => deslizar(-1)} aria-label="Ver cupones anteriores">‹</button>}
+            <div className="promo-band-cards" ref={cintaRef} onScroll={medir}>
             {coupons.map((c) => (
               <Link href={`/ofertas/${c.slug || slugify(c.code)}`} className="promo-coupon-card" key={c.id}>
                 <div className="pcc-info">
@@ -49,6 +81,8 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
                 <span className="pcc-btn"><span>Ver ofertas →</span></span>
               </Link>
             ))}
+            </div>
+            {verde.der && <button type="button" className="pcc-arrow next" onClick={() => deslizar(1)} aria-label="Ver más cupones">›</button>}
           </div>
         </motion.div>
       )}
@@ -116,7 +150,18 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
           .pcc-btn{min-width:78px;padding:0 12px;font-size:13px}
         }
         .promo-band-title strong{font-weight:400;font-style:italic;display:block}
-        .promo-band-cards{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;padding:2px 0}
+        .promo-band-wrap{position:relative;flex:1;min-width:0}
+        .promo-band-cards{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;min-width:0;padding:2px 0;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
+        .promo-band-cards .promo-coupon-card{scroll-snap-align:start}
+        .promo-band-wrap.can-right .promo-band-cards{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent)}
+        .promo-band-wrap.can-left .promo-band-cards{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 64px),transparent)}
+        .promo-band-wrap.can-left.can-right .promo-band-cards{-webkit-mask-image:linear-gradient(90deg,transparent,#000 56px,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(90deg,transparent,#000 56px,#000 calc(100% - 64px),transparent)}
+        .pcc-arrow{position:absolute;top:50%;translate:0 -50%;z-index:5;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.55);cursor:pointer;background:rgba(4,17,10,.55);color:#fff;font-size:26px;line-height:1;display:grid;place-items:center;padding:0 0 3px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:scale .2s var(--ease-out),background .2s ease}
+        .pcc-arrow:hover{scale:1.1;background:rgba(4,17,10,.8)}
+        .pcc-arrow.prev{left:4px}
+        .pcc-arrow.next{right:8px;animation:pccnudge 1.6s ease-in-out infinite}
+        @keyframes pccnudge{0%,100%{translate:0 -50%}50%{translate:5px -50%}}
+        @media (prefers-reduced-motion:reduce){.pcc-arrow.next{animation:none}}
         .promo-band-cards .promo-coupon-card:first-child{margin-left:auto}
         .promo-band-cards .promo-coupon-card:last-child{margin-right:auto}
         .promo-band-cards::-webkit-scrollbar{display:none}
@@ -150,7 +195,9 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
           .promo-arrow{display:none}
           .promo-dots{bottom:8px}
           .promo-band{flex-direction:column;align-items:flex-start;gap:10px;padding:12px 14px}
+          .promo-band-wrap{width:100%;flex:none}
           .promo-band-cards{width:100%;justify-content:flex-start}
+          .pcc-arrow{width:34px;height:34px;font-size:22px}
         }
         @media (prefers-reduced-motion:reduce){.promo-slide{transition:none}.promo-shine{display:none}}
       `}</style>

@@ -72,6 +72,10 @@ export interface OrderLine {
   promo?: string;
   /** Peso del paquete declarado en ML, por unidad. */
   weightGrams: number;
+  /** Medidas del paquete por unidad (cm), tomadas del producto al crear el pedido. */
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
 }
 
 export interface OrderPayment {

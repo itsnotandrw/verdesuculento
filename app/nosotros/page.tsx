@@ -4,6 +4,7 @@ import Reveal from '@/components/Reveal';
 import CountUp from '@/components/CountUp';
 import BlurText from '@/components/BlurText';
 import { CONTACTO } from '@/data/contacto';
+import MapaPlegable from '@/components/MapaPlegable';
 
 export const metadata: Metadata = {
   title: 'Nosotros — Vivero Verde Suculento',
@@ -252,12 +253,7 @@ export default function NosotrosPage() {
               </div>
             </Reveal>
             <Reveal className="reveal-right">
-              <div style={{
-                aspectRatio: '4/3',
-                borderRadius: 'var(--radius-lg)',
-                backgroundImage: 'url(https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=85)',
-                backgroundSize: 'cover', backgroundPosition: 'center',
-              }} />
+              <MapaPlegable />
             </Reveal>
           </div>
         </div>
