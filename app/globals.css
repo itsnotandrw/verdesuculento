@@ -2672,3 +2672,10 @@ html { overflow-x: clip; max-width: 100%; }
   .reveal-left.in, .reveal-right.in { transform: translateY(0); }
 }
 @media (max-width: 760px) { .adm-logi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+
+/* Menú Catálogo en móvil: tarjetas apiladas dentro de la hoja inferior */
+.mobile-catalog-stack { max-height: 72dvh; overscroll-behavior: contain; padding: 4px 14px 18px; }
+.mobile-catalog-stack .cs-card { height: 96px; }
+.mobile-catalog-stack .cs-oferta .cs-card { height: 54px; }
+.mobile-catalog-stack .cs-name { font-size: 24px; bottom: 30px; }
+.mobile-catalog-stack .cs-oferta .cs-name { font-size: 14px; }

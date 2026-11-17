@@ -8,6 +8,7 @@ import { CATEGORIES } from '@/data/catalog';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { useOffers } from '@/context/OffersContext';
 import { useSearch } from '@/context/SearchContext';
+import CatalogStack from '@/components/CatalogStack';
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function MobileNav() {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const catalogRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -56,7 +58,7 @@ export default function MobileNav() {
         className={`mobile-catalog-overlay ${(catalogOpen || moreOpen) ? 'open' : ''}`}
         onClick={() => { setCatalogOpen(false); setMoreOpen(false); }}
       />
-      <div className={`mobile-catalog-panel ${catalogOpen ? 'open' : ''}`} aria-hidden={!catalogOpen}>
+      <div ref={catalogRef} className={`mobile-catalog-panel mobile-catalog-stack ${catalogOpen ? 'open' : ''}`} aria-hidden={!catalogOpen}>
         <div className="mobile-catalog-panel-header">
           <span className="eyebrow">Catálogo</span>
           <button className="nav-icon-btn" onClick={() => setCatalogOpen(false)} aria-label="Cerrar catálogo">
@@ -65,30 +67,22 @@ export default function MobileNav() {
             </svg>
           </button>
         </div>
-        <div className="mobile-catalog-panel-list">
-          {CATEGORIES.filter((cat) => (counts[cat.id] ?? cat.count) > 0).map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/catalogo/${cat.id}`}
-              className="nav-dropdown-item"
-              onClick={() => setCatalogOpen(false)}
-            >
-              <span>{cat.name}</span>
-              <span className="nav-dropdown-count">{counts[cat.id] ?? cat.count}</span>
-            </Link>
-          ))}
-          {offers.length > 0 && (
-            <>
-              <div className="nav-dropdown-group">Ofertas y cupones</div>
-              {offers.map((o) => (
-                <Link key={o.slug} href={`/ofertas/${o.slug}`} className="nav-dropdown-item" onClick={() => setCatalogOpen(false)}>
-                  <span>{o.label}</span>
-                  <span className="nav-dropdown-count nav-dropdown-offer">{o.pct}% OFF</span>
-                </Link>
-              ))}
-            </>
-          )}
-        </div>
+        <CatalogStack
+          scrollerRef={catalogRef}
+          onNavigate={() => setCatalogOpen(false)}
+          items={CATEGORIES.filter((cat) => (counts[cat.id] ?? cat.count) > 0).map((cat) => ({ id: cat.id, name: cat.name, count: counts[cat.id] ?? cat.count }))}
+        />
+        {offers.length > 0 && (
+          <>
+            <div className="nav-dropdown-group">Ofertas y cupones</div>
+            <CatalogStack
+              variant="oferta"
+              scrollerRef={catalogRef}
+              onNavigate={() => setCatalogOpen(false)}
+              items={offers.map((o) => ({ id: o.slug, name: o.label, href: `/ofertas/${o.slug}`, pct: o.pct }))}
+            />
+          </>
+        )}
       </div>
 
       <div className={`mobile-catalog-panel ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>
