@@ -10,6 +10,7 @@ import { getPromoConfig } from '@/lib/promotions-store';
 import { orders } from '@/lib/orders/store';
 import { redis } from '@/lib/redis';
 import { wompiProvider } from '@/lib/payments/providers/wompi';
+import { ipDe } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,14 @@ export async function GET(request: Request) {
   try {
     const salida: Record<string, unknown> = {
       servidor: { node: process.version, activoSegundos: Math.round(process.uptime()), memoriaMB: Math.round(process.memoryUsage().rss / 1048576), zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      red: {
+        ipDetectada: ipDe(request),
+        xForwardedFor: request.headers.get('x-forwarded-for'),
+        xRealIp: request.headers.get('x-real-ip'),
+        forwarded: request.headers.get('forwarded'),
+        cabecerasDeProxy: [...request.headers.keys()].filter((k) => /^(x-|cf-|fly-|forwarded|via|true-client)/i.test(k)),
+        saltosConfigurados: process.env.TRUSTED_PROXY_HOPS ?? '(sin definir, 1)',
+      },
       pagos: { wompiConfigurado: wompiProvider.isConfigured(), urlWompi: process.env.WOMPI_BASE_URL || 'https://sandbox.wompi.co/v1 (por defecto: sandbox)' },
     };
 
