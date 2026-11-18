@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Eye, MoreVertical, PackageOpen, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { CATEGORIES, formatCOP } from '@/data/catalog';
 import { RATINGS } from '@/data/ratings';
@@ -47,6 +48,7 @@ export default function CatalogAdmin() {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [sync, setSync] = useState<ResultadoSync | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -73,7 +75,9 @@ export default function CatalogAdmin() {
     if (!menu) return;
     const close = () => setMenu(null);
     document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+    return () => { document.removeEventListener('click', close); window.removeEventListener('resize', close); window.removeEventListener('scroll', close, true); };
   }, [menu]);
 
   const promoDe = useCallback((p: Product) => mejorCampana(campaigns, p), [campaigns]);
@@ -279,14 +283,21 @@ export default function CatalogAdmin() {
                       </label>
                     </td>
                     <td style={{ position: 'relative' }}>
-                      <button className="adm-x" aria-label="Más opciones" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}><MoreVertical size={18} /></button>
-                      {menu === p.id && (
-                        <div className="adm-menu" style={{ minWidth: 190 }} onClick={(e) => e.stopPropagation()}>
+                      <button className="adm-x" aria-label="Más opciones" onClick={(e) => {
+                        e.stopPropagation();
+                        const r = e.currentTarget.getBoundingClientRect();
+                        const alto = 150;
+                        setMenuPos({ top: r.bottom + alto > window.innerHeight ? Math.max(8, r.top - alto - 6) : r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) });
+                        setMenu(menu === p.id ? null : p.id);
+                      }}><MoreVertical size={18} /></button>
+                      {menu === p.id && createPortal(
+                        <div className="adm-menu adm-menu-fixed" style={{ minWidth: 190, top: menuPos.top, right: menuPos.right }} onClick={(e) => e.stopPropagation()}>
                           <Link href={`/admin/catalogo/${p.id}`}><Pencil size={15} />Editar</Link>
                           <Link href={`/producto/${p.id}`} target="_blank"><Eye size={15} />Ver en la tienda</Link>
                           <hr />
                           <button onClick={() => { setMenu(null); borrar(p); }} style={{ color: 'var(--a-bad)' }}><Trash2 size={15} />Borrar</button>
-                        </div>
+                        </div>,
+                        document.querySelector('.adm') ?? document.body
                       )}
                     </td>
                   </tr>
