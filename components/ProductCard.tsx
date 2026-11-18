@@ -11,7 +11,6 @@ import { useSpotlight } from '@/hooks/useSpotlight';
 import ProductShape from './ProductShape';
 import StarRating from './StarRating';
 import SoldCount from './SoldCount';
-import { CUTOUTS } from '@/data/cutouts';
 import { usePromo } from '@/context/PromoContext';
 import PrecioPromo from '@/components/PrecioPromo';
 import type { Product } from '@/types';
@@ -31,7 +30,6 @@ export default function ProductCard({ product, compact = false, discountPct: pct
   const rating = RATINGS[product.id];
   const badgeLabel = rating?.bestsellerRank ? 'Más vendido' : product.badge;
   const spotlight = useSpotlight<HTMLElement>();
-  const tieneRecorte = CUTOUTS.has(product.id) && product.images[0]?.startsWith(`/images/productos/${product.id}/`);
   // Solo se muestra una etiqueta de descuento donde hay una oferta real (/ofertas/<slug>). Ya no hay etiquetas fijas por categoría.
   const discountPct = pctOverride; // solo para ofertas por cupón (el descuento se aplica al escribir el código)
   const { precio } = usePromo();
@@ -51,7 +49,7 @@ export default function ProductCard({ product, compact = false, discountPct: pct
         <span className="product-discount">Cupón −{discountPct}%</span>
       ) : null}
 
-      <Link href={`/producto/${product.id}`} className={`product-card-media${tieneRecorte ? ' has-cut' : ''}`} style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
+      <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
         {product.images.length > 0 ? (
           <>
             <FadeImage
@@ -63,18 +61,6 @@ export default function ProductCard({ product, compact = false, discountPct: pct
               quality={90}
               style={{ objectFit: 'cover' }}
             />
-            {tieneRecorte && (
-              <FadeImage
-                className="img-cut"
-                src={`/images/productos/${product.id}/cut/1.webp`}
-                alt=""
-                aria-hidden
-                fill
-                sizes={sizes}
-                quality={92}
-                style={{ objectFit: 'cover' }}
-              />
-            )}
           </>
         ) : (
           <ProductShape product={product} activeColorHex={activeColor.hex} />

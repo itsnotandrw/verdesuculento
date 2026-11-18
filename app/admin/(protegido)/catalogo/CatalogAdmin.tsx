@@ -16,6 +16,7 @@ import { RATINGS } from '@/data/ratings';
 import { mejorCampana, precioConDescuento, type Campaign } from '@/lib/promotions';
 import { toast } from '@/components/admin/toast';
 import type { Product } from '@/types';
+import { urlImagen } from '@/lib/image-loader';
 
 interface CambioML { id: string; name: string; price?: { antes: number; despues: number }; activo?: { antes: boolean; despues: boolean } }
 interface ResultadoSync { consultados: number; cambios: CambioML[]; revisar: { id: string; name: string; antes: number; despues: number }[]; aplicado: boolean }
@@ -252,7 +253,7 @@ export default function CatalogAdmin() {
                     <td>
                       <div className="adm-prod">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img className="adm-thumb" src={p.images[0] ?? '/logo-icon.png'} alt="" loading="lazy" />
+                        <img className="adm-thumb" src={urlImagen(p.images[0] ?? '/logo-icon.png', 192)} alt="" loading="lazy" />
                         <div><b>{p.name}</b><small>#{p.id}</small><small>{nombreCat(p.category)}</small></div>
                       </div>
                     </td>

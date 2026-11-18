@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return fail('El catálogo es de solo lectura: falta configurar Redis (REDIS_URL).', 503);
     }
 
-    const body = await cuerpo(request);
+    const body = await cuerpo(request, 600_000);
     const producto = parseProducto(body);
 
     const existentes = await getAllProducts(true);

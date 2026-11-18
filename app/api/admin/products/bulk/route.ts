@@ -6,7 +6,7 @@
  */
 
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok } from '@/lib/api';
-import { catalogoEditable, getAllProducts, upsertProduct } from '@/lib/catalog/store';
+import { catalogoEditable, modificarCatalogo } from '@/lib/catalog/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   try {
     if (!catalogoEditable()) return fail('El catálogo es de solo lectura: falta configurar REDIS_URL.', 503);
 
-    const body = await cuerpo(request);
+    const body = await cuerpo(request, 600_000);
     const ids = Array.isArray(body.ids) ? body.ids.filter((x): x is string => typeof x === 'string') : [];
     if (ids.length === 0 || ids.length > 500) throw new ValidationError('Selecciona entre 1 y 500 productos.');
     const accion = body.accion;
@@ -29,18 +29,19 @@ export async function POST(request: Request) {
       throw new ValidationError('El porcentaje debe estar entre -90 y 300 (y no ser 0).');
     }
 
-    const todos = await getAllProducts(true);
     const set = new Set(ids);
     let cambiados = 0;
-    for (const p of todos) {
-      if (!set.has(p.id)) continue;
-      const siguiente = { ...p };
-      if (accion === 'ocultar') siguiente.activo = false;
-      else if (accion === 'mostrar') delete siguiente.activo;
-      else siguiente.price = Math.max(100, Math.round((p.price * (1 + pct / 100)) / 10) * 10);
-      await upsertProduct(siguiente);
-      cambiados++;
-    }
+    await modificarCatalogo((todos) =>
+      todos.map((p) => {
+        if (!set.has(p.id)) return p;
+        cambiados++;
+        const siguiente = { ...p };
+        if (accion === 'ocultar') siguiente.activo = false;
+        else if (accion === 'mostrar') delete siguiente.activo;
+        else siguiente.price = Math.max(100, Math.round((p.price * (1 + pct / 100)) / 10) * 10);
+        return siguiente;
+      })
+    );
     return ok({ cambiados });
   } catch (error) {
     if (error instanceof ValidationError) return fail(error.message, 422);

@@ -7,7 +7,15 @@ import { env } from '@/lib/env';
 import ProductContent from './ProductContent';
 import { campanasVigentes } from '@/lib/promo-servidor';
 import { precioProducto } from '@/lib/promo-precios';
+import { urlCompartir } from '@/lib/image-loader';
 import type { Product } from '@/types';
+
+// Se genera al primer pedido y se guarda 60 s; al guardar en el admin se renueva al instante (lib/refrescar.ts).
+// Sin esto cada visita a una ficha volvía a leer todo el catálogo y a armar la página.
+export const revalidate = 60;
+export async function generateStaticParams() {
+  return [];
+}
 
 interface Props {
   params: { id: string };
@@ -16,9 +24,16 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductById(params.id);
   if (!product) return {};
+  const base = env.siteUrl.replace(/\/$/, '');
+  const descripcion = product.description.replace(/\s+/g, ' ').trim().slice(0, 155);
+  const foto = product.images[0] ? urlCompartir(product.images[0]) : undefined;
+  const url = `${base}/producto/${product.id}`;
   return {
     title: `${product.name} — Vivero Verde Suculento`,
-    description: product.description,
+    description: descripcion,
+    alternates: { canonical: url },
+    openGraph: { title: product.name, description: descripcion, url, type: 'website', ...(foto ? { images: [{ url: foto.startsWith('http') ? foto : `${base}${foto}` }] } : {}) },
+    twitter: { card: 'summary_large_image', title: product.name, description: descripcion },
   };
 }
 
@@ -42,7 +57,7 @@ function jsonLd(product: Product, precioVigente: number) {
     sku: product.id,
     // Las fotos ya vienen en URL absoluta desde el catálogo (scraping de ML);
     // si algún día hay una relativa, esto la resuelve igual.
-    image: product.images.map((img) => (img.startsWith('http') ? img : `${baseUrl}${img}`)),
+    image: product.images.map((img) => { const u = urlCompartir(img); return u.startsWith('http') ? u : `${baseUrl}${u}`; }),
     url,
     brand: { '@type': 'Brand', name: 'Vivero Verde Suculento' },
     offers: {

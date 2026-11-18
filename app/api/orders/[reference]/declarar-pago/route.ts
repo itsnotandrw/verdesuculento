@@ -10,7 +10,7 @@
  * extracto — que es exactamente el error que hunde a este flujo.
  */
 
-import { ValidationError, cuerpo, fail, fallo, ok, texto } from '@/lib/api';
+import { ValidationError, cuerpo, fail, fallo, ok, texto, limitarPeticion } from '@/lib/api';
 import { declararPago } from '@/lib/orders/orchestrator';
 import { etiquetaEstado, toPublicOrder } from '@/lib/orders/types';
 
@@ -20,6 +20,8 @@ export async function POST(
   request: Request,
   { params }: { params: { reference: string } }
 ) {
+  const excedido = await limitarPeticion(request, 'declarar');
+  if (excedido) return excedido;
   try {
     const body = await cuerpo(request).catch(() => ({}) as Record<string, unknown>);
     const nota = texto(body.nota, 'la nota', { max: 300, requerido: false });

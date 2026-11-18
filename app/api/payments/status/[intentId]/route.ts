@@ -9,7 +9,7 @@
  * mismo: el webhook pudo perderse y el cliente no tiene por qué esperar.
  */
 
-import { fail, fallo, ok } from '@/lib/api';
+import { fail, fallo, ok, limitarPeticion } from '@/lib/api';
 import { aprobarPago } from '@/lib/orders/orchestrator';
 import { orders } from '@/lib/orders/store';
 import { etiquetaEstado } from '@/lib/orders/types';
@@ -18,9 +18,11 @@ import { paymentProviderById } from '@/lib/payments';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: { intentId: string } }
 ) {
+  const excedido = await limitarPeticion(request, 'estado-pago');
+  if (excedido) return excedido;
   try {
     // El intento se busca por referencia de pago o por id de transacción: en el
     // flujo manual son lo mismo, en el de pasarela no.

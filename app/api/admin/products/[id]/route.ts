@@ -27,7 +27,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const existente = await getProductById(params.id);
     if (!existente) return fail('Ese producto no existe.', 404);
 
-    const body = await cuerpo(request);
+    const body = await cuerpo(request, 600_000);
     const producto = parseProducto(body, params.id);
     await upsertProduct(producto);
     return ok({ product: producto });

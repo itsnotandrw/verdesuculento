@@ -7,7 +7,7 @@
  * poder cosechar datos personales.
  */
 
-import { fallo, ok } from '@/lib/api';
+import { fallo, ok, limitarPeticion } from '@/lib/api';
 import { orders } from '@/lib/orders/store';
 import { etiquetaEnvio, etiquetaEstado, toPublicOrder } from '@/lib/orders/types';
 import { paymentProvider } from '@/lib/payments';
@@ -15,9 +15,11 @@ import { paymentProvider } from '@/lib/payments';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: { reference: string } }
 ) {
+  const excedido = await limitarPeticion(request, 'pedido');
+  if (excedido) return excedido;
   try {
     const pedido = await orders.byReference(params.reference);
     if (!pedido) return ok({ found: false }, 404);

@@ -95,3 +95,28 @@ export async function redisDisponible(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Cerrojo de escritura entre procesos y peticiones (SET NX con vencimiento). Sirve para que dos ediciones del admin
+ * (o el admin y una sincronización) no se pisen al leer-modificar-guardar la misma clave.
+ */
+export async function conCerrojo<T>(nombre: string, operacion: () => Promise<T>, opciones: { ttlSegundos?: number; intentos?: number } = {}): Promise<T> {
+  const { ttlSegundos = 20, intentos = 80 } = opciones;
+  const clave = `verde:cerrojo:${nombre}`;
+  const propio = `${process.pid}-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+
+  for (let i = 0; i < intentos; i++) {
+    const tomado = await cmd<string | null>(['SET', clave, propio, 'NX', 'EX', ttlSegundos]);
+    if (tomado === 'OK') {
+      try {
+        return await operacion();
+      } finally {
+        // Solo se libera si sigue siendo nuestro (si expiró y lo tomó otro, no se le quita el turno).
+        const actual = await cmd<string | null>(['GET', clave]).catch(() => null);
+        if (actual === propio) await cmd(['DEL', clave]).catch(() => undefined);
+      }
+    }
+    await new Promise((r) => setTimeout(r, 40 + Math.random() * 80));
+  }
+  throw new Error(`[redis] no se pudo tomar el cerrojo "${nombre}".`);
+}

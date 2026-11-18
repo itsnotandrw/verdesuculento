@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES } from '@/data/catalog';
 import type { Product, ProductColor, ProductSpecs } from '@/types';
+import { urlImagen } from '@/lib/image-loader';
 
 const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: '', altura: '', dificultad: '' };
 
@@ -259,7 +260,7 @@ export default function ProductForm({ modo, inicial }: Props) {
           {images.map((img, i) => (
             <div key={img + i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0, background: 'var(--bg-elev)' }} />
+              <img src={urlImagen(img, 192)} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0, background: 'var(--bg-elev)' }} />
               <input className="checkout-input mono" value={img} readOnly style={{ flex: 1, fontSize: 12 }} />
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => moverImagen(i, -1)} disabled={i === 0}>↑</button>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => moverImagen(i, 1)} disabled={i === images.length - 1}>↓</button>

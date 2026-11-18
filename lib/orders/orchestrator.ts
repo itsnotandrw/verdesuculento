@@ -22,7 +22,8 @@
 
 import { getProductById } from '@/lib/catalog/store';
 import { aplicarCupon, precioProducto } from '@/lib/promo-precios';
-import { campanasVigentes, registrarUsoCupon } from '@/lib/promo-servidor';
+import { campanasVigentes } from '@/lib/promo-servidor';
+import { liberarUsoCupon, reservarUsoCupon } from '@/lib/promotions-store';
 import { getPromoConfig } from '@/lib/promotions-store';
 import { nuevaReferenciaPago, nuevaReferenciaPedido, nuevoOrderId } from '@/lib/ids';
 import { env } from '@/lib/env';
@@ -124,6 +125,7 @@ export async function crearPedido(
   // --- cupón: lo valida y lo calcula el servidor; el navegador solo manda el código
   let couponDiscount = 0;
   let cuponAplicado: { id: string; code: string; pct: number } | undefined;
+  let usoCuponReservado = false;
   if (input.couponCode?.trim()) {
     const config = await getPromoConfig();
     const resultado = aplicarCupon(
@@ -221,8 +223,18 @@ export async function crearPedido(
     meta: { metodo: input.method, envio: quote.id },
   });
 
+  // --- reserva atómica del uso del cupón: dos compras a la vez no se llevan el último uso disponible las dos
+  if (cuponAplicado) {
+    const cupon = (await getPromoConfig()).coupons.find((c) => c.id === cuponAplicado!.id);
+    if (!(await reservarUsoCupon(cuponAplicado.id, cupon?.usageLimit, cupon?.used ?? 0))) {
+      throw new OrderError('Este cupón ya alcanzó su límite de usos.', 'cupon_invalido');
+    }
+    usoCuponReservado = true;
+  }
+
   // --- intento de pago
   let intent: PaymentIntent;
+  try {
 
   if (esContraEntrega) {
     // No pasa por pasarela: el dinero lo asegura el recaudo de la
@@ -256,7 +268,11 @@ export async function crearPedido(
 
   order.status = derivarEstado(order.payment, order.shipment);
   await orders.create(order);
-  if (cuponAplicado) await registrarUsoCupon(cuponAplicado.id);
+  } catch (error) {
+    // El pedido no llegó a existir: se devuelve el uso reservado del cupón
+    if (usoCuponReservado && cuponAplicado) await liberarUsoCupon(cuponAplicado.id);
+    throw error;
+  }
 
   // El contra entrega despacha inmediatamente; el resto espera el pago.
   if (esContraEntrega) {

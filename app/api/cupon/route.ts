@@ -6,12 +6,15 @@
  * Cuerpo: { code: string, lines: [{ productId, qty }] }
  */
 
-import { cuerpo, fail, fallo, lineasCarrito, ok, texto, ValidationError } from '@/lib/api';
+import { cuerpo, fail, fallo, lineasCarrito, ok, texto, ValidationError, limitarPeticion } from '@/lib/api';
 import { calcularCarrito } from '@/lib/promo-servidor';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const excedido = await limitarPeticion(request, 'cupon');
+  if (excedido) return excedido;
+
   try {
     const body = await cuerpo(request);
     const code = texto(body.code, 'el cupón', { max: 40, requerido: false });

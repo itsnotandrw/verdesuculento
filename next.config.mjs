@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Permite correr el servidor de desarrollo en otra carpeta sin pisar el build de producción (NEXT_DIST_DIR=.next-dev)
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+
   images: {
+    // Sin optimizador en el servidor: las fotos ya están preparadas en 3 tamaños (ver lib/image-loader.ts)
+    loader: 'custom',
+    loaderFile: './lib/image-loader.ts',
+    deviceSizes: [384, 768, 1280],
+    imageSizes: [96, 192],
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,11 +25,49 @@ const nextConfig = {
   // una CSP estricta mitigaría no existe hoy. Si el sitio empieza a
   // renderizar HTML externo (reseñas con formato libre, un blog con CMS,
   // etc.), ese es el momento de agregarla.
+  experimental: {
+    // Navegar dentro del sitio no reutiliza páginas viejas más de 30 s (antes hasta 5 min): un cambio del admin se ve pronto
+    staleTimes: { dynamic: 0, static: 30 },
+    instrumentationHook: true,
+  },
+
   async headers() {
     return [
+      // Imágenes y datos propios: caché larga en el navegador (los nombres de las variantes no cambian de contenido)
+      {
+        source: '/images/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/promos/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/data/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=86400' }],
+      },
       {
         source: '/:path*',
         headers: [
+          // CSP: solo se permite cargar scripts y datos del propio sitio. 'unsafe-inline' es necesario para los scripts
+          // de arranque de Next y los estilos en línea; aun así bloquea scripts de otros dominios, conexiones a
+          // terceros, formularios hacia fuera, plugins y que otro sitio meta este en un iframe.
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "connect-src 'self'",
+              'frame-src https://www.google.com https://maps.google.com',
+              "frame-ancestors 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

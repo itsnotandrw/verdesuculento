@@ -8,6 +8,9 @@ import { aplicaScope } from '@/lib/promotions';
 import ProductCard from '@/components/ProductCard';
 
 export const revalidate = 60;
+export async function generateStaticParams() {
+  return [];
+}
 
 interface Props { params: { slug: string } }
 

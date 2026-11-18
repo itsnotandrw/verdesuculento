@@ -132,7 +132,7 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
         )}
       </motion.div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .promo-hero{--nav:75px;--band:104px;--ar:3.0303;position:relative;padding-top:var(--nav);background:var(--bg)}
         .promo-stage{position:relative;width:100%;height:calc(100vw / var(--ar));min-height:0;overflow:hidden;background:#0b110d}
         .promo-shine{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);translate:-120% 0;animation:promoshine 1.5s .9s var(--ease-out) 1 both}
@@ -200,7 +200,7 @@ export default function PromoHero({ promotions, coupons = [] }: { promotions: Pr
           .pcc-arrow{width:34px;height:34px;font-size:22px}
         }
         @media (prefers-reduced-motion:reduce){.promo-slide{transition:none}.promo-shine{display:none}}
-      `}</style>
+      ` }} />
     </section>
   );
 }

@@ -119,6 +119,8 @@ export interface Look {
 }
 
 export interface PromoConfig {
+  /** Versión: sube en cada guardado. Evita que dos personas del admin se pisen (si no coincide, se rechaza). */
+  rev?: number;
   promotions: Promotion[];
   campaigns: Campaign[];
   coupons: PromoCoupon[];

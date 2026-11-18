@@ -14,6 +14,7 @@ import { formatCOP } from '@/data/catalog';
 import type { Look, LookSpot, PromoConfig } from '@/lib/promotions';
 import { toast } from '@/components/admin/toast';
 import type { Product } from '@/types';
+import { urlImagen } from '@/lib/image-loader';
 
 const uid = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
 const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n * 10) / 10));
@@ -188,7 +189,7 @@ export default function LookEditor() {
                 return (
                   <button key={s.id} className={`adm-spotrow${s.id === spotId ? ' sel' : ''}`} onClick={() => setSpotId(s.id)}>
                     <span className="n">{i + 1}</span>
-                    {p ? (<>{/* eslint-disable-next-line @next/next/no-img-element */}<img className="adm-thumb" style={{ width: 34, height: 34 }} src={p.images[0] ?? '/logo-icon.png'} alt="" /><span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>{p.name}<br /><b className="adm-money">{formatCOP(p.price)}</b></span></>) : <span style={{ flex: 1, color: 'var(--a-warn)' }}>{s.fallback ? `${s.fallback.name} (externo)` : 'Elige un producto'}</span>}
+                    {p ? (<>{/* eslint-disable-next-line @next/next/no-img-element */}<img className="adm-thumb" style={{ width: 34, height: 34 }} src={urlImagen(p.images[0] ?? '/logo-icon.png', 192)} alt="" /><span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>{p.name}<br /><b className="adm-money">{formatCOP(p.price)}</b></span></>) : <span style={{ flex: 1, color: 'var(--a-warn)' }}>{s.fallback ? `${s.fallback.name} (externo)` : 'Elige un producto'}</span>}
                   </button>
                 );
               })}
@@ -203,7 +204,7 @@ export default function LookEditor() {
                   {lista.map((p) => (
                     <button key={p.id} className="adm-row" style={{ gap: 10, padding: '8px 12px', width: '100%', border: 0, borderBottom: '1px solid var(--a-line)', background: spot.productId === p.id ? 'var(--a-accent-soft)' : 'transparent', textAlign: 'left', flexWrap: 'nowrap' }} onClick={() => setSpot(spot.id, { productId: p.id, fallback: undefined })}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img className="adm-thumb" style={{ width: 34, height: 34 }} src={p.images[0] ?? '/logo-icon.png'} alt="" loading="lazy" />
+                      <img className="adm-thumb" style={{ width: 34, height: 34 }} src={urlImagen(p.images[0] ?? '/logo-icon.png', 192)} alt="" loading="lazy" />
                       <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>{p.name}</span><span className="adm-money" style={{ fontSize: 12.5 }}>{formatCOP(p.price)}</span>
                     </button>
                   ))}

@@ -164,9 +164,9 @@ export default function BlogPage() {
         </div>
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media (max-width: 760px) { .featured-article { grid-template-columns: 1fr !important; } }
-      `}</style>
+      ` }} />
     </div>
   );
 }

@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { limitarPeticion } from '@/lib/api';
 import { CATEGORIES } from '@/data/catalog';
 import { getAllProducts } from '@/lib/catalog/store';
 import { campanasVigentes } from '@/lib/promo-servidor';
@@ -14,7 +15,9 @@ import { precioProducto } from '@/lib/promo-precios';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const excedido = await limitarPeticion(request, 'buscar');
+  if (excedido) return excedido;
   const [productos, campanas] = await Promise.all([getAllProducts(), campanasVigentes()]);
   const nombreCategoria = new Map<string, string>(CATEGORIES.map((c) => [c.id, c.name]));
   const items = productos.map((p) => {

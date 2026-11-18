@@ -8,12 +8,14 @@
  * confirmó cobertura de recaudo para ese destino).
  */
 
-import { fallo, ok } from '@/lib/api';
+import { fallo, ok, limitarPeticion } from '@/lib/api';
 import { metodosDisponibles } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const excedido = await limitarPeticion(request, 'metodos');
+  if (excedido) return excedido;
   try {
     const url = new URL(request.url);
     const cod = url.searchParams.get('cod') === '1';

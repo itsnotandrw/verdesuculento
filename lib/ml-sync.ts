@@ -8,7 +8,7 @@
  */
 
 import { env } from '@/lib/env';
-import { getAllProducts, upsertProduct } from '@/lib/catalog/store';
+import { getAllProducts, modificarCatalogo } from '@/lib/catalog/store';
 
 export interface CambioML {
   id: string;
@@ -71,6 +71,7 @@ export async function sincronizarConML(aplicar: boolean): Promise<ResultadoSync>
   }
 
   const cambios: CambioML[] = [];
+  const aEscribir = new Map<string, (typeof productos)[number]>();
   const revisar: ResultadoSync['revisar'] = [];
 
   for (const p of productos) {
@@ -95,9 +96,14 @@ export async function sincronizarConML(aplicar: boolean): Promise<ResultadoSync>
           if (cambio.activo.despues) delete siguiente.activo;
           else siguiente.activo = false;
         }
-        await upsertProduct(siguiente);
+        aEscribir.set(siguiente.id, siguiente);
       }
     }
+  }
+
+  // Una sola escritura (con cerrojo) en vez de reescribir el catálogo entero por cada producto cambiado
+  if (aplicar && aEscribir.size > 0) {
+    await modificarCatalogo((actual) => actual.map((p) => aEscribir.get(p.id) ?? p));
   }
 
   return { consultados: remoto.size, cambios, revisar, aplicado: aplicar };

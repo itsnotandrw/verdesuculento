@@ -164,7 +164,7 @@ export default function AsesoriaPage() {
             </Reveal>
           </div>
         </div>
-        <style>{`@media (max-width:760px){.asesoria-split{grid-template-columns:1fr !important;gap:48px !important;}}`}</style>
+        <style dangerouslySetInnerHTML={{ __html: `@media (max-width:760px){.asesoria-split{grid-template-columns:1fr !important;gap:48px !important;}}` }} />
       </section>
 
       {/* ── INMERSIVO — Testimonio ────────────────── */}
@@ -212,7 +212,7 @@ export default function AsesoriaPage() {
             ))}
           </Reveal>
         </div>
-        <style>{`@media (max-width:760px){.faq-row{grid-template-columns:1fr !important;gap:12px !important;}}`}</style>
+        <style dangerouslySetInnerHTML={{ __html: `@media (max-width:760px){.faq-row{grid-template-columns:1fr !important;gap:12px !important;}}` }} />
       </section>
 
       {/* ── CTA ──────────────────────────────────── */}

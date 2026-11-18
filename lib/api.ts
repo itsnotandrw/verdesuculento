@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
 import { sesionActual } from '@/lib/admin/session';
+import { ipDe, limitar, type NombreLimite } from '@/lib/ratelimit';
 
 export function ok<T>(data: T, status = 200): NextResponse {
   return NextResponse.json(data, { status });
@@ -91,14 +92,32 @@ export function lineasCarrito(valor: unknown): Array<{ productId: string; color:
   });
 }
 
-export async function cuerpo(request: Request): Promise<Record<string, unknown>> {
+/** Tope de tamaño del cuerpo: un JSON enorme podría agotar la memoria del servidor (los route handlers no limitan solos). */
+export async function cuerpo(request: Request, maxBytes = 64_000): Promise<Record<string, unknown>> {
+  const declarado = Number(request.headers.get('content-length') ?? 0);
+  if (declarado > maxBytes) throw new ValidationError('La solicitud es demasiado grande.');
+  let texto: string;
   try {
-    const json = await request.json();
-    if (!json || typeof json !== 'object') throw new Error();
+    texto = await request.text();
+  } catch {
+    throw new ValidationError('No se pudo leer la solicitud.');
+  }
+  if (texto.length > maxBytes) throw new ValidationError('La solicitud es demasiado grande.');
+  try {
+    const json = JSON.parse(texto);
+    if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error();
     return json as Record<string, unknown>;
   } catch {
     throw new ValidationError('El cuerpo de la solicitud no es JSON válido.');
   }
+}
+
+/** Devuelve la respuesta 429 si esta IP superó el límite del endpoint; null si puede seguir. */
+export async function limitarPeticion(request: Request, nombre: NombreLimite): Promise<NextResponse | null> {
+  if (await limitar(nombre, ipDe(request))) return null;
+  const r = fail('Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.', 429);
+  r.headers.set('Retry-After', '30');
+  return r;
 }
 
 // ------------------------------------------------------------------- admin

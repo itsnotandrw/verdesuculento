@@ -6,10 +6,13 @@
 
 import { NextResponse } from 'next/server';
 import { getProductById } from '@/lib/catalog/store';
+import { limitarPeticion } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const excedido = await limitarPeticion(request, 'carrito');
+  if (excedido) return excedido;
   const ids = (new URL(request.url).searchParams.get('ids') ?? '')
     .split(',')
     .map((s) => s.trim())

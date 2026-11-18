@@ -474,13 +474,13 @@ export default function ProductContent({ product, related, crossSell }: Props) {
         </div>
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media (max-width: 760px) {
           .pdp-grid { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 48px !important; }
           /* relative (no static) para mantener el ancla del carrusel de fotos; top 0 anula el offset del sticky de escritorio */
           .pdp-media { position: relative !important; top: 0 !important; height: auto !important; }
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

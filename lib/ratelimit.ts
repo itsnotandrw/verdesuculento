@@ -103,9 +103,67 @@ export async function limitarBusquedaPedidos(ip: string): Promise<boolean> {
   }
 }
 
-/** IP del cliente detrás del proxy (Railway, Vercel, cualquiera con x-forwarded-for). */
+/**
+ * Límites por endpoint público: [peticiones, ventana en ms] por IP. Sin Redis o si Redis falla, se limita en memoria
+ * (no se deja el endpoint abierto). Pensados para que un humano no los note y un bot sí.
+ */
+const LIMITES = {
+  cupon: [12, 60_000],
+  cotizar: [20, 60_000],
+  cobertura: [30, 60_000],
+  buscar: [40, 60_000],
+  carrito: [40, 60_000],
+  'estado-pago': [40, 60_000],
+  pedido: [60, 60_000],
+  declarar: [10, 60_000],
+  rastreo: [30, 60_000],
+  metodos: [40, 60_000],
+} as const satisfies Record<string, readonly [number, number]>;
+
+export type NombreLimite = keyof typeof LIMITES;
+
+const memoriaGenerica = new Map<string, { conteo: number; expiraEn: number }>();
+
+export async function limitar(nombre: NombreLimite, ip: string): Promise<boolean> {
+  const [limite, ventanaMs] = LIMITES[nombre];
+  if (redis) {
+    try {
+      const clave = `verde:ratelimit:${nombre}:${ip}:${Math.floor(Date.now() / ventanaMs)}`;
+      const n = await redis.incr(clave);
+      if (n === 1) await redis.pexpire(clave, ventanaMs);
+      return n <= limite;
+    } catch (error) {
+      console.warn(`[ratelimit] ${nombre}: Redis falló, limitando en memoria.`, error);
+    }
+  }
+  const ahora = Date.now();
+  const clave = `${nombre}:${ip}`;
+  const e = memoriaGenerica.get(clave);
+  if (!e || ahora > e.expiraEn) {
+    if (memoriaGenerica.size > 5000) memoriaGenerica.clear(); // evita crecer sin límite
+    memoriaGenerica.set(clave, { conteo: 1, expiraEn: ahora + ventanaMs });
+    return true;
+  }
+  e.conteo++;
+  return e.conteo <= limite;
+}
+
+/**
+ * IP del cliente detrás del proxy. NO se usa la primera entrada de x-forwarded-for: la manda el propio cliente y
+ * cualquiera podría inventar una IP distinta en cada petición para saltarse los límites. Se toma la que añadió el
+ * proxy de confianza (la última, o la `TRUSTED_PROXY_HOPS`-ésima desde el final si hay más de un proxy delante).
+ */
 export function ipDe(request: Request): string {
+  // x-real-ip solo si se declara que el proxy de confianza lo fija (un cliente puede enviarlo con cualquier valor)
+  if (process.env.TRUST_X_REAL_IP === '1') {
+    const real = request.headers.get('x-real-ip');
+    if (real) return real.trim();
+  }
   const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') ?? 'desconocida';
+  if (forwarded) {
+    const partes = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    const saltos = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS ?? 1) || 1);
+    return partes[Math.max(0, partes.length - saltos)] ?? 'desconocida';
+  }
+  return 'desconocida';
 }

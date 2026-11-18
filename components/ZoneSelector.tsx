@@ -344,7 +344,7 @@ export default function ZoneSelector() {
         document.body,
       )}
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .zone{position:relative}
         .zone-chip{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:999px;cursor:pointer;color:var(--fg);
           background:var(--bg-elev);border:1px solid var(--border-strong);font-family:var(--font-ui);transition:border-color .2s ease,background .2s ease}
@@ -494,7 +494,7 @@ export default function ZoneSelector() {
         .b-cat-nombre{font-family:var(--font-display);font-size:24px;line-height:1.05}
         .b-cat-n{font-family:var(--font-mono);font-size:11px;opacity:.85}
         @media (max-width:720px){.bento-plantas{grid-template-columns:1fr 1fr;grid-auto-rows:130px}.zs-lbl{display:none}.zs-i.on .zs-lbl{display:inline}}
-      `}</style>
+      ` }} />
     </div>
   );
 }

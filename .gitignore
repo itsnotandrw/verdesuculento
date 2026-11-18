@@ -32,3 +32,4 @@ tsconfig.tsbuildinfo
 mcp-server*.log
 *.tsbuildinfo
 _*.mjs
+.next-dev*

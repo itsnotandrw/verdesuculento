@@ -4,7 +4,7 @@
  */
 
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok, texto } from '@/lib/api';
-import { getPromoConfig, promosEditables, savePromoConfig } from '@/lib/promotions-store';
+import { ConflictoDeVersionError, getPromoConfig, promosEditables, savePromoConfig } from '@/lib/promotions-store';
 import { getAllProducts } from '@/lib/catalog/store';
 import { conflictosNuevos, detectarConflictos } from '@/lib/promo-conflictos';
 import { slugify, type Campaign, type CampaignScope, type CampanaTipo, type CuponTipo, type Look, type PromoConfig, type PromoCoupon, type Promotion } from '@/lib/promotions';
@@ -157,7 +157,8 @@ function parseConfig(body: Raw): PromoConfig {
   const slugs = [...campaigns.map((c) => c.slug), ...coupons.map((c) => c.slug)];
   if (new Set(slugs).size !== slugs.length) throw new ValidationError('Hay direcciones de catálogo (slug) repetidas entre promociones y cupones.');
 
-  return { promotions, campaigns, coupons, looks: parseLooks(rawL) };
+  const rev = typeof body.rev === 'number' && Number.isFinite(body.rev) ? Math.floor(body.rev) : undefined;
+  return { rev, promotions, campaigns, coupons, looks: parseLooks(rawL) };
 }
 
 export async function GET(request: Request) {
@@ -175,7 +176,7 @@ export async function PUT(request: Request) {
   if (noAutorizado) return noAutorizado;
   try {
     if (!promosEditables()) return fail('Las promociones son de solo lectura: falta configurar REDIS_URL.', 503);
-    const config = parseConfig(await cuerpo(request));
+    const config = parseConfig(await cuerpo(request, 600_000));
 
     // Choques: solo se bloquea lo que no tiene sentido (duplicados exactos); el resto se guarda y se avisa.
     const productos = (await getAllProducts(true)).map((p) => ({ id: p.id, category: p.category }));
@@ -186,12 +187,13 @@ export async function PUT(request: Request) {
       return fail(bloqueantes.map((c) => c.mensaje).join(' | '), 409);
     }
 
-    await savePromoConfig(config);
+    const guardada = await savePromoConfig(config);
     // Avisos: los cruces nuevos que no bloquean + los que ya existían (para que no se pierdan de vista)
     const avisos = [...nuevos.filter((c) => !c.bloquea), ...previos].map((c) => c.mensaje);
-    return ok({ config, avisos });
+    return ok({ config: guardada, avisos });
   } catch (error) {
     if (error instanceof ValidationError) return fail(error.message, 422);
+    if (error instanceof ConflictoDeVersionError) return fail(error.message, 409);
     return fallo(error, 'PUT /api/admin/promociones');
   }
 }

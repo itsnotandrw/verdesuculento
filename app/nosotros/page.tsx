@@ -146,7 +146,7 @@ export default function NosotrosPage() {
             </Reveal>
           </div>
         </div>
-        <style>{`@media (max-width:760px){.nosotros-grid-2{grid-template-columns:1fr !important;gap:48px !important;}}`}</style>
+        <style dangerouslySetInnerHTML={{ __html: `@media (max-width:760px){.nosotros-grid-2{grid-template-columns:1fr !important;gap:48px !important;}}` }} />
       </section>
 
       {/* ── VALORES ──────────────────────────────── */}

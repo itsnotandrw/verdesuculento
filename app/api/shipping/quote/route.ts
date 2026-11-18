@@ -6,7 +6,7 @@
  */
 
 import { getProductById } from '@/lib/catalog/store';
-import { ValidationError, cuerpo, fail, fallo, lineasCarrito, ok, texto } from '@/lib/api';
+import { ValidationError, cuerpo, fail, fallo, lineasCarrito, ok, texto, limitarPeticion } from '@/lib/api';
 import { env } from '@/lib/env';
 import { armarPaquete, cotizar, logisticaDe, shippingProvider } from '@/lib/shipping';
 import type { OrderLine } from '@/lib/orders/types';
@@ -14,6 +14,9 @@ import type { OrderLine } from '@/lib/orders/types';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const excedido = await limitarPeticion(request, 'cotizar');
+  if (excedido) return excedido;
+
   try {
     const body = await cuerpo(request);
 

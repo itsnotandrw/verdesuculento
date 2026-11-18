@@ -18,7 +18,8 @@
  * fallar en silencio).
  */
 
-import { redis, getJson, setJson } from '@/lib/redis';
+import { redis, getJson, setJson, conCerrojo } from '@/lib/redis';
+import { crearCacheTtl } from '@/lib/memoria';
 import { CATALOG as CATALOGO_ESTATICO } from '@/data/catalog';
 import { refrescarSitio } from '@/lib/refrescar';
 import type { Product } from '@/types';
@@ -36,23 +37,27 @@ export function catalogoEditable(): boolean {
 // condición de carrera del arranque.
 let siembra: Promise<Product[]> | null = null;
 
+/** Lee el catálogo de Redis (sin caché). Si Redis falla, lanza: el caché de memoria decide qué hacer. */
+async function leerDeRedis(): Promise<Product[]> {
+  const guardado = await getJson<Product[]>(CLAVE_CATALOGO);
+  if (guardado) return guardado;
+  if (!siembra) siembra = setJson(CLAVE_CATALOGO, CATALOGO_ESTATICO).then(() => CATALOGO_ESTATICO);
+  return siembra;
+}
+
+// Caché de 5 s en memoria: una página llama al catálogo varias veces y cada llamada leía y analizaba 230 KB de Redis.
+// Se invalida al guardar, así que en este proceso un cambio del admin se ve al instante.
+const cacheCatalogo = crearCacheTtl(leerDeRedis, 5_000, 'catalogo');
+
 async function todosSinFiltrar(): Promise<Product[]> {
   if (!redis) return CATALOGO_ESTATICO;
-
-  // Si Redis no responde, el sitio sigue vendiendo con el catálogo estático (solo lectura) en vez de dar error 500.
-  let guardado: Product[] | null;
   try {
-    guardado = await getJson<Product[]>(CLAVE_CATALOGO);
+    return await cacheCatalogo.obtener();
   } catch (error) {
-    console.error('[catalogo] Redis no respondió; usando el catálogo estático:', error instanceof Error ? error.message : error);
+    // Solo si NUNCA se pudo leer (arranque con Redis caído): se sigue vendiendo con el catálogo de respaldo.
+    console.error('[catalogo] Redis no respondió y no hay copia previa; usando el catálogo estático:', error instanceof Error ? error.message : error);
     return CATALOGO_ESTATICO;
   }
-  if (guardado) return guardado;
-
-  if (!siembra) {
-    siembra = setJson(CLAVE_CATALOGO, CATALOGO_ESTATICO).then(() => CATALOGO_ESTATICO);
-  }
-  return siembra;
 }
 
 /**
@@ -65,13 +70,21 @@ export async function getAllProducts(incluirInactivos = false): Promise<Product[
   return incluirInactivos ? todos : todos.filter((p) => p.activo !== false);
 }
 
-async function guardarCatalogo(productos: Product[]): Promise<void> {
+/**
+ * Cambia el catálogo de forma segura: toma el cerrojo, lee lo ÚLTIMO de Redis (no la copia de memoria), aplica el
+ * cambio, guarda UNA vez y refresca el sitio. Así dos ediciones simultáneas no se pisan y una acción masiva no
+ * reescribe el catálogo entero una vez por producto.
+ */
+export async function modificarCatalogo(mutador: (actual: Product[]) => Product[]): Promise<void> {
   if (!redis) {
-    throw new Error(
-      'El catálogo es de solo lectura: falta configurar REDIS_URL.'
-    );
+    throw new Error('El catálogo es de solo lectura: falta configurar REDIS_URL.');
   }
-  await setJson(CLAVE_CATALOGO, productos);
+  await conCerrojo('catalogo', async () => {
+    const actual = (await getJson<Product[]>(CLAVE_CATALOGO)) ?? CATALOGO_ESTATICO;
+    const siguiente = mutador(actual);
+    await setJson(CLAVE_CATALOGO, siguiente);
+  });
+  cacheCatalogo.invalidar();
   refrescarSitio();
 }
 
@@ -121,12 +134,10 @@ export async function getCrossSellProducts(product: Product): Promise<Product[]>
 
 /** Crea (si el id no existe) o reemplaza (si existe) un producto completo. */
 export async function upsertProduct(producto: Product): Promise<void> {
-  const todos = await todosSinFiltrar();
-  const indice = todos.findIndex((p) => p.id === producto.id);
-  const siguiente = indice >= 0
-    ? todos.map((p, i) => (i === indice ? producto : p))
-    : [...todos, producto];
-  await guardarCatalogo(siguiente);
+  await modificarCatalogo((todos) => {
+    const indice = todos.findIndex((p) => p.id === producto.id);
+    return indice >= 0 ? todos.map((p, i) => (i === indice ? producto : p)) : [...todos, producto];
+  });
 }
 
 /**
@@ -138,6 +149,5 @@ export async function upsertProduct(producto: Product): Promise<void> {
  * carga, no para descontinuar un producto.
  */
 export async function deleteProduct(id: string): Promise<void> {
-  const todos = await todosSinFiltrar();
-  await guardarCatalogo(todos.filter((p) => p.id !== id));
+  await modificarCatalogo((todos) => todos.filter((p) => p.id !== id));
 }

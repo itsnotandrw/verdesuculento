@@ -7,7 +7,7 @@
  * sin poder ver su envío.
  */
 
-import { fallo, ok } from '@/lib/api';
+import { fallo, ok, limitarPeticion } from '@/lib/api';
 import { orders } from '@/lib/orders/store';
 import { etiquetaEnvio } from '@/lib/orders/types';
 import { shippingProvider } from '@/lib/shipping';
@@ -15,9 +15,11 @@ import { shippingProvider } from '@/lib/shipping';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: { tracking: string } }
 ) {
+  const excedido = await limitarPeticion(request, 'rastreo');
+  if (excedido) return excedido;
   try {
     const pedido = await orders.byTrackingNumber(params.tracking);
 

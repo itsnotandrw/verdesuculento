@@ -7,7 +7,9 @@ import GooeyNav from '@/components/GooeyNav';
 import PrecioPromo from '@/components/PrecioPromo';
 import { usePromo } from '@/context/PromoContext';
 import type { Look, LookSpot } from '@/lib/promotions';
-import type { Product } from '@/types';
+/** Solo lo que necesita un punto de la imagen (el catálogo completo pesaba cientos de KB en cada visita a la portada). */
+export interface ProductoMin { id: string; name: string; price: number; category: string; images: string[] }
+import { urlImagen } from '@/lib/image-loader';
 
 // Imágenes interactivas tipo "genially": foto con puntos "+" que abren la tarjeta de un producto.
 // Se editan en el admin (Imágenes interactivas): se pueden arrastrar los puntos y elegir el producto de cada uno.
@@ -33,7 +35,7 @@ function PrecioSpot({ s }: { s: Resolved }) {
   return <PrecioPromo unit={p.unit} list={p.list} />;
 }
 
-function resolve(spots: LookSpot[], products: Product[]): Resolved[] {
+function resolve(spots: LookSpot[], products: ProductoMin[]): Resolved[] {
   const out: Resolved[] = [];
   for (const s of spots) {
     const p = products.find((q) => q.id === s.productId);
@@ -43,7 +45,7 @@ function resolve(spots: LookSpot[], products: Product[]): Resolved[] {
   return out;
 }
 
-function HotspotBanner({ banner, products }: { banner: Look; products: Product[] }) {
+function HotspotBanner({ banner, products }: { banner: Look; products: ProductoMin[] }) {
   const [active, setActive] = useState<string | null>(null);
   const [seen, setSeen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -87,7 +89,7 @@ function HotspotBanner({ banner, products }: { banner: Look; products: Product[]
           const body = (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={s.image} alt={s.name} width={72} height={72} />
+              <img src={urlImagen(s.image, 192)} alt={s.name} width={72} height={72} loading="lazy" decoding="async" />
               <span className="stl-info">
                 <span className="stl-name">{s.name}</span>
                 <span className="stl-price"><PrecioSpot s={s} /></span>
@@ -130,13 +132,13 @@ function HotspotBanner({ banner, products }: { banner: Look; products: Product[]
         current.external ? (
           <a key={current.id} href={current.href} target="_blank" rel="noopener noreferrer" className="stl-sheet">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={current.image} alt={current.name} width={64} height={64} />
+            <img src={urlImagen(current.image, 192)} alt={current.name} width={64} height={64} loading="lazy" decoding="async" />
             <span className="stl-info"><span className="stl-name">{current.name}</span><span className="stl-price"><PrecioSpot s={current} /></span><span className="stl-cta">Ver producto →</span></span>
           </a>
         ) : (
           <Link key={current.id} href={current.href} className="stl-sheet">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={current.image} alt={current.name} width={64} height={64} />
+            <img src={urlImagen(current.image, 192)} alt={current.name} width={64} height={64} loading="lazy" decoding="async" />
             <span className="stl-info"><span className="stl-name">{current.name}</span><span className="stl-price"><PrecioSpot s={current} /></span><span className="stl-cta">Ver producto →</span></span>
           </Link>
         )
@@ -146,7 +148,7 @@ function HotspotBanner({ banner, products }: { banner: Look; products: Product[]
   );
 }
 
-export default function ShopTheLook({ products, looks }: { products: Product[]; looks: Look[] }) {
+export default function ShopTheLook({ products, looks }: { products: ProductoMin[]; looks: Look[] }) {
   const [tab, setTab] = useState(0);
   if (looks.length === 0) return null;
   const actual = looks[Math.min(tab, looks.length - 1)];
@@ -162,7 +164,7 @@ export default function ShopTheLook({ products, looks }: { products: Product[]; 
         </div>
         <HotspotBanner key={actual.id} banner={actual} products={products} />
       </div>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .stl-banner{animation:stlbanner .55s var(--ease-out) both}
         @keyframes stlbanner{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
         .stl-title{font-family:var(--font-display);font-weight:400;font-size:clamp(24px,3vw,38px);letter-spacing:-0.015em;line-height:1.05;margin:0 0 14px;text-align:center}
@@ -226,7 +228,7 @@ export default function ShopTheLook({ products, looks }: { products: Product[]; 
           .stl-banner,.stl-card,.stl-ring{animation:none}
           .stl-img,.stl-dot{transition:none;opacity:1;scale:1;transform:none}
         }
-      `}</style>
+      ` }} />
     </section>
   );
 }

@@ -32,7 +32,7 @@ export default function FloatingActions() {
         </svg>
       </motion.a>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .fa-wa{position:fixed;right:18px;bottom:22px;z-index:90;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#25d366;box-shadow:0 10px 30px rgba(0,0,0,.4)}
         .fa-wa-ring{display:none}
         .fa-wa{animation:fapulsesombra 2.6s ease-out infinite}
@@ -41,7 +41,7 @@ export default function FloatingActions() {
         @media (max-width:900px){.fa-wa{bottom:calc(86px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px}.fa-wa-pdp{bottom:calc(var(--mobile-nav-height,70px) + 84px + env(safe-area-inset-bottom))}}
         @keyframes fapulsem{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.28);opacity:0}}
         @media (prefers-reduced-motion:reduce){.fa-wa{animation:none}}
-      `}</style>
+      ` }} />
     </>
   );
 }

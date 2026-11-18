@@ -3,7 +3,7 @@
  * SOLO SERVIDOR.
  */
 
-import { getPromoConfig, savePromoConfig } from '@/lib/promotions-store';
+import { getPromoConfig } from '@/lib/promotions-store';
 import { aplicarCupon, precioProducto, type ResultadoCupon } from '@/lib/promo-precios';
 import { vigente, type Campaign } from '@/lib/promotions';
 import { getProductById } from '@/lib/catalog/store';
@@ -51,17 +51,4 @@ export async function calcularCarrito(lineas: LineaCarrito[], codigoCupon?: stri
     : undefined;
 
   return { lineas: detalle, subtotalLista, subtotal, descuentoCampanas: subtotalLista - subtotal, cupon };
-}
-
-/** Suma un uso al cupón (al crear el pedido). Si falla, el pedido igual se conserva. */
-export async function registrarUsoCupon(couponId: string): Promise<void> {
-  try {
-    const config = await getPromoConfig();
-    const cupon = config.coupons.find((c) => c.id === couponId);
-    if (!cupon) return;
-    cupon.used = (cupon.used ?? 0) + 1;
-    await savePromoConfig(config);
-  } catch (error) {
-    console.error('[cupones] no se pudo registrar el uso del cupón', couponId, error instanceof Error ? error.message : error);
-  }
 }

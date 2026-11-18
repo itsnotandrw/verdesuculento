@@ -5,12 +5,15 @@
  * entrega donde no hay recaudo es despachar producto que nadie va a cobrar.
  */
 
-import { ValidationError, cuerpo, entero, fail, fallo, ok, texto } from '@/lib/api';
+import { ValidationError, cuerpo, entero, fail, fallo, ok, texto, limitarPeticion } from '@/lib/api';
 import { shippingProvider } from '@/lib/shipping';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const excedido = await limitarPeticion(request, 'cobertura');
+  if (excedido) return excedido;
+
   try {
     const body = await cuerpo(request);
 

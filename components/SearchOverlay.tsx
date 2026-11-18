@@ -10,6 +10,7 @@ import { useSearch } from '@/context/SearchContext';
 import { usePromo } from '@/context/PromoContext';
 import PrecioPromo from '@/components/PrecioPromo';
 import './SearchOverlay.css';
+import { urlImagen } from '@/lib/image-loader';
 
 interface Item {
   id: string;
@@ -145,7 +146,7 @@ export default function SearchOverlay() {
               {resultados.map((p, i) => (
                 <li key={p.id} role="option" aria-selected={i === sel}>
                   <Link href={`/producto/${p.id}`} className={`so-item${i === sel ? ' on' : ''}`} onClick={closeSearch} onMouseEnter={() => setSel(i)}>
-                    {p.image ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={p.image} alt="" loading="lazy" /> : <span className="so-noimg" />}
+                    {p.image ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={urlImagen(p.image, 192)} alt="" loading="lazy" decoding="async" width={48} height={48} /> : <span className="so-noimg" />}
                     <span className="so-txt">
                       <b>{p.name}</b>
                       <small>{p.categoryName}</small>

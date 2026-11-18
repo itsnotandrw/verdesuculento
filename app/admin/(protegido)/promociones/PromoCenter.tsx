@@ -24,6 +24,7 @@ import {
 } from '@/lib/promotions';
 import { toast } from '@/components/admin/toast';
 import type { Product } from '@/types';
+import { urlImagen } from '@/lib/image-loader';
 
 type Tab = 'vista' | 'promociones' | 'cupones';
 const DIA = 86400000;
@@ -255,7 +256,7 @@ export default function PromoCenter() {
                     const c = mejorCampana(camps, p, ahora);
                     return (
                       <tr key={p.id}>
-                        <td><div className="adm-prod">{/* eslint-disable-next-line @next/next/no-img-element */}<img className="adm-thumb" src={p.images[0] ?? '/logo-icon.png'} alt="" loading="lazy" /><div><b>{p.name}</b><small>#{p.id}</small></div></div></td>
+                        <td><div className="adm-prod">{/* eslint-disable-next-line @next/next/no-img-element */}<img className="adm-thumb" src={urlImagen(p.images[0] ?? '/logo-icon.png', 192)} alt="" loading="lazy" /><div><b>{p.name}</b><small>#{p.id}</small></div></div></td>
                         <td>{c ? <><span className="adm-badge purple">{c.badge ?? CAMPANA_TIPOS[c.kind].label}</span><br /><small className="adm-hint">{fcorta(c.startsAt)} – {fcorta(c.endsAt)}</small></> : <span className="adm-hint">Sin promoción</span>}</td>
                         <td>{c ? <span className="adm-money">{c.pct}%</span> : '—'}</td>
                         <td>{c ? <><span className="adm-money">{formatCOP(precioConDescuento(p.price, c.pct))}</span><br /><span className="adm-strike">{formatCOP(p.price)}</span></> : <span className="adm-money">{formatCOP(p.price)}</span>}</td>
@@ -437,7 +438,7 @@ function CampanaForm({ inicial, existe, products, guardando, onClose, onSave }: 
               <span className="adm-label">Así se verá</span>
               <div className="adm-prod" style={{ marginTop: 10, alignItems: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="adm-thumb" src={muestra.images[0] ?? '/logo-icon.png'} alt="" />
+                <img className="adm-thumb" src={urlImagen(muestra.images[0] ?? '/logo-icon.png', 192)} alt="" />
                 <div><b>{muestra.name}</b><span className="adm-row" style={{ gap: 8, marginTop: 4 }}><span className="adm-money" style={{ fontSize: 18 }}>{formatCOP(precioConDescuento(muestra.price, c.pct))}</span><span className="adm-strike">{formatCOP(muestra.price)}</span><span className="adm-badge purple">{c.pct}% OFF</span></span>{c.kind === 'cantidad' && <small>Comprando {c.minQty ?? 2} o más.</small>}</div>
               </div>
             </div>
@@ -518,7 +519,7 @@ function ScopePicker({ label, scope, onChange, products }: { label: string; scop
               <label key={p.id} className="adm-row" style={{ padding: '8px 12px', borderBottom: '1px solid var(--a-line)', gap: 10 }}>
                 <input type="checkbox" checked={scope.ids.includes(p.id)} onChange={() => toggleId(p.id)} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="adm-thumb" style={{ width: 34, height: 34 }} src={p.images[0] ?? '/logo-icon.png'} alt="" loading="lazy" />
+                <img className="adm-thumb" style={{ width: 34, height: 34 }} src={urlImagen(p.images[0] ?? '/logo-icon.png', 192)} alt="" loading="lazy" />
                 <span style={{ flex: 1, minWidth: 0 }}>{p.name}</span><span className="adm-money">{formatCOP(p.price)}</span>
               </label>
             ))}

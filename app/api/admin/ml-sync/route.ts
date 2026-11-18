@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
   try {
     if (!mlConfigurado()) return fail('Faltan ML_APP_ID y ML_CLIENT_SECRET en el servidor.', 503);
-    const body = await cuerpo(request);
+    const body = await cuerpo(request, 600_000);
     const aplicar = body.aplicar === true;
     if (aplicar && !catalogoEditable()) return fail('El catálogo es de solo lectura: falta configurar REDIS_URL.', 503);
     return ok(await sincronizarConML(aplicar));

@@ -37,6 +37,12 @@ const SHOW_HIDDEN = false;
 export default async function HomePage() {
   const products = await getAllProducts();
   const config = await getPromoConfig();
+  // Solo los productos que usan las imágenes interactivas activas, y solo con lo necesario (no el catálogo completo)
+  const looksActivos = config.looks.filter((l) => l.active);
+  const idsLooks = new Set(looksActivos.flatMap((l) => l.spots.map((s) => s.productId)));
+  const productosDeLooks = products
+    .filter((p) => idsLooks.has(p.id))
+    .map((p) => ({ id: p.id, name: p.name, price: p.price, category: p.category, images: p.images.slice(0, 1) }));
   const promotions = config.promotions.filter((p) => vigente(p));
   const promoCoupons = promotions.length > 0 ? config.coupons.filter((c) => vigente(c)) : [];
   // Destacados: uno por categoría (el más vendido). Ver data/destacados.ts.
@@ -144,7 +150,7 @@ export default async function HomePage() {
             </Reveal>
           </div>
         </div>
-        <style>{`@media (max-width: 760px) { .editorial-grid { grid-template-columns: 1fr !important; } }`}</style>
+        <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 760px) { .editorial-grid { grid-template-columns: 1fr !important; } }` }} />
       </section>
 
 </>
@@ -152,7 +158,7 @@ export default async function HomePage() {
 
       {/* ── IMAGEN INTERACTIVA (frutales clima cálido) ── */}
 
-      <ShopTheLook products={products} looks={config.looks.filter((l) => l.active)} />
+      <ShopTheLook products={productosDeLooks} looks={looksActivos} />
 
 
       {/* ── HORIZONTAL CATEGORY SCROLL ───────────────── */}
@@ -202,7 +208,7 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        <style>{`@media (max-width: 760px) { .parallax-grid { grid-template-columns: 1fr !important; } }`}</style>
+        <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 760px) { .parallax-grid { grid-template-columns: 1fr !important; } }` }} />
       </section>
 
 </>
@@ -242,7 +248,7 @@ export default async function HomePage() {
             <Link href="/asesoria" className="btn btn-primary">Hablar con un agrónomo <span className="btn-arrow">→</span></Link>
           </div>
         </div>
-        <style>{`@media (max-width: 760px) { .agro-stats-grid { grid-template-columns: 1fr !important; } .agro-stat-0, .agro-stat-1 { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding-right: 0 !important; padding-left: 0 !important; } }`}</style>
+        <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 760px) { .agro-stats-grid { grid-template-columns: 1fr !important; } .agro-stat-0, .agro-stat-1 { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding-right: 0 !important; padding-left: 0 !important; } }` }} />
       </section>
 
       {/* ── BLOG TEASER ──────────────────────────────── */}

@@ -307,9 +307,9 @@ export default function CartPage() {
           </aside>
         </div>
       </div>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media (max-width: 760px) { .cart-layout { grid-template-columns: 1fr !important; } }
-      `}</style>
+      ` }} />
     </div>
   );
 }
