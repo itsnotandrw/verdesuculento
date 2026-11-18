@@ -154,8 +154,11 @@ export async function limitar(nombre: NombreLimite, ip: string): Promise<boolean
  * proxy de confianza (la última, o la `TRUSTED_PROXY_HOPS`-ésima desde el final si hay más de un proxy delante).
  */
 export function ipDe(request: Request): string {
-  // x-real-ip solo si se declara que el proxy de confianza lo fija (un cliente puede enviarlo con cualquier valor)
-  if (process.env.TRUST_X_REAL_IP === '1') {
+  // x-real-ip solo donde el proxy de confianza lo FIJA (un cliente puede enviarlo con cualquier valor). En Railway el
+  // borde lo sobrescribe siempre (comprobado en producción) y x-forwarded-for llega como "cliente, proxy": la última
+  // entrada es la IP del proxy, que cambia en cada petición, así que no sirve como llave.
+  const enRailway = Boolean(process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_ID);
+  if (enRailway || process.env.TRUST_X_REAL_IP === '1') {
     const real = request.headers.get('x-real-ip');
     if (real) return real.trim();
   }
