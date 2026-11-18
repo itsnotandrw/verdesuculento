@@ -221,7 +221,7 @@ export default function AdminShell({ children, avisos, pendientesVentas }: Props
       )}
 
       <div className="adm-toasts" aria-live="polite">
-        {toasts.map((t) => <div key={t.id} className={`adm-toast${t.kind === 'bad' ? ' bad' : ''}`}>{t.message}</div>)}
+        {toasts.map((t) => <div key={t.id} className={`adm-toast${t.kind === 'bad' ? ' bad' : t.kind === 'warn' ? ' warn' : ''}`}>{t.message}</div>)}
       </div>
     </div>
   );

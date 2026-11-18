@@ -177,16 +177,19 @@ export async function PUT(request: Request) {
     if (!promosEditables()) return fail('Las promociones son de solo lectura: falta configurar REDIS_URL.', 503);
     const config = parseConfig(await cuerpo(request));
 
-    // Choques entre promociones o entre cupones: lo nuevo no se guarda y se le explica al admin qué cambiar.
+    // Choques: solo se bloquea lo que no tiene sentido (duplicados exactos); el resto se guarda y se avisa.
     const productos = (await getAllProducts(true)).map((p) => ({ id: p.id, category: p.category }));
     const antes = detectarConflictos(await getPromoConfig(), productos);
     const { nuevos, previos } = conflictosNuevos(antes, detectarConflictos(config, productos));
-    if (nuevos.length > 0) {
-      return fail(nuevos.map((c) => c.mensaje).join(' | '), 409);
+    const bloqueantes = nuevos.filter((c) => c.bloquea);
+    if (bloqueantes.length > 0) {
+      return fail(bloqueantes.map((c) => c.mensaje).join(' | '), 409);
     }
 
     await savePromoConfig(config);
-    return ok({ config, avisos: previos.map((c) => c.mensaje) });
+    // Avisos: los cruces nuevos que no bloquean + los que ya existían (para que no se pierdan de vista)
+    const avisos = [...nuevos.filter((c) => !c.bloquea), ...previos].map((c) => c.mensaje);
+    return ok({ config, avisos });
   } catch (error) {
     if (error instanceof ValidationError) return fail(error.message, 422);
     return fallo(error, 'PUT /api/admin/promociones');

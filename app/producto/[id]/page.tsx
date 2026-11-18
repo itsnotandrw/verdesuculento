@@ -5,6 +5,8 @@ import { getProductById, getRelatedProducts, getCrossSellProducts } from '@/lib/
 import { SOCIAL_PROOF } from '@/data/socialProof';
 import { env } from '@/lib/env';
 import ProductContent from './ProductContent';
+import { campanasVigentes } from '@/lib/promo-servidor';
+import { precioProducto } from '@/lib/promo-precios';
 import type { Product } from '@/types';
 
 interface Props {
@@ -26,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * documentado como pendiente propio, así que se hace bien acá desde el
  * arranque en vez de repetirlo.
  */
-function jsonLd(product: Product) {
+function jsonLd(product: Product, precioVigente: number) {
   const baseUrl = env.siteUrl.replace(/\/$/, '');
   const categoria = CATEGORIES.find((c) => c.id === product.category);
   const social = SOCIAL_PROOF[product.id];
@@ -47,7 +49,7 @@ function jsonLd(product: Product) {
       '@type': 'Offer',
       url,
       priceCurrency: 'COP',
-      price: String(product.price),
+      price: String(precioVigente),
       // Sin stock por unidad en el catálogo hoy (es estático, sin inventario
       // en tiempo real) — InStock es la representación honesta mientras el
       // producto siga publicado; si en el futuro hay control de inventario,
@@ -90,14 +92,15 @@ export default async function ProductPage({ params }: Props) {
   // Calculado acá (servidor) y pasado como prop en vez de que ProductContent
   // (cliente) importe el catálogo directo — el catálogo ahora puede vivir en
   // Redis, y un componente cliente no puede leer ahí.
-  const [related, crossSell] = await Promise.all([
+  const [related, crossSell, campanas] = await Promise.all([
     getRelatedProducts(product, 3),
     getCrossSellProducts(product),
+    campanasVigentes(),
   ]);
 
   return (
     <>
-      {jsonLd(product).map((ld, i) => (
+      {jsonLd(product, precioProducto(product, 1, campanas).unit).map((ld, i) => (
         <script
           key={i}
           type="application/ld+json"

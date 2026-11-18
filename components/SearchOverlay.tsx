@@ -18,6 +18,8 @@ interface Item {
   categoryName: string;
   tagline: string;
   price: number;
+  /** Precio con promoción (calculado por el servidor). */
+  unit?: number;
   image: string | null;
 }
 
@@ -44,14 +46,16 @@ export default function SearchOverlay() {
     return () => window.removeEventListener('keydown', onKey);
   }, [openSearch]);
 
-  // Carga el índice la primera vez que se abre
+  // Pide el índice cada vez que se abre (precios y promociones siempre al día); mientras llega, muestra el anterior
   useEffect(() => {
-    if (!open || items || error) return;
-    fetch('/api/buscar')
+    if (!open) return;
+    let vivo = true;
+    fetch('/api/buscar', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((j: { items: Item[] }) => setItems(j.items))
-      .catch(() => setError(true));
-  }, [open, items, error]);
+      .then((j: { items: Item[] }) => { if (vivo) { setItems(j.items); setError(false); } })
+      .catch(() => { if (vivo) setItems((prev) => { if (!prev) setError(true); return prev; }); });
+    return () => { vivo = false; };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -146,7 +150,7 @@ export default function SearchOverlay() {
                       <b>{p.name}</b>
                       <small>{p.categoryName}</small>
                     </span>
-                    <span className="so-price"><PrecioPromo unit={precio(p).unit} list={p.price} /></span>
+                    <span className="so-price"><PrecioPromo unit={p.unit ?? precio(p).unit} list={p.price} /></span>
                   </Link>
                 </li>
               ))}

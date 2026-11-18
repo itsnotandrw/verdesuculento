@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { CartItem, Product, ProductColor } from '@/types';
 import { usePromo } from '@/context/PromoContext';
 import type { PrecioProducto } from '@/lib/promo-precios';
@@ -74,6 +74,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clear = useCallback(() => { setItems([]); setCouponCode(''); }, []);
+
+  // Mantiene los precios del carrito iguales a los del admin: al cambiar los productos y al abrir el carrito.
+  const ids = Array.from(new Set(items.map((i) => i.product.id))).sort().join(',');
+  useEffect(() => {
+    if (!ids) return;
+    let vivo = true;
+    fetch(`/api/carrito/sync?ids=${encodeURIComponent(ids)}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { items: Array<{ id: string; name: string; price: number; category: string }> } | null) => {
+        if (!vivo || !j) return;
+        const actual = new Map(j.items.map((p) => [p.id, p]));
+        setItems((prev) => {
+          let cambio = false;
+          const next = prev.map((i) => {
+            const p = actual.get(i.product.id);
+            if (!p || (p.price === i.product.price && p.name === i.product.name && p.category === i.product.category)) return i;
+            cambio = true;
+            return { ...i, product: { ...i.product, price: p.price, name: p.name, category: p.category } };
+          });
+          return cambio ? next : prev;
+        });
+      })
+      .catch(() => undefined);
+    return () => { vivo = false; };
+  }, [ids, open]);
 
   const subtotal = items.reduce((s, i) => s + precio(i.product, i.qty).unit * i.qty, 0);
   const listSubtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);

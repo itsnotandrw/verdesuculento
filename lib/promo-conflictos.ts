@@ -2,12 +2,13 @@
  * Detección de choques en la configuración de promociones y cupones.
  *
  * Reglas (solo cuentan los elementos ACTIVOS):
- *  - Dos promociones (campañas) se cruzan si coinciden en fechas Y en productos: el comprador vería dos
- *    precios rebajados posibles para lo mismo. No se permite guardar.
- *  - Dos cupones se cruzan si tienen el mismo alcance (todo el sitio, o las mismas categorías/productos)
- *    Y coinciden en fechas: serían redundantes y confundirían a quien los reparte. Cupones con alcances
- *    distintos conviven sin problema (en una compra solo vale uno).
- *  - Códigos y direcciones (slug) repetidos ya los rechaza el API aparte.
+ * Qué BLOQUEA y qué solo AVISA:
+ *  - BLOQUEA lo que no tiene sentido ni ventaja: una promoción idéntica a otra (mismo alcance, fechas y descuento) o un
+ *    cupón idéntico a otro (mismo alcance, fechas y condiciones). Los códigos y direcciones (slug) repetidos también
+ *    se rechazan, en el API.
+ *  - AVISA cuando dos promociones se cruzan en fechas y productos pero son distintas: es normal en una tienda (p. ej.
+ *    5 % en todo el sitio y 30 % en ciertas categorías); en el sitio gana la de mayor descuento y nunca se suman.
+ *    Igual con cupones del mismo alcance y fechas pero condiciones distintas.
  */
 
 import type { Campaign, CampaignScope, PromoConfig, PromoCoupon } from './promotions';
@@ -18,6 +19,8 @@ export interface Conflicto {
   /** Clave estable (para distinguir choques nuevos de los que ya existían). */
   clave: string;
   tipo: 'promocion' | 'cupon';
+  /** true = no se puede guardar; false = se guarda y se le avisa al admin. */
+  bloquea: boolean;
   mensaje: string;
 }
 
@@ -71,10 +74,15 @@ export function detectarConflictos(config: Pick<PromoConfig, 'campaigns' | 'coup
       if (!fechasSeCruzan(a, b)) continue;
       const n = alcancesSeCruzan(a.scope, b.scope, productos);
       if (n <= 0) continue;
+      const identica = mismoAlcance(a.scope, b.scope) && a.pct === b.pct && a.kind === b.kind && a.startsAt === b.startsAt && a.endsAt === b.endsAt;
+      const gana = a.pct >= b.pct ? a : b;
       out.push({
         clave: `promo:${[a.id, b.id].sort().join('+')}`,
         tipo: 'promocion',
-        mensaje: `Las promociones "${a.name}" (${rangoTexto(a)}) y "${b.name}" (${rangoTexto(b)}) se cruzan en ${n} producto${n === 1 ? '' : 's'}. Cambia las fechas, el alcance o pausa una de las dos.`,
+        bloquea: identica,
+        mensaje: identica
+          ? `Las promociones "${a.name}" y "${b.name}" son idénticas (mismos productos, fechas y descuento). Borra o cambia una.`
+          : `Las promociones "${a.name}" (${rangoTexto(a)}) y "${b.name}" (${rangoTexto(b)}) se cruzan en ${n} producto${n === 1 ? '' : 's'}: ahí se aplicará la de mayor descuento (${gana.pct} % de "${gana.name}") y nunca se suman.`,
       });
     }
   }
@@ -85,10 +93,14 @@ export function detectarConflictos(config: Pick<PromoConfig, 'campaigns' | 'coup
       const a: PromoCoupon = cups[i], b: PromoCoupon = cups[j];
       if (!fechasSeCruzan(a, b)) continue;
       if (!mismoAlcance(a.target ?? { type: 'todo', ids: [] }, b.target ?? { type: 'todo', ids: [] })) continue;
+      const identico = a.pct === b.pct && a.minPurchase === b.minPurchase && (a.maxDiscount ?? 0) === (b.maxDiscount ?? 0) && a.startsAt === b.startsAt && a.endsAt === b.endsAt;
       out.push({
         clave: `cupon:${[a.id, b.id].sort().join('+')}`,
         tipo: 'cupon',
-        mensaje: `Los cupones ${a.code} y ${b.code} tienen el mismo alcance (${a.scope.toLowerCase()}) y fechas que se cruzan. Cambia las fechas, el alcance o pausa uno de los dos.`,
+        bloquea: identico,
+        mensaje: identico
+          ? `Los cupones ${a.code} y ${b.code} son idénticos (mismo alcance, fechas y condiciones). Borra o cambia uno.`
+          : `Los cupones ${a.code} y ${b.code} tienen el mismo alcance (${a.scope.toLowerCase()}) y fechas que se cruzan, pero condiciones distintas. Los dos funcionan; revisa que sea lo que quieres.`,
       });
     }
   }

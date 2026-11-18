@@ -103,10 +103,10 @@ export default function PromoCenter() {
     try {
       const r = await fetch('/api/admin/promociones', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(next) });
       const d = await r.json();
-      if (r.status === 409) { toast('⚠ No se guardó porque se cruza con otra promoción o cupón: ' + String(d.error ?? '').replace(/ | /g, ' — '), 'bad'); return false; }
+      if (r.status === 409) { toast('No se guardó: ' + String(d.error ?? '').split(' | ').join(' — '), 'bad'); return false; }
       if (!r.ok) throw new Error(d.error ?? 'No se pudo guardar.');
       setConfig(d.config); toast(mensaje);
-      if (Array.isArray(d.avisos) && d.avisos.length > 0) toast('Ojo, ya había choques sin resolver: ' + d.avisos.join(' — '), 'bad');
+      if (Array.isArray(d.avisos) && d.avisos.length > 0) toast('Guardado. Ten en cuenta: ' + d.avisos.join(' — '), 'warn');
       return true;
     } catch (e) { toast(e instanceof Error ? e.message : 'Error al guardar', 'bad'); return false; } finally { setGuardando(false); }
   };
