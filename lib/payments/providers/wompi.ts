@@ -181,10 +181,44 @@ async function crearTransaccion(
   });
 }
 
+/**
+ * URL del checkout alojado de Wompi (tarjeta, PSE, Nequi, Bancolombia…). El cliente paga en la página segura de
+ * Wompi: los datos de pago nunca tocan este servidor. Es determinista (misma referencia → misma URL), así que la
+ * página del pedido la puede reconstruir en cada visita. La redirección de vuelta NUNCA confirma el pago:
+ * solo el webhook firmado o la consulta a la API.
+ */
+export function urlCheckout(order: Order): string {
+  const { publicKey } = config();
+  const reference = order.payment.reference;
+  const amountInCents = toCents(order.total);
+  const telefono = order.customer.telefono.replace(/\D/g, '').slice(-10);
+  const parametros: Array<[string, string]> = [
+    ['public-key', publicKey],
+    ['currency', 'COP'],
+    ['amount-in-cents', String(amountInCents)],
+    ['reference', reference],
+    ['signature:integrity', firmaIntegridad(reference, amountInCents)],
+    ['redirect-url', `${env.siteUrl.replace(/\/$/, '')}/pedido/${order.reference}`],
+    ['customer-data:email', order.customer.email],
+    ['customer-data:full-name', `${order.customer.nombre} ${order.customer.apellido}`.trim()],
+  ];
+  if (telefono.length === 10) {
+    parametros.push(['customer-data:phone-number', telefono], ['customer-data:phone-number-prefix', '+57']);
+  }
+  return `https://checkout.wompi.co/p/?${parametros.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&')}`;
+}
+
+/** Datos de una transacción de Wompi tal como los devuelve la API (fuente de verdad del estado del pago). */
+export async function consultarTransaccion(id: string): Promise<{ status: PaymentStatus; reference: string; amountInCents: number; method?: string }> {
+  if (!/^[A-Za-z0-9-]{6,60}$/.test(id)) throw new Error('[wompi] id de transacción inválido.');
+  const t = await llamar<TransaccionWompi & { payment_method_type?: string }>(`/transactions/${encodeURIComponent(id)}`);
+  return { status: ESTADOS[t.status] ?? 'pending', reference: t.reference, amountInCents: t.amount_in_cents, method: t.payment_method_type };
+}
+
 export const wompiProvider: PaymentProvider = {
   id: ID,
   label: 'Wompi',
-  methods: ['NEQUI', 'PSE', 'CARD', 'BREB'],
+  methods: ['WOMPI'],
   requiresManualVerification: false,
 
   isConfigured() {
@@ -205,6 +239,15 @@ export const wompiProvider: PaymentProvider = {
     };
 
     switch (method) {
+      // Checkout alojado de Wompi: ahí el cliente elige tarjeta, PSE, Nequi o Bancolombia.
+      case 'WOMPI':
+        return {
+          ...base,
+          id: reference,
+          status: 'pending',
+          instructions: { kind: 'redirect', url: urlCheckout(order) },
+        };
+
       // La tarjeta va por el Widget: así los datos de la tarjeta nunca tocan
       // nuestro servidor y el proyecto se mantiene fuera del alcance de PCI.
       case 'CARD':
@@ -282,8 +325,16 @@ export const wompiProvider: PaymentProvider = {
   },
 
   async getStatus(intentId: string): Promise<PaymentStatus> {
-    const transaccion = await llamar<TransaccionWompi>(`/transactions/${intentId}`);
-    return ESTADOS[transaccion.status] ?? 'pending';
+    // Id de transacción de Wompi (11004-123-456) o, si todavía no lo conocemos, la referencia del pedido.
+    if (/^\d+-\d+-\d+$/.test(intentId)) {
+      const transaccion = await llamar<TransaccionWompi>(`/transactions/${intentId}`);
+      return ESTADOS[transaccion.status] ?? 'pending';
+    }
+    const lista = await llamar<TransaccionWompi[]>(`/transactions?reference=${encodeURIComponent(intentId)}`);
+    const transacciones = Array.isArray(lista) ? lista : [];
+    if (transacciones.some((t) => t.status === 'APPROVED')) return 'approved';
+    if (transacciones.length > 0 && transacciones.every((t) => ['DECLINED', 'VOIDED', 'ERROR'].includes(t.status))) return 'declined';
+    return 'pending';
   },
 
   parseWebhook(payload): PaymentWebhookEvent | null {

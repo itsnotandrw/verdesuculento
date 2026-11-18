@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { orders } from '@/lib/orders/store';
 import { toPublicOrder } from '@/lib/orders/types';
-import { paymentProvider } from '@/lib/payments';
 import { env } from '@/lib/env';
+import { urlCheckout, wompiProvider } from '@/lib/payments/providers/wompi';
 import OrderStatus from './OrderStatus';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,11 @@ export default async function PedidoPage({ params }: { params: { reference: stri
   // ve es "página no encontrada". Se le muestra su referencia y una salida.
   if (!pedido) return <PedidoNoEncontrado referencia={params.reference} />;
 
-  const proveedor = paymentProvider();
+  // Wompi: la URL del checkout se reconstruye en cada visita (misma referencia → misma URL).
+  const urlWompi =
+    pedido.payment.method === 'WOMPI' && pedido.payment.status === 'pending' && wompiProvider.isConfigured()
+      ? urlCheckout(pedido)
+      : null;
 
   // Las instrucciones se reconstruyen en el servidor en cada visita: así el
   // cliente puede cerrar la pestaña y volver más tarde con el enlace, sin
@@ -42,7 +46,8 @@ export default async function PedidoPage({ params }: { params: { reference: stri
     <OrderStatus
       inicial={toPublicOrder(pedido)}
       instrucciones={instrucciones}
-      requiereVerificacionManual={proveedor.requiresManualVerification}
+      requiereVerificacionManual={pedido.payment.method === 'BREB'}
+      urlWompi={urlWompi}
     />
   );
 }

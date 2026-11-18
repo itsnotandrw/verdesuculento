@@ -51,26 +51,48 @@ export interface MetodoDisponible {
   order: number;
 }
 
+/** Proveedor que atiende cada método: Bre-B es siempre manual y Wompi atiende el pago en línea. */
+export function paymentProviderFor(method: PaymentMethodId): PaymentProvider {
+  if (method === 'BREB') return brebManualProvider;
+  if (wompiProvider.methods.includes(method)) {
+    if (!wompiProvider.isConfigured()) {
+      throw new Error('El pago con Wompi no está disponible: faltan las credenciales en el servidor.');
+    }
+    return wompiProvider;
+  }
+  return paymentProvider();
+}
+
+/** Proveedor por su id (para pedidos ya creados). */
+export function paymentProviderById(id: string): PaymentProvider {
+  return id === wompiProvider.id ? wompiProvider : id === brebManualProvider.id ? brebManualProvider : paymentProvider();
+}
+
 const CATALOGO: Record<PaymentMethodId, Omit<MetodoDisponible, 'id' | 'instant'>> = {
+  WOMPI: {
+    label: 'Wompi — tarjeta, PSE o Nequi',
+    description: 'Pagas en la página segura de Wompi con tarjeta, PSE, Nequi o Bancolombia. Confirmación inmediata.',
+    order: 1,
+  },
   BREB: {
     label: 'Bre-B — transferencia con llave',
     description: 'Paga desde cualquier banco o billetera con la llave del vivero. Sin costo adicional.',
-    order: 1,
+    order: 2,
   },
   NEQUI: {
     label: 'Nequi',
     description: 'Te llega una notificación a la app y la apruebas. Confirmación inmediata.',
-    order: 2,
+    order: 3,
   },
   PSE: {
     label: 'PSE — débito bancario',
     description: 'Pagas desde la web de tu banco. Confirmación en minutos.',
-    order: 3,
+    order: 4,
   },
   COD: {
     label: 'Contra entrega',
     description: 'Pagas en efectivo cuando recibas el pedido.',
-    order: 4,
+    order: 9,
   },
   CARD: {
     label: 'Tarjeta de crédito o débito',
@@ -88,18 +110,17 @@ const CATALOGO: Record<PaymentMethodId, Omit<MetodoDisponible, 'id' | 'instant'>
  * el negocio en vez de irse en comisión.
  */
 export function metodosDisponibles(codDisponible = false): MetodoDisponible[] {
-  const proveedor = paymentProvider();
-  const ids: PaymentMethodId[] = [...proveedor.methods];
-
-  // El contra entrega no lo ofrece la pasarela sino la transportadora, así que
-  // se agrega aparte y solo si hay cobertura de recaudo confirmada.
-  if (codDisponible && !ids.includes('COD')) ids.push('COD');
+  // Conviven tres métodos: Wompi (si hay credenciales), Bre-B (siempre) y contra entrega (solo con cobertura de recaudo).
+  const ids: PaymentMethodId[] = ['BREB'];
+  if (wompiProvider.isConfigured()) ids.unshift('WOMPI');
+  if (codDisponible) ids.push('COD');
 
   return ids
     .map((id) => ({
       id,
       ...CATALOGO[id],
-      instant: id === 'COD' ? true : !proveedor.requiresManualVerification,
+      // Solo Bre-B espera a que alguien vea el abono; Wompi y contra entrega se confirman solos.
+      instant: id !== 'BREB',
     }))
     .sort((a, b) => a.order - b.order);
 }

@@ -9,7 +9,7 @@
  */
 
 import { fallo, ok } from '@/lib/api';
-import { metodosDisponibles, paymentProvider } from '@/lib/payments';
+import { metodosDisponibles } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,14 +17,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const cod = url.searchParams.get('cod') === '1';
-    const proveedor = paymentProvider();
-
-    return ok({
-      provider: proveedor.id,
-      providerLabel: proveedor.label,
-      requiresManualVerification: proveedor.requiresManualVerification,
-      methods: metodosDisponibles(cod),
-    });
+    return ok({ methods: metodosDisponibles(cod) });
   } catch (error) {
     return fallo(error, 'GET /api/payments/methods');
   }

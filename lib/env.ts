@@ -54,7 +54,7 @@ export const env = {
       privateKey: str('WOMPI_PRIVATE_KEY'),
       integritySecret: str('WOMPI_INTEGRITY_SECRET'),
       eventsSecret: str('WOMPI_EVENTS_SECRET'),
-      baseUrl: str('WOMPI_BASE_URL', 'https://api-sandbox.co.uat.wompi.dev/v1'),
+      baseUrl: str('WOMPI_BASE_URL', 'https://sandbox.wompi.co/v1'),
     },
   },
 

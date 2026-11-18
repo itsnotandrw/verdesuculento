@@ -80,10 +80,13 @@ export default function OrderStatus({
   inicial,
   instrucciones,
   requiereVerificacionManual,
+  urlWompi = null,
 }: {
   inicial: PublicOrder;
   instrucciones: Instrucciones | null;
   requiereVerificacionManual: boolean;
+  /** Checkout de Wompi para completar (o reintentar) el pago de un pedido pendiente. */
+  urlWompi?: string | null;
 }) {
   const [pedido, setPedido] = useState<PublicOrder>(inicial);
   const [declarando, setDeclarando] = useState(false);
@@ -93,6 +96,23 @@ export default function OrderStatus({
   const enRevision = pedido.paymentStatus === 'in_review';
   const esRecogerEnTienda = pedido.carrier === 'Recoger en tienda';
 
+  // Al volver de Wompi llega ?id=<transacción>: se verifica de inmediato con Wompi (sin esperar al aviso automático)
+  useEffect(() => {
+    if (pedido.paymentMethod !== 'WOMPI' || pedido.paymentStatus !== 'pending') return;
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+    fetch('/api/payments/wompi/confirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference: pedido.reference, transactionId: id }),
+    })
+      .then(() => fetch(`/api/orders/${pedido.reference}`, { cache: 'no-store' }))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.order) setPedido(d.order); })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Mientras el pago no esté resuelto se refresca solo: si el operador aprueba
   // desde el panel, el cliente lo ve sin recargar.
   useEffect(() => {
@@ -100,6 +120,10 @@ export default function OrderStatus({
 
     const intervalo = setInterval(async () => {
       try {
+        // Con Wompi se pregunta el estado real a la pasarela (respaldo del aviso automático)
+        if (pedido.paymentMethod === 'WOMPI') {
+          await fetch(`/api/payments/status/${encodeURIComponent(pedido.paymentReference)}`, { cache: 'no-store' }).catch(() => undefined);
+        }
         const respuesta = await fetch(`/api/orders/${pedido.reference}`, { cache: 'no-store' });
         if (!respuesta.ok) return;
         const datos = await respuesta.json();
@@ -107,10 +131,10 @@ export default function OrderStatus({
       } catch {
         // Sin conexión no pasa nada: se reintenta en el siguiente ciclo.
       }
-    }, 15_000);
+    }, pedido.paymentMethod === 'WOMPI' ? 5_000 : 15_000);
 
     return () => clearInterval(intervalo);
-  }, [pedido.reference, esperandoPago, enRevision]);
+  }, [pedido.reference, pedido.paymentMethod, pedido.paymentReference, esperandoPago, enRevision]);
 
   const copiar = async (texto: string, llave: string) => {
     try {
@@ -169,7 +193,9 @@ export default function OrderStatus({
         </h1>
 
         <p style={{ color: 'var(--fg-dim)', lineHeight: 1.65, marginBottom: 40, maxWidth: 560 }}>
-          {esperandoPago &&
+          {esperandoPago && pedido.paymentMethod === 'WOMPI' &&
+            'Tu pedido está reservado. Completa el pago en la página segura de Wompi; apenas se confirme, despachamos tu planta. Si ya pagaste, esta página se actualiza sola.'}
+          {esperandoPago && pedido.paymentMethod !== 'WOMPI' &&
             'Transfiere el valor exacto a la llave del vivero usando la referencia de abajo. Apenas veamos el abono, despachamos tu planta.'}
           {enRevision &&
             'Ya registramos tu aviso. Estamos confirmando el abono en la cuenta; en cuanto aparezca, tu pedido pasa a despacho y te avisamos por correo.'}
@@ -180,6 +206,27 @@ export default function OrderStatus({
           {pedido.paymentStatus === 'declined' && 'Este pedido fue cancelado. Si crees que es un error, escríbenos y lo revisamos.'}
           {pedido.paymentStatus === 'expired' && 'Venció el plazo de pago y liberamos el pedido. Puedes volver a armarlo cuando quieras.'}
         </p>
+
+        {/* --- pago con Wompi --- */}
+        {urlWompi && esperandoPago && (
+          <div className="pay-panel" style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+              <div className="eyebrow" style={{ margin: 0 }}>Pagar con Wompi</div>
+              <span className="badge-inline">Tarjeta, PSE, Nequi o Bancolombia</span>
+            </div>
+            <a href={urlWompi} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              Pagar {pedido.total.toLocaleString('es-CO')} COP con Wompi <span className="btn-arrow">→</span>
+            </a>
+            <p style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: 12, lineHeight: 1.55 }}>
+              Pagas en la página segura de Wompi; tus datos de pago no pasan por nuestro sitio. Si ya pagaste y esta página no cambia,
+              espera unos segundos: la confirmación llega sola.
+            </p>
+            <div style={{ marginTop: 16, display: 'flex', gap: 10, alignItems: 'center' }}>
+              <span className="spinner-sm" />
+              <span style={{ fontSize: 13, color: 'var(--fg-dim)' }}>Esperando la confirmación del pago…</span>
+            </div>
+          </div>
+        )}
 
         {/* --- instrucciones de pago Bre-B --- */}
         {instrucciones && (esperandoPago || enRevision) && (

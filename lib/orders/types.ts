@@ -10,7 +10,8 @@
  *                       → delivered | incident | returned
  */
 
-export type PaymentMethodId = 'BREB' | 'NEQUI' | 'PSE' | 'CARD' | 'COD';
+/** WOMPI = pago en línea con Wompi (tarjeta, PSE, Nequi, Bancolombia…) en su página segura. */
+export type PaymentMethodId = 'BREB' | 'WOMPI' | 'NEQUI' | 'PSE' | 'CARD' | 'COD';
 
 export type PaymentStatus =
   | 'pending'

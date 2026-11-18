@@ -18,12 +18,16 @@
 
 import { cabeceras, ok } from '@/lib/api';
 import { onPaymentWebhook } from '@/lib/orders/orchestrator';
-import { paymentProvider } from '@/lib/payments';
+import { wompiProvider } from '@/lib/payments/providers/wompi';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   const crudo = await request.text();
+
+  if (!wompiProvider.isConfigured()) {
+    return ok({ received: true, processed: false, reason: 'wompi no configurado' });
+  }
 
   let payload: unknown;
   try {
@@ -33,7 +37,7 @@ export async function POST(request: Request) {
     return ok({ received: true, processed: false, reason: 'json inválido' });
   }
 
-  const evento = paymentProvider().parseWebhook(payload, cabeceras(request), crudo);
+  const evento = wompiProvider.parseWebhook(payload, cabeceras(request), crudo);
 
   if (!evento) {
     // Ya quedó registrado en el log del adaptador con el motivo exacto.
@@ -53,5 +57,5 @@ export async function POST(request: Request) {
 
 /** Algunas pasarelas verifican que la URL exista antes de guardarla. */
 export async function GET() {
-  return ok({ status: 'listo', provider: paymentProvider().id });
+  return ok({ status: 'listo', provider: wompiProvider.id, configurado: wompiProvider.isConfigured() });
 }

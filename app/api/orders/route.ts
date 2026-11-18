@@ -13,7 +13,7 @@ import { ipDe, limitarCheckout } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
-const METODOS: PaymentMethodId[] = ['BREB', 'NEQUI', 'PSE', 'CARD', 'COD'];
+const METODOS: PaymentMethodId[] = ['WOMPI', 'BREB', 'NEQUI', 'PSE', 'CARD', 'COD'];
 
 export async function POST(request: Request) {
   try {

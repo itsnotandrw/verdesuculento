@@ -296,6 +296,12 @@ export default function CheckoutPage() {
       // El carrito se limpia solo cuando el pedido ya existe en el servidor: si
       // algo falla, el cliente no pierde lo que había armado.
       clear();
+      // Wompi: se manda al cliente a la página segura de pago; el pedido ya existe y esperará el aviso de Wompi.
+      const instrucciones = datos.intent?.instructions as { kind?: string; url?: string } | undefined;
+      if (instrucciones?.kind === 'redirect' && instrucciones.url) {
+        window.location.href = instrucciones.url;
+        return;
+      }
       router.push(`/pedido/${datos.order.reference}`);
     } catch (error) {
       setErrorPedido(error instanceof Error ? error.message : 'No pudimos crear el pedido.');

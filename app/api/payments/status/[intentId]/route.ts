@@ -13,7 +13,7 @@ import { fail, fallo, ok } from '@/lib/api';
 import { aprobarPago } from '@/lib/orders/orchestrator';
 import { orders } from '@/lib/orders/store';
 import { etiquetaEstado } from '@/lib/orders/types';
-import { paymentProvider } from '@/lib/payments';
+import { paymentProviderById } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,12 +33,12 @@ export async function GET(
 
     if (!pedido) return fail('Intento de pago no encontrado.', 404);
 
-    const proveedor = paymentProvider();
+    const proveedor = paymentProviderById(pedido.payment.provider);
     let estado = pedido.payment.status;
 
-    if (!proveedor.requiresManualVerification && estado === 'pending' && pedido.payment.intentId) {
+    if (!proveedor.requiresManualVerification && pedido.payment.method !== 'COD' && estado === 'pending') {
       try {
-        const remoto = await proveedor.getStatus(pedido.payment.intentId);
+        const remoto = await proveedor.getStatus(pedido.payment.intentId ?? pedido.payment.reference);
         if (remoto === 'approved') {
           const actualizado = await aprobarPago(pedido.id, 'webhook');
           estado = actualizado?.payment.status ?? 'approved';

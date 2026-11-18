@@ -26,7 +26,7 @@ import { campanasVigentes, registrarUsoCupon } from '@/lib/promo-servidor';
 import { getPromoConfig } from '@/lib/promotions-store';
 import { nuevaReferenciaPago, nuevaReferenciaPedido, nuevoOrderId } from '@/lib/ids';
 import { env } from '@/lib/env';
-import { paymentProvider, type PaymentContext } from '@/lib/payments';
+import { paymentProviderById, paymentProviderFor, type PaymentContext } from '@/lib/payments';
 import type { PaymentIntent } from '@/lib/payments/types';
 import { armarPaquete, logisticaDe, resolverCotizacion, shippingProvider } from '@/lib/shipping';
 import type { ShippingQuote } from '@/lib/shipping/types';
@@ -203,7 +203,7 @@ export async function crearPedido(
       etaLabel: quote.etaLabel,
     },
     payment: {
-      provider: esContraEntrega ? 'cod' : paymentProvider().id,
+      provider: esContraEntrega ? 'cod' : paymentProviderFor(input.method).id,
       method: input.method,
       status: 'pending',
       reference: nuevaReferenciaPago(reference),
@@ -249,7 +249,7 @@ export async function crearPedido(
       message: 'Contra entrega con cobertura confirmada: el recaudo asegura el pago.',
     });
   } else {
-    intent = await paymentProvider().createIntent(order, input.method, context);
+    intent = await paymentProviderFor(input.method).createIntent(order, input.method, context);
     order.payment.intentId = intent.id;
     order.payment.status = intent.status;
   }
@@ -722,15 +722,14 @@ export async function marcarRecogido(orderId: string, quien: string): Promise<Or
  */
 export async function expirarPendientes(): Promise<{ expirados: number; rescatados: number }> {
   const vencidos = await pedidosVencidos();
-  const proveedor = paymentProvider();
-
   let expirados = 0;
   let rescatados = 0;
 
   for (const pedido of vencidos) {
-    if (!proveedor.requiresManualVerification && pedido.payment.intentId) {
+    const proveedor = paymentProviderById(pedido.payment.provider);
+    if (!proveedor.requiresManualVerification && proveedor.id !== 'cod' && pedido.payment.method !== 'COD') {
       try {
-        const estado = await proveedor.getStatus(pedido.payment.intentId);
+        const estado = await proveedor.getStatus(pedido.payment.intentId ?? pedido.payment.reference);
         if (estado === 'approved') {
           await aprobarPago(pedido.id, 'webhook');
           rescatados++;
