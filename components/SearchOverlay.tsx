@@ -69,14 +69,36 @@ export default function SearchOverlay() {
     }
   }, [open]);
 
+  const tokens = useMemo(() => normaliza(q).split(/\s+/).filter(Boolean), [q]);
+
+  // Categorías que coinciden (por nombre o por lo que dice su descripción: "arándanos", "limones"…)
+  const categorias = useMemo(() => {
+    if (!items || tokens.length === 0) return [];
+    return CATEGORIES
+      .filter((c) => items.some((p) => p.category === c.id))
+      .map((c) => {
+        const nombre = normaliza(c.name);
+        const resto = normaliza(c.blurb);
+        let score = 0;
+        for (const t of tokens) {
+          if (nombre.startsWith(t)) score += 4;
+          else if (nombre.includes(t)) score += 3;
+          else if (resto.includes(t)) score += 1;
+          else return null;
+        }
+        return { c, score, n: items.filter((p) => p.category === c.id).length };
+      })
+      .filter((x): x is { c: (typeof CATEGORIES)[number]; score: number; n: number } => x !== null)
+      .sort((x, y) => y.score - x.score)
+      .slice(0, 3);
+  }, [items, tokens]);
+
   const resultados = useMemo(() => {
-    if (!items) return [];
-    const tokens = normaliza(q).split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) return [];
+    if (!items || tokens.length === 0) return [];
     return items
       .map((p) => {
         const nombre = normaliza(p.name);
-        const resto = normaliza(`${p.categoryName} ${p.tagline}`);
+        const resto = normaliza(`${p.categoryName} ${p.tagline} ${p.id}`);
         let score = 0;
         for (const t of tokens) {
           if (nombre.startsWith(t)) score += 4;
@@ -87,21 +109,28 @@ export default function SearchOverlay() {
         return { p, score };
       })
       .filter((x): x is { p: Item; score: number } => x !== null)
-      .sort((a, b) => b.score - a.score)
+      .sort((x, y) => y.score - x.score)
       .slice(0, 8)
       .map((x) => x.p);
-  }, [items, q]);
+  }, [items, tokens]);
+
+  // Lista única para el teclado: primero categorías, luego productos
+  const total = categorias.length + resultados.length;
 
   useEffect(() => { setSel(0); }, [q]);
 
   if (!open) return null;
 
-  const ir = (id: string) => { closeSearch(); router.push(`/producto/${id}`); };
+  const irA = (i: number) => {
+    closeSearch();
+    if (i < categorias.length) router.push(`/catalogo/${categorias[i].c.id}`);
+    else router.push(`/producto/${resultados[i - categorias.length].id}`);
+  };
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { e.preventDefault(); closeSearch(); }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, Math.max(0, resultados.length - 1))); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, Math.max(0, total - 1))); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => Math.max(s - 1, 0)); }
-    else if (e.key === 'Enter' && resultados[sel]) { e.preventDefault(); ir(resultados[sel].id); }
+    else if (e.key === 'Enter' && total > 0) { e.preventDefault(); irA(Math.min(sel, total - 1)); }
   };
 
   return (
@@ -137,25 +166,51 @@ export default function SearchOverlay() {
             </div>
           )}
 
-          {items && q.trim() !== '' && resultados.length === 0 && (
+          {items && q.trim() !== '' && total === 0 && (
             <p className="so-msg">No encontramos “{q.trim()}”. Prueba con otra palabra o explora una categoría.</p>
           )}
 
+          {categorias.length > 0 && (
+            <>
+              <div className="so-label">Categorías</div>
+              <ul className="so-list" role="listbox">
+                {categorias.map(({ c, n }, i) => (
+                  <li key={c.id} role="option" aria-selected={i === sel}>
+                    <Link href={`/catalogo/${c.id}`} className={`so-item so-cat${i === sel ? ' on' : ''}`} onClick={closeSearch} onMouseEnter={() => setSel(i)}>
+                      <span className="so-noimg so-caticon" aria-hidden="true">▦</span>
+                      <span className="so-txt">
+                        <b>{c.name}</b>
+                        <small>Ver toda la categoría</small>
+                      </span>
+                      <span className="so-price"><small>{n} productos →</small></span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           {resultados.length > 0 && (
-            <ul className="so-list" role="listbox">
-              {resultados.map((p, i) => (
-                <li key={p.id} role="option" aria-selected={i === sel}>
-                  <Link href={`/producto/${p.id}`} className={`so-item${i === sel ? ' on' : ''}`} onClick={closeSearch} onMouseEnter={() => setSel(i)}>
-                    {p.image ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={urlImagen(p.image, 192)} alt="" loading="lazy" decoding="async" width={48} height={48} /> : <span className="so-noimg" />}
-                    <span className="so-txt">
-                      <b>{p.name}</b>
-                      <small>{p.categoryName}</small>
-                    </span>
-                    <span className="so-price"><PrecioPromo unit={p.unit ?? precio(p).unit} list={p.price} /></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              {categorias.length > 0 && <div className="so-label">Productos</div>}
+              <ul className="so-list" role="listbox">
+                {resultados.map((p, j) => {
+                  const i = categorias.length + j;
+                  return (
+                    <li key={p.id} role="option" aria-selected={i === sel}>
+                      <Link href={`/producto/${p.id}`} className={`so-item${i === sel ? ' on' : ''}`} onClick={closeSearch} onMouseEnter={() => setSel(i)}>
+                        {p.image ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={urlImagen(p.image, 192)} alt="" loading="lazy" decoding="async" width={48} height={48} /> : <span className="so-noimg" />}
+                        <span className="so-txt">
+                          <b>{p.name}</b>
+                          <small>{p.categoryName}</small>
+                        </span>
+                        <span className="so-price"><PrecioPromo unit={p.unit ?? precio(p).unit} list={p.price} /></span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </div>
       </div>

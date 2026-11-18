@@ -20,3 +20,5 @@
 .so-price { font-family: var(--font-mono); font-size: 13px; color: var(--accent); flex-shrink: 0; }
 @media (max-width: 600px) { .so-backdrop { padding-top: 12px; } .so-panel { max-height: calc(100vh - 24px); border-radius: 16px; } .so-close { display: none; } }
 @media (prefers-reduced-motion: reduce) { .so-panel { animation: none; } }
+
+.so-caticon { display: grid; place-items: center; font-size: 22px; color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, var(--bg-elev-2)); border-radius: 8px; width: 48px; height: 48px; flex-shrink: 0; }

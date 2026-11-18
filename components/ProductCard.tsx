@@ -32,8 +32,9 @@ export default function ProductCard({ product, compact = false, discountPct: pct
   const spotlight = useSpotlight<HTMLElement>();
   // Solo se muestra una etiqueta de descuento donde hay una oferta real (/ofertas/<slug>). Ya no hay etiquetas fijas por categoría.
   const discountPct = pctOverride; // solo para ofertas por cupón (el descuento se aplica al escribir el código)
-  const { precio } = usePromo();
+  const { precio, cuponDe } = usePromo();
   const promo = precio(product, 1);
+  const cupon = promo.pct === 0 ? cuponDe(product) : null;
 
   return (
     <article
@@ -43,11 +44,6 @@ export default function ProductCard({ product, compact = false, discountPct: pct
       data-compact={compact ? 'true' : 'false'}
     >
       {badgeLabel && <span className="product-badge">{badgeLabel}</span>}
-      {promo.pct > 0 ? (
-        <span className="product-discount" title={promo.etiqueta}>−{promo.pct}%</span>
-      ) : discountPct ? (
-        <span className="product-discount">Cupón −{discountPct}%</span>
-      ) : null}
 
       <Link href={`/producto/${product.id}`} className="product-card-media" style={{ display: 'grid', placeItems: 'center', textDecoration: 'none' }}>
         {product.images.length > 0 ? (
@@ -136,7 +132,15 @@ export default function ProductCard({ product, compact = false, discountPct: pct
             </div>
           )}
         </div>
-        <div className="product-card-price"><PrecioPromo unit={promo.unit} list={promo.list} /></div>
+        <div className="product-card-price">
+          <PrecioPromo ml unit={promo.unit} list={promo.list} />
+          {promo.etiqueta && promo.pct > 0 && <span className="pml-etiqueta">{promo.etiqueta}</span>}
+          {discountPct ? (
+            <span className="pml-cupon">Cupón {discountPct}% OFF</span>
+          ) : cupon ? (
+            <Link href={`/ofertas/${cupon.slug}`} className="pml-cupon" onClick={(e) => e.stopPropagation()}>Cupón {cupon.pct}% OFF</Link>
+          ) : null}
+        </div>
       </div>
     </article>
   );

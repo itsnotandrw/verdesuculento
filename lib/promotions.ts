@@ -118,6 +118,16 @@ export interface Look {
   spots: LookSpot[];
 }
 
+/** Lo que el sitio puede mostrar de un cupón vigente: el descuento y a qué aplica, NUNCA el código. */
+export interface CuponPublico {
+  pct: number;
+  slug: string;
+  scope: string;
+  minPurchase: number;
+  maxDiscount?: number;
+  target?: CampaignScope;
+}
+
 export interface PromoConfig {
   /** Versión: sube en cada guardado. Evita que dos personas del admin se pisen (si no coincide, se rechaza). */
   rev?: number;

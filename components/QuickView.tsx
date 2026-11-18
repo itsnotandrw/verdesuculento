@@ -105,7 +105,7 @@ export default function QuickView() {
                 <StarRating rating={RATINGS[product.id].rating!} count={RATINGS[product.id].reviewCount} size={13} showValue />
               </div>
             )}
-            <div className="mono" style={{ fontSize: 18, marginBottom: 18 }}><PrecioPromo unit={precio(product, 1).unit} list={precio(product, 1).list} /></div>
+            <div style={{ marginBottom: 18 }}><PrecioPromo ml unit={precio(product, 1).unit} list={precio(product, 1).list} /></div>
             {/* white-space: pre-line respeta los \n\n que ya trae la descripción
                 (viene del scraping de ML) — sin esto el HTML los colapsa y todo
                 el texto se ve como un solo párrafo amontonado. */}

@@ -92,14 +92,17 @@ export default function CatalogAdmin() {
   }), [products, promoDe]);
 
   const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
+    const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const tokens = norm(busqueda).split(/\s+/).filter(Boolean);
     const lista = products.filter((p) => {
       if (tab === 'visibles' && p.activo === false) return false;
       if (tab === 'ocultas' && p.activo !== false) return false;
       if (tab === 'promo' && !promoDe(p)) return false;
       if (tab === 'sinpromo' && promoDe(p)) return false;
       if (categoria !== 'todas' && p.category !== categoria) return false;
-      return !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+      if (tokens.length === 0) return true;
+      const pajar = norm(`${p.name} ${p.id} ${p.tagline ?? ''} ${CATEGORIES.find((c) => c.id === p.category)?.name ?? p.category}`);
+      return tokens.every((t) => pajar.includes(t));
     });
     const ord = [...lista];
     if (orden === 'precio-asc') ord.sort((a, b) => a.price - b.price);

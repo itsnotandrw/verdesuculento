@@ -8,7 +8,7 @@ import FloatingActions from '@/components/FloatingActions';
 import ChromeGate from '@/components/ChromeGate';
 import { CategoryCountsProvider } from '@/context/CategoryCountsContext';
 import { getAllProducts } from '@/lib/catalog/store';
-import { getOfertas } from '@/lib/promotions-store';
+import { getActiveCoupons, getOfertas } from '@/lib/promotions-store';
 import { OffersProvider } from '@/context/OffersContext';
 import Footer from '@/components/Footer';
 import MiniCart from '@/components/MiniCart';
@@ -68,21 +68,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const counts: Record<string, number> = {};
   for (const p of visibles) counts[p.category] = (counts[p.category] ?? 0) + 1;
   const campanas = await campanasVigentes().catch(() => []);
+  const cupones = (await getActiveCoupons().catch(() => [])).map((c) => ({ pct: c.pct, slug: c.slug || c.code.toLowerCase(), scope: c.scope, minPurchase: c.minPurchase, maxDiscount: c.maxDiscount, target: c.target }));
   const ofertas = (await getOfertas().catch(() => [])).map((o) => ({ slug: o.slug, label: o.title, pct: o.pct, kind: o.kind }));
 
   return (
-    <html lang="es" data-theme="dark" className={`${instrumentSerif.variable} ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="es" data-theme="light" className={`${instrumentSerif.variable} ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
           try{
             var t=localStorage.getItem('verde-theme');
             if(t)document.documentElement.setAttribute('data-theme',t);
-            else if(window.matchMedia('(prefers-color-scheme: light)').matches)document.documentElement.setAttribute('data-theme','light');
           }catch(e){}
         ` }} />
       </head>
       <body>
-        <Providers campanas={campanas}>
+        <Providers campanas={campanas} cupones={cupones}>
           <CategoryCountsProvider counts={counts}>
           <OffersProvider offers={ofertas}>
           <a href="#main-content" className="skip-to-content">Saltar al contenido principal</a>

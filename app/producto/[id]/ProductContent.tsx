@@ -34,8 +34,9 @@ export default function ProductContent({ product, related, crossSell }: Props) {
   const [activeColor, setActiveColor] = useState<ProductColor>(product.colors[0]);
   const [activeSize, setActiveSize] = useState(product.sizes[0]);
   const [qty, setQty] = useState(1);
-  const { precio } = usePromo();
+  const { precio, cuponDe } = usePromo();
   const precioPromo = precio(product, 1);
+  const cuponPdp = cuponDe(product);
   const precioQty = precio(product, qty);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
@@ -176,11 +177,19 @@ export default function ProductContent({ product, related, crossSell }: Props) {
               }}
             >
               <div className="bb-price">
-                <div className="mono" style={{ fontSize: 30, letterSpacing: '-0.02em' }}><PrecioPromo unit={precioPromo.unit} list={precioPromo.list} /></div>
-                {precioPromo.pct > 0 && (
-                  <span className="bb-off">−{precioPromo.pct}%{precioPromo.etiqueta ? ` · ${precioPromo.etiqueta}` : ''}</span>
-                )}
+                <PrecioPromo ml unit={precioPromo.unit} list={precioPromo.list} />
               </div>
+              {precioPromo.pct > 0 && precioPromo.etiqueta && <div className="pml-etiqueta" style={{ marginTop: -6, marginBottom: 12 }}>{precioPromo.etiqueta}</div>}
+              {cuponPdp && (
+                <Link href={`/ofertas/${cuponPdp.slug}`} className="pml-cupon-box">
+                  <span className="pml-cupon">Cupón {cuponPdp.pct}% OFF</span>
+                  <span>
+                    {cuponPdp.minPurchase > 0 ? `En compras desde ${formatCOP(cuponPdp.minPurchase)}. ` : ''}
+                    {cuponPdp.maxDiscount ? `Ahorra hasta ${formatCOP(cuponPdp.maxDiscount)}. ` : ''}
+                    Escribe tu código en el carrito.
+                  </span>
+                </Link>
+              )}
 
               {/* Variety selector */}
               {product.colors.length > 1 && (
