@@ -273,7 +273,8 @@ export function etiquetaEnvio(status: ShipmentStatus): string {
  * lo que ayuda. No se creó un estado nuevo para esto a propósito: es
  * un caso de presentación, no una rama nueva de la máquina de estados.
  */
-export function etiquetaEstadoPedido(order: Pick<Order, 'status' | 'shipment'>): string {
+export function etiquetaEstadoPedido(order: Pick<Order, 'status' | 'shipment'> & { payment?: Pick<Order['payment'], 'method'> }): string {
+  if (order.payment?.method === 'COD' && order.status === 'paid' && !order.shipment) return 'Contra entrega por confirmar';
   if (order.shipment?.provider === 'pickup') {
     if (order.status === 'shipped') return 'Listo para recoger';
     if (order.status === 'delivered') return 'Recogido';

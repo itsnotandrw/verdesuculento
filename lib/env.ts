@@ -95,6 +95,20 @@ export const env = {
      */
     codFeePct: num('SHIPPING_COD_FEE_PCT', 0),
 
+    /**
+     * Cargo fijo por pagar contra entrega (COP), que se suma al ENVÍO del cliente (no es una línea aparte).
+     * Cubre la comisión de recaudo de la transportadora (3,5 % a 5,2 %, con mínimos de $4.500-$4.760). 0 = lo asume el vivero.
+     */
+    codFeeFlat: num('SHIPPING_COD_FEE', 4500),
+    /** Pedido mínimo y máximo (COP, total con envío) para ofrecer contra entrega. 0 en el máximo = sin tope. */
+    codMinOrder: num('SHIPPING_COD_MIN', 50000),
+    codMaxOrder: num('SHIPPING_COD_MAX', 800000),
+    /**
+     * false (recomendado): el pedido contra entrega NO genera la guía solo; queda en "pagados sin guía" hasta que alguien
+     * lo confirme con el cliente por WhatsApp y pulse "Generar guía". true = la guía sale al crear el pedido.
+     */
+    codAutoGuide: bool('SHIPPING_COD_AUTO_GUIDE', false),
+
     /** Costo del domicilio de entrega el mismo día (Soacha, Bogotá, Mosquera). 0 = se confirma por WhatsApp. */
     sameDayFee: num('SHIPPING_SAME_DAY_FEE', 0),
 

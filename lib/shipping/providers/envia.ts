@@ -278,6 +278,9 @@ interface TarifaEnvia {
   basePrice?: number;
   deliveryEstimate?: string;
   deliveryDate?: { date_from?: number; date_to?: number };
+  /** Solo vienen cuando se cotizó con `cash_on_delivery` y el servicio recauda. */
+  cashOnDeliveryCommission?: number | string;
+  cashOnDeliveryAmount?: number | string;
 }
 
 /** Cómo se escriben los nombres de las transportadoras en Colombia. */
@@ -382,6 +385,147 @@ function frontera(opciones: ShippingQuote[]): ShippingQuote[] {
   return elegidas.slice(0, 4);
 }
 
+// ----------------------------------------------------------------------------- recaudo (contra entrega)
+
+/**
+ * Servientrega solo recauda con su servicio `premier_cod`: el `premier` normal no lleva recaudo. Para emparejar una
+ * tarifa normal con su variante de recaudo se compara sin ese sufijo.
+ */
+const sinSufijoCod = (servicio: string) => servicio.replace(/_cod$/i, '');
+const claveServicio = (carrier: string, servicio: string) => `${carrier}:${sinSufijoCod(servicio)}`;
+
+/**
+ * Tarifas ya consultadas durante 20 s. El checkout cotiza dos veces seguidas para la misma dirección y carrito (la
+ * normal y la que pregunta por recaudo); sin esto, cada pantalla dispararía el doble de llamadas a Envia, que ya se
+ * ha visto tropezar bajo carga concurrente. Una promesa fallida se descarta para no cachear el error.
+ */
+const TTL_TARIFAS_MS = 20_000;
+const cacheTarifas = new Map<string, { vence: number; tarifas: Promise<TarifaEnvia[]> }>();
+
+function llaveTarifas(request: QuoteRequest, recaudo: number): string {
+  const { weightGrams, lengthCm, widthCm, heightCm, declaredValue } = request.parcel;
+  const { departamento, ciudad } = request.destination;
+  return [departamento, ciudad, weightGrams, lengthCm, widthCm, heightCm, declaredValue, recaudo].join('|').toLowerCase();
+}
+
+/** Monto que se manda a Envia al preguntar por recaudo: el subtotal (el envío aún no se conoce al cotizar). */
+const recaudoEstimado = (request: QuoteRequest) => Math.max(10_000, Math.round(request.merchandiseValue));
+
+/**
+ * Códigos reales (carrier y servicio) con los que Envia genera la guía.
+ *
+ * Salen del `id` de la cotización (`envia:<carrier>:<servicio>`), que es determinista y viaja congelado en el pedido.
+ * Los campos `carrierCode`/`serviceCode` de una cotización congelada pueden traer el nombre para mostrar ("Servientrega",
+ * "Premier") en vez del código, y mandarlo así rompe la guía. Con recaudo se prefiere el servicio que Envia devolvió
+ * para recaudar, y Servientrega pasa de `premier` a `premier_cod`.
+ */
+function codigosDe(quote: ShippingQuote, conRecaudo: boolean): { carrier: string; service: string } {
+  const partes = quote.id.split(':');
+  const deId = partes[0] === ID && partes.length >= 3 ? { carrier: partes[1], service: partes.slice(2).join(':') } : null;
+  const parecidoACodigo = (t: string) => /^[A-Za-z0-9_]+$/.test(t);
+
+  const carrier = deId?.carrier ?? quote.carrierCode;
+  let service = deId?.service ?? quote.serviceCode;
+
+  if (conRecaudo) {
+    if (deId && parecidoACodigo(quote.serviceCode) && sinSufijoCod(quote.serviceCode) === sinSufijoCod(deId.service)) {
+      service = quote.serviceCode;
+    } else if (carrier === 'serviEntrega' && !/_cod$/i.test(service)) {
+      service = `${service}_cod`;
+    }
+  }
+
+  if (!carrier || !service) throw new Error(`[envia] no se pudo determinar la transportadora de la cotización "${quote.id}".`);
+  return { carrier, service };
+}
+
+/** Consulta tarifas a Envia (una llamada por transportadora, en paralelo). `recaudo > 0` pregunta con `cash_on_delivery`. */
+async function consultarEnvia(request: QuoteRequest, recaudo: number, exigir: boolean): Promise<TarifaEnvia[]> {
+  const [origen, destinoGeo] = await Promise.all([
+    origenResuelto(),
+    resolverUbicacion(request.destination.ciudad, request.destination.departamento),
+  ]);
+
+  const destino = ubicacion(
+    {
+      calle: request.destination.direccion ?? 'Sin dirección',
+      barrio: request.destination.barrio,
+      geo: destinoGeo,
+    },
+    'Cliente'
+  );
+
+  const bultos: Array<Record<string, unknown>> = paquete(request);
+  if (recaudo > 0) {
+    bultos[0] = { ...bultos[0], additionalServices: [{ service: 'cash_on_delivery', data: { amount: String(recaudo) } }] };
+  }
+
+  // Una llamada por transportadora: `carrier` es obligatorio y no acepta vacío. Se lanzan en paralelo y las que
+  // fallen no tumban al resto — es normal que alguna esté caída o sin cobertura en cierta ruta, y perder una
+  // opción es mejor que quedarse sin ninguna. Con reintento (ver `conReintento`): Coordinadora e Inter fallan de
+  // forma intermitente bajo carga. Con recaudo no se reintenta: que un servicio no recaude es una respuesta normal.
+  const consultarTodas = () =>
+    Promise.all(
+      TRANSPORTADORAS.map(async (carrier) => {
+        try {
+          const tarifas = await conReintento(
+            async () => {
+              const resultado = await llamar<TarifaEnvia[]>(
+                '/ship/rate/',
+                {
+                  origin: origen,
+                  destination: destino,
+                  packages: bultos,
+                  shipment: { carrier, type: 1 },
+                  settings: { currency: 'COP' },
+                },
+                TIMEOUT_COTIZACION_MS
+              );
+              if (!resultado?.length) throw new Error('respuesta vacía');
+              return resultado;
+            },
+            recaudo > 0 ? 0 : 1
+          );
+          return tarifas.map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
+        } catch (error) {
+          console.warn(`[envia] ${carrier}${recaudo > 0 ? ' (con recaudo)' : ''} no cotizó: ${(error as Error).message.slice(0, 160)}`);
+          return [] as TarifaEnvia[];
+        }
+      })
+    );
+
+  let tarifas = (await consultarTodas()).flat();
+
+  // Que las CUATRO fallen a la vez es poco frecuente pero se ha visto pasar (verificado en vivo): antes de decirle al
+  // comprador que no hay opciones se intenta la ronda completa una vez más.
+  if (tarifas.length === 0 && exigir) {
+    await new Promise((r) => setTimeout(r, 400));
+    tarifas = (await consultarTodas()).flat();
+  }
+
+  if (tarifas.length === 0 && exigir) throw new SinTarifasError();
+  return tarifas;
+}
+
+function tarifasConCache(request: QuoteRequest, recaudo: number, exigir: boolean): Promise<TarifaEnvia[]> {
+  const llave = llaveTarifas(request, recaudo);
+  const ahora = Date.now();
+  const previa = cacheTarifas.get(llave);
+  if (previa && previa.vence > ahora) return previa.tarifas;
+
+  if (cacheTarifas.size > 200) {
+    for (const [k, v] of cacheTarifas) if (v.vence <= ahora) cacheTarifas.delete(k);
+    if (cacheTarifas.size > 200) cacheTarifas.clear();
+  }
+
+  const tarifas = consultarEnvia(request, recaudo, exigir);
+  cacheTarifas.set(llave, { vence: ahora + TTL_TARIFAS_MS, tarifas });
+  tarifas.catch(() => {
+    if (cacheTarifas.get(llave)?.tarifas === tarifas) cacheTarifas.delete(llave);
+  });
+  return tarifas;
+}
+
 /**
  * TEMPORAL — sonda de solo lectura para ver cómo responde Envia a una cotización CON recaudo. Cotiza (no genera
  * guías ni cobra nada) y devuelve campos de precio recortados. Se elimina cuando el contra entrega esté probado.
@@ -422,85 +566,25 @@ export const enviaProvider: ShippingProvider = {
     return Boolean(env.shipping.envia.token);
   },
 
+  /**
+   * Cotiza. Sin `cashOnDelivery` devuelve las opciones normales. Con `cashOnDelivery` devuelve SOLO las que Envia
+   * confirma con recaudo (la cotización con `cash_on_delivery` trae `cashOnDeliveryCommission`; si un servicio no lo
+   * trae, no recauda), con el cargo fijo del cliente en `cashOnDeliveryFee`.
+   *
+   * El precio que ve el cliente sale siempre de la cotización normal del mismo servicio, nunca de la que lleva
+   * recaudo: así no depende de cómo Envia reparta la comisión dentro de `totalPrice`.
+   */
   async quote(request: QuoteRequest): Promise<ShippingQuote[]> {
     credenciales();
 
-    const [origen, destinoGeo] = await Promise.all([
-      origenResuelto(),
-      resolverUbicacion(request.destination.ciudad, request.destination.departamento),
-    ]);
-
-    const destino = ubicacion(
-      {
-        calle: request.destination.direccion ?? 'Sin dirección',
-        barrio: request.destination.barrio,
-        geo: destinoGeo,
-      },
-      'Cliente'
-    );
-
-    const bultos = paquete(request);
-
-    // Una llamada por transportadora: `carrier` es obligatorio y no acepta
-    // vacío. Se lanzan en paralelo y las que fallen no tumban al resto — es
-    // normal que alguna esté caída o sin cobertura en cierta ruta, y perder
-    // una opción es mejor que quedarse sin ninguna.
-    //
-    // Cada llamada va con reintento: ver el comentario de `conReintento` sobre
-    // por qué Coordinadora e Inter Rapidísimo necesitan esto. Un `data: []`
-    // sin error cuenta como fallo transitorio también — es exactamente lo que
-    // se observó que devuelven bajo carga para rutas que sí tienen cobertura.
-    const consultarTodas = () =>
-      Promise.all(
-        TRANSPORTADORAS.map(async (carrier) => {
-          try {
-            const tarifas = await conReintento(async () => {
-              const resultado = await llamar<TarifaEnvia[]>(
-                '/ship/rate/',
-                {
-                  origin: origen,
-                  destination: destino,
-                  packages: bultos,
-                  shipment: { carrier, type: 1 },
-                  settings: { currency: 'COP' },
-                },
-                TIMEOUT_COTIZACION_MS
-              );
-              if (!resultado?.length) throw new Error('respuesta vacía');
-              return resultado;
-            });
-            return tarifas.map((t) => ({ ...t, carrier: t.carrier ?? carrier }));
-          } catch (error) {
-            console.warn(`[envia] ${carrier} no cotizó tras reintentos: ${(error as Error).message.slice(0, 160)}`);
-            return [];
-          }
-        })
-      );
-
-    let tarifas = (await consultarTodas()).flat();
-
-    // Que las CUATRO fallen a la vez —cada una ya con su propio reintento— es
-    // poco frecuente, pero se ha visto pasar: verificado en vivo contra la API
-    // real que una ruta con cobertura confirmada (3 de 4 transportadoras
-    // cotizando) puede devolver `[]` para las cuatro en un mal momento
-    // puntual, sin que signifique falta de cobertura. Antes de decirle al
-    // comprador que no hay opciones, se intenta la ronda completa una vez
-    // más — es barato comparado con perder la venta por un tropiezo pasajero.
-    if (tarifas.length === 0) {
-      await new Promise((r) => setTimeout(r, 400));
-      tarifas = (await consultarTodas()).flat();
-    }
-
-    if (tarifas.length === 0) {
-      throw new SinTarifasError();
-    }
+    const normales = await tarifasConCache(request, 0, true);
 
     const envioGratis =
       env.shipping.freeShippingFrom > 0 &&
       request.merchandiseValue >= env.shipping.freeShippingFrom;
     const zona = zonaDe(request.destination.departamento);
 
-    const opciones = tarifas
+    const todas = normales
       .map((tarifa): ShippingQuote => {
         const carrier = tarifa.carrier ?? 'transportadora';
         const servicio = tarifa.service ?? 'estandar';
@@ -526,30 +610,77 @@ export const enviaProvider: ShippingProvider = {
       })
       .sort((a, b) => a.cost - b.cost || a.etaMaxDays - b.etaMaxDays);
 
-    return frontera(opciones);
+    // Una misma clave (carrier + servicio sin `_cod`) puede venir dos veces; se queda la normal.
+    const unicas = new Map<string, ShippingQuote>();
+    for (const o of todas) {
+      const clave = claveServicio(o.carrierCode, o.serviceCode);
+      const previa = unicas.get(clave);
+      if (!previa || (/_cod$/i.test(previa.serviceCode) && !/_cod$/i.test(o.serviceCode))) unicas.set(clave, o);
+    }
+    const candidatas = [...unicas.values()].sort((a, b) => a.cost - b.cost || a.etaMaxDays - b.etaMaxDays);
+
+    if (!request.cashOnDelivery) {
+      // Un servicio de recaudo nunca se ofrece como envío normal: sin monto a recaudar no tiene sentido.
+      return frontera(candidatas.filter((o) => !/_cod$/i.test(o.serviceCode)));
+    }
+
+    // Si la consulta con recaudo falla, simplemente no hay contra entrega: no se tumba la cotización.
+    const conRecaudo = await tarifasConCache(request, recaudoEstimado(request), false).catch((error) => {
+      console.warn(`[envia] cotización con recaudo falló: ${(error as Error).message.slice(0, 160)}`);
+      return [] as TarifaEnvia[];
+    });
+
+    const servicioConRecaudo = new Map<string, string>();
+    for (const t of conRecaudo) {
+      if (t.cashOnDeliveryCommission == null && t.cashOnDeliveryAmount == null) continue;
+      servicioConRecaudo.set(claveServicio(t.carrier ?? '', t.service ?? ''), t.service ?? '');
+    }
+
+    const capaces = candidatas
+      .filter((o) => servicioConRecaudo.has(claveServicio(o.carrierCode, o.serviceCode)))
+      .map((o) => ({
+        ...o,
+        serviceCode: servicioConRecaudo.get(claveServicio(o.carrierCode, o.serviceCode)) || o.serviceCode,
+        cashOnDeliveryAvailable: true,
+        cashOnDeliveryFee: env.shipping.codFeeFlat,
+      }));
+
+    return frontera(capaces);
   },
 
-  async codCoverage(destination: ShippingAddress): Promise<CodCoverage> {
-    // El catálogo confirma que el recaudo existe: `cash_on_delivery: 1` en TCC
-    // (ambos servicios), Coordinadora (los cuatro), InterRapidísimo (los cinco)
-    // y el servicio `premier_cod` de Servientrega. La comisión sale de
-    // `additional_services`: 5% del recaudo con mínimo $4.760, más 1,3% de
-    // seguro (mínimo $650) si se asegura.
-    //
-    // Aun así se responde "no disponible" hasta probar el flujo completo con
-    // una llave de sandbox: ofrecer contra entrega y descubrir después que el
-    // recaudo no se pidió bien es despachar producto que nadie cobra. El
-    // default seguro se mantiene a propósito.
-    return {
-      available: false,
-      fee: 0,
-      settlementDays: 0,
-      reason: `Cobertura de recaudo pendiente de verificar para ${destination.ciudad}.`,
-    };
+  /**
+   * Cobertura de recaudo: aquí solo se aplican las reglas del negocio (habilitado, pedido mínimo y máximo). Qué
+   * transportadoras recaudan en el destino lo decide la cotización con recaudo (`quote` con `cashOnDelivery`).
+   */
+  async codCoverage(_destination: ShippingAddress, amount = 0): Promise<CodCoverage> {
+    const { codEnabled, codMinOrder, codMaxOrder, codFeeFlat } = env.shipping;
+    const cop = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`;
+
+    if (!codEnabled) {
+      return { available: false, fee: 0, settlementDays: 0, reason: 'El contra entrega no está habilitado por ahora.' };
+    }
+    if (codMinOrder > 0 && amount > 0 && amount < codMinOrder) {
+      return { available: false, fee: 0, settlementDays: 0, reason: `El contra entrega aplica desde ${cop(codMinOrder)}.` };
+    }
+    if (codMaxOrder > 0 && amount > codMaxOrder) {
+      return {
+        available: false,
+        fee: 0,
+        settlementDays: 0,
+        reason: `El contra entrega aplica hasta ${cop(codMaxOrder)}. Para pedidos más grandes usa Wompi o Bre-B.`,
+      };
+    }
+    // Envia acredita el recaudo al marcarse "Entregado"; el retiro a banco se procesa martes y viernes.
+    return { available: true, fee: codFeeFlat, settlementDays: 4 };
   },
 
-  async createShipment({ order, quote }: CreateShipmentInput): Promise<CreatedShipment> {
+  async createShipment({ order, quote, cashOnDelivery }: CreateShipmentInput): Promise<CreatedShipment> {
     credenciales();
+
+    // Contra entrega: el MISMO servicio de recaudo y monto en la cotización y en la guía. Envia vuelve a calcular el
+    // precio al generar y solo compra los servicios que se envían aquí: uno cotizado y no enviado no se aplica.
+    const recaudo = cashOnDelivery && cashOnDelivery > 0 ? Math.round(cashOnDelivery) : 0;
+    const codigos = codigosDe(quote, recaudo > 0);
 
     const [origen, destinoGeo] = await Promise.all([
       origenResuelto(),
@@ -598,9 +729,10 @@ export const enviaProvider: ShippingProvider = {
           declaredValue: order.subtotal,
           weightUnit: 'KG',
           lengthUnit: 'CM',
+          ...(recaudo > 0 ? { additionalServices: [{ service: 'cash_on_delivery', data: { amount: String(recaudo) } }] } : {}),
         },
       ],
-      shipment: { carrier: quote.carrierCode, service: quote.serviceCode, type: 1 },
+      shipment: { carrier: codigos.carrier, service: codigos.service, type: 1 },
       settings: { printFormat: 'PDF', printSize: 'STOCK_4X6', comments: `Pedido ${order.reference}. PLANTAS VIVAS.` },
     });
 
@@ -615,6 +747,7 @@ export const enviaProvider: ShippingProvider = {
       trackingNumber: guia.trackingNumber,
       labelUrl: guia.label,
       cost: quote.cost,
+      ...(recaudo > 0 ? { codAmount: recaudo } : {}),
       status: 'created',
       externalId: String(guia.shipmentId ?? guia.trackingNumber),
       actualCost: guia.totalPrice,

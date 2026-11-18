@@ -61,8 +61,11 @@ export async function POST(request: Request) {
 
     // La cobertura de contra entrega se resuelve aquí para que el checkout sepa
     // si puede ofrecer el método antes de mostrarlo.
+    // El monto a recaudar es el total con envío, así que los límites del contra entrega se miden con la opción más barata.
+    const costos = quotes.filter((q) => !q.costLabel).map((q) => q.cost);
+    const envioMasBarato = costos.length > 0 ? Math.min(...costos) : 0;
     const cod = env.shipping.codEnabled
-      ? await shippingProvider().codCoverage(destination, subtotal)
+      ? await shippingProvider().codCoverage(destination, subtotal + envioMasBarato)
       : { available: false, fee: 0, settlementDays: 0, reason: 'Contra entrega no habilitado.' };
 
     return ok({

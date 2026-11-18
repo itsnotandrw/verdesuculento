@@ -2698,3 +2698,15 @@ a.pml-cupon:hover { background: color-mix(in oklab, var(--accent) 12%, transpare
 /* La tarjeta pone el precio debajo del título (como Mercado Libre) en vez de a la derecha */
 .product-card-info { flex-direction: column; align-items: stretch; gap: 10px; }
 .product-card-price { font-family: var(--font-mono); }
+
+/* ===== Logos del checkout (transportadoras y métodos de pago) ===== */
+.logo-chip { display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; flex-shrink: 0; color: #2b2b2b; overflow: hidden; }
+.logo-chip img { display: block; object-fit: contain; max-width: 100%; max-height: 100%; }
+.logo-chip-cuadrado { width: 54px; height: 54px; padding: 4px; }
+.logo-chip-ancho { height: 34px; padding: 0 9px; }
+.logo-chip-pse { width: 34px; height: 34px; padding: 2px; }
+.logo-fila { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+.logo-breb { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; color: #0a2540; }
+.logo-efectivo { color: #1f6b3a; }
+.option-card .logo-fila { margin-left: auto; justify-content: flex-end; flex-wrap: nowrap; }
+@media (max-width: 560px) { .option-card .logo-fila { max-width: 100%; margin-left: 0; } .logo-chip-cuadrado { width: 46px; height: 46px; } }

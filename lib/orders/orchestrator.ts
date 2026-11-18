@@ -153,8 +153,10 @@ export async function crearPedido(
 
   if (!quote) {
     throw new OrderError(
-      'La opción de envío ya no está disponible. Vuelve a cotizar.',
-      'cotizacion_invalida'
+      esContraEntrega
+        ? 'Esa transportadora no ofrece contra entrega para tu destino. Elige otra opción de envío o paga en línea.'
+        : 'La opción de envío ya no está disponible. Vuelve a cotizar.',
+      esContraEntrega ? 'cod_sin_cobertura' : 'cotizacion_invalida'
     );
   }
 
@@ -164,6 +166,9 @@ export async function crearPedido(
     // El recaudo lo hace la transportadora: no aplica a recoger en tienda ni a la entrega el mismo día.
     if (quote.provider === 'pickup' || quote.provider === 'local') {
       throw new OrderError('El pago contra entrega solo está disponible con envío por transportadora.', 'cod_sin_cobertura');
+    }
+    if (!quote.cashOnDeliveryAvailable) {
+      throw new OrderError('Esa transportadora no ofrece contra entrega para tu destino. Elige otra opción de envío o paga en línea.', 'cod_sin_cobertura');
     }
     const cobertura = await shippingProvider().codCoverage(destination, subtotal - couponDiscount + quote.cost);
     if (!cobertura.available) {
@@ -252,13 +257,15 @@ export async function crearPedido(
       instructions: {
         kind: 'cod',
         amount: total,
-        note: `Paga ${total.toLocaleString('es-CO')} COP en efectivo al recibir el pedido.`,
+        note: `Paga ${total.toLocaleString('es-CO')} COP en efectivo al recibir el pedido.${env.shipping.codAutoGuide ? '' : ' Te escribiremos por WhatsApp para confirmarlo antes de despacharlo.'}`,
       },
     };
     registrar(order, {
       type: 'contra_entrega',
       actor: 'sistema',
-      message: 'Contra entrega con cobertura confirmada: el recaudo asegura el pago.',
+      message: env.shipping.codAutoGuide
+        ? 'Contra entrega con cobertura confirmada: el recaudo asegura el pago.'
+        : 'Contra entrega: confirmar el pedido con el cliente por WhatsApp y luego generar la guía desde el panel.',
     });
   } else {
     intent = await paymentProviderFor(input.method).createIntent(order, input.method, context);
@@ -274,8 +281,9 @@ export async function crearPedido(
     throw error;
   }
 
-  // El contra entrega despacha inmediatamente; el resto espera el pago.
-  if (esContraEntrega) {
+  // Contra entrega: por defecto NO se despacha solo. Con plantas vivas, un pedido falso o equivocado cuesta una guía y un
+  // viaje de ida y vuelta, así que el vivero confirma por WhatsApp y genera la guía desde el panel (SHIPPING_COD_AUTO_GUIDE).
+  if (esContraEntrega && env.shipping.codAutoGuide) {
     await crearGuia(order.id, total);
   }
 

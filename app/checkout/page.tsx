@@ -11,6 +11,7 @@ import { RECOGER_TIENDA_QUOTE_ID, DIRECCION_RECOGIDA } from '@/lib/shipping/cons
 import ProductShape from '@/components/ProductShape';
 import PrecioPromo from '@/components/PrecioPromo';
 import CuponBox from '@/components/CuponBox';
+import { LogoEnvio, LogoPago } from '@/components/LogosCheckout';
 import { useCupon } from '@/hooks/useCupon';
 
 const STEPS = ['Envío', 'Pago'];
@@ -18,6 +19,8 @@ const STEPS = ['Envío', 'Pago'];
 interface Quote {
   id: string;
   carrier: string;
+  /** Código de la transportadora (para el logo). */
+  carrierCode?: string;
   service: string;
   cost: number;
   listCost: number;
@@ -88,6 +91,9 @@ export default function CheckoutPage() {
   const [cotizando, setCotizando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const [codDisponible, setCodDisponible] = useState(false);
+  // Opciones de envío que admiten contra entrega → cargo fijo que se suma a su envío. Llega de una segunda consulta.
+  const [codOpciones, setCodOpciones] = useState<Record<string, number>>({});
+  const cotizacionActual = useRef(0);
 
   const [metodos, setMetodos] = useState<Metodo[]>([]);
   const [metodo, setMetodo] = useState<string | null>(null);
@@ -99,8 +105,11 @@ export default function CheckoutPage() {
   const cupon = useCupon();
   const descuentoCupon = cupon.valido ? cupon.descuento : 0;
   // Contra entrega: lo recauda la transportadora, así que no aplica a recoger en tienda ni a entrega el mismo día.
-  const contraEntregaPosible = codDisponible && !!quote && quote.id !== RECOGER_TIENDA_QUOTE_ID && !quote.id.startsWith('local:');
-  const envio = quote?.cost ?? 0;
+  const contraEntregaPosible =
+    codDisponible && !!quote && quote.id !== RECOGER_TIENDA_QUOTE_ID && !quote.id.startsWith('local:') && quote.id in codOpciones;
+  // Con contra entrega el recaudo va DENTRO del envío (no es una línea aparte): el cliente ve un solo valor de envío.
+  const recargoCod = metodo === 'COD' && quote && quote.id in codOpciones ? codOpciones[quote.id] : 0;
+  const envio = (quote?.cost ?? 0) + recargoCod;
   const total = subtotal - descuentoCupon + envio;
 
   // El desplegable guarda el municipio elegido, o el centinela "Otro
@@ -111,6 +120,7 @@ export default function CheckoutPage() {
 
   // --- cotización: se dispara cuando ya hay destino y algo en el carrito
   const cotizar = useCallback(async () => {
+    const idCotizacion = ++cotizacionActual.current;
     // Recoger en tienda no depende del destino ni de ninguna transportadora:
     // es una sola opción fija, gratis, siempre disponible.
     if (modoEntrega === 'recoger') {
@@ -124,17 +134,43 @@ export default function CheckoutPage() {
       }]);
       setQuoteId(RECOGER_TIENDA_QUOTE_ID);
       setCodDisponible(false);
+      setCodOpciones({});
       setErrorEnvio(null);
       return;
     }
 
     if (!form.departamento.trim() || !ciudadEfectiva.trim() || items.length === 0) {
       setQuotes([]);
+      setCodOpciones({});
       return;
     }
 
     setCotizando(true);
     setErrorEnvio(null);
+
+    const lineasCotizacion = items.map((i) => ({
+      productId: i.product.id,
+      color: i.color.name,
+      size: i.size,
+      qty: i.qty,
+    }));
+
+    const consultarContraEntrega = async (id: number) => {
+      try {
+        const r = await fetch('/api/shipping/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ departamento: form.departamento, ciudad: ciudadEfectiva, codigoPostal: form.codigoPostal, lines: lineasCotizacion, cashOnDelivery: true }),
+        });
+        const d = await r.json();
+        if (id !== cotizacionActual.current) return;
+        const mapa: Record<string, number> = {};
+        if (r.ok) for (const q of d.quotes ?? []) if (q.cashOnDeliveryAvailable) mapa[q.id] = q.cashOnDeliveryFee ?? 0;
+        setCodOpciones(mapa);
+      } catch {
+        if (id === cotizacionActual.current) setCodOpciones({});
+      }
+    };
 
     try {
       const respuesta = await fetch('/api/shipping/quote', {
@@ -158,6 +194,9 @@ export default function CheckoutPage() {
 
       setQuotes(datos.quotes ?? []);
       setCodDisponible(Boolean(datos.cod?.available));
+      setCodOpciones({});
+      // Segunda consulta, sin bloquear la primera: qué transportadoras recaudan en este destino y a qué costo.
+      if (datos.cod?.available) void consultarContraEntrega(idCotizacion);
       // Se preselecciona la primera opción con costo conocido; la entrega el mismo día se elige a mano.
       setQuoteId((actual) =>
         datos.quotes?.some((q: Quote) => q.id === actual)
@@ -472,6 +511,7 @@ export default function CheckoutPage() {
                           onChange={() => setQuoteId(q.id)}
                           style={{ accentColor: 'var(--accent)', flexShrink: 0 }}
                         />
+                        <LogoEnvio codigo={q.carrierCode} nombre={q.carrier} />
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ fontSize: 14, fontWeight: 500 }}>
                             {q.service} · {q.carrier}
@@ -479,6 +519,11 @@ export default function CheckoutPage() {
                           <div className="mono" style={{ fontSize: 11.5, color: 'var(--fg-dim)', marginTop: 3 }}>
                             {q.etaLabel}
                           </div>
+                          {q.id in codOpciones && (
+                            <span className="badge-inline" style={{ marginTop: 6, display: 'inline-block' }}>
+                              Contra entrega disponible{codOpciones[q.id] > 0 ? ` · +${formatCOP(codOpciones[q.id])} en el envío` : ''}
+                            </span>
+                          )}
                           {q.note && (
                             <div style={{ fontSize: 12, color: 'var(--fg-dim)', marginTop: 6, lineHeight: 1.5 }}>{q.note}</div>
                           )}
@@ -508,7 +553,7 @@ export default function CheckoutPage() {
               </button>
             </div>
 
-            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} />
+            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} recargoCod={recargoCod} />
           </div>
         )}
 
@@ -535,8 +580,10 @@ export default function CheckoutPage() {
                       </div>
                       <div style={{ fontSize: 12.5, color: 'var(--fg-dim)', marginTop: 4, lineHeight: 1.5 }}>
                         {m.description}
+                        {m.id === 'COD' && quote && (codOpciones[quote.id] ?? 0) > 0 && ` El envío sube ${formatCOP(codOpciones[quote.id])} por el recaudo.`}
                       </div>
                     </div>
+                    <LogoPago metodo={m.id} />
                   </label>
                 ))}
               </div>
@@ -569,7 +616,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} />
+            <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} recargoCod={recargoCod} />
           </div>
         )}
       </div>
@@ -603,7 +650,7 @@ const CAMPOS: Array<{
 ];
 
 function OrderSummary({
-  items, subtotal, envio, total, quote, descuentoCupon, cuponCode,
+  items, subtotal, envio, total, quote, descuentoCupon, cuponCode, recargoCod = 0,
 }: {
   items: ReturnType<typeof useCart>['items'];
   subtotal: number;
@@ -612,6 +659,8 @@ function OrderSummary({
   quote: Quote | null;
   descuentoCupon: number;
   cuponCode?: string;
+  /** Parte del envío que corresponde al recaudo contra entrega. */
+  recargoCod?: number;
 }) {
   const { listSubtotal, linePrice } = useCart();
   return (
@@ -656,6 +705,7 @@ function OrderSummary({
           <span style={{ color: 'var(--fg-dim)', minWidth: 0 }}>
             Envío
             {quote && <span className="mono" style={{ display: 'block', fontSize: 11, color: 'var(--fg-mute)' }}>{quote.etaLabel}</span>}
+            {recargoCod > 0 && <span className="mono" style={{ display: 'block', fontSize: 11, color: 'var(--fg-mute)' }}>Incluye {formatCOP(recargoCod)} de recaudo contra entrega</span>}
           </span>
           <span className="mono" style={{ flexShrink: 0 }}>
             {quote ? (quote.costLabel ? <span style={{ color: 'var(--accent)', fontSize: 12 }}>{quote.costLabel}</span> : envio === 0 ? <span style={{ color: 'var(--accent)' }}>Gratis</span> : formatCOP(envio)) : '—'}

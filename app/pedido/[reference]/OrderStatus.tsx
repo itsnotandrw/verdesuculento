@@ -67,6 +67,8 @@ function etiquetaEstadoCliente(pedido: PublicOrder): string {
     if (pedido.status === 'shipped') return 'Listo para recoger';
     if (pedido.status === 'delivered') return 'Recogido';
   }
+  // Contra entrega sin guía todavía: el vivero primero confirma el pedido con el cliente por WhatsApp.
+  if (pedido.paymentMethod === 'COD' && pedido.status === 'paid' && pedido.shipmentStatus === 'not_created') return 'Por confirmar';
   return ETIQUETA[pedido.status] ?? pedido.status;
 }
 
@@ -95,6 +97,7 @@ export default function OrderStatus({
   const esperandoPago = pedido.paymentStatus === 'pending';
   const enRevision = pedido.paymentStatus === 'in_review';
   const esRecogerEnTienda = pedido.carrier === 'Recoger en tienda';
+  const codPorConfirmar = pedido.paymentMethod === 'COD' && pedido.paymentStatus === 'approved' && pedido.shipmentStatus === 'not_created' && !esRecogerEnTienda;
 
   // Al volver de Wompi llega ?id=<transacción>: se verifica de inmediato con Wompi (sin esperar al aviso automático)
   useEffect(() => {
@@ -201,7 +204,9 @@ export default function OrderStatus({
             'Ya registramos tu aviso. Estamos confirmando el abono en la cuenta; en cuanto aparezca, tu pedido pasa a despacho y te avisamos por correo.'}
           {pedido.paymentStatus === 'approved' && esRecogerEnTienda &&
             `Tu pedido está confirmado. Te avisamos por correo o WhatsApp cuando esté listo para recoger en ${DIRECCION_RECOGIDA.direccion}, ${DIRECCION_RECOGIDA.ciudad}.`}
-          {pedido.paymentStatus === 'approved' && !esRecogerEnTienda &&
+          {codPorConfirmar &&
+            `Recibimos tu pedido. Te escribiremos por WhatsApp para confirmarlo y verificar tu dirección antes de despacharlo. Pagarás ${pedido.total.toLocaleString('es-CO')} COP en efectivo al recibirlo.`}
+          {pedido.paymentStatus === 'approved' && !esRecogerEnTienda && !codPorConfirmar &&
             `Tu pedido está confirmado y viaja a ${pedido.destino}. Cada planta sale empacada para el viaje y con garantía de planta viva.`}
           {pedido.paymentStatus === 'declined' && 'Este pedido fue cancelado. Si crees que es un error, escríbenos y lo revisamos.'}
           {pedido.paymentStatus === 'expired' && 'Venció el plazo de pago y liberamos el pedido. Puedes volver a armarlo cuando quieras.'}

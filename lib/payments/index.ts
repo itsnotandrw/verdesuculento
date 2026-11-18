@@ -119,8 +119,11 @@ export function metodosDisponibles(codDisponible = false): MetodoDisponible[] {
     .map((id) => ({
       id,
       ...CATALOGO[id],
-      // Solo Bre-B espera a que alguien vea el abono; Wompi y contra entrega se confirman solos.
-      instant: id !== 'BREB',
+      // Solo Wompi confirma solo. Bre-B espera a que alguien vea el abono y el contra entrega, a que el vivero lo confirme.
+      instant: id === 'WOMPI',
+      ...(id === 'COD' && !env.shipping.codAutoGuide
+        ? { description: `${CATALOGO.COD.description} Te escribimos por WhatsApp para confirmar tu pedido antes de despacharlo.` }
+        : {}),
     }))
     .sort((a, b) => a.order - b.order);
 }

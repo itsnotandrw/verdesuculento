@@ -297,6 +297,29 @@ export default function AdminOrders() {
                       </div>
                     )}
 
+                    {/* Contra entrega: no se despacha solo. Primero se confirma con el cliente. */}
+                    {pedido.metodo === 'COD' && pedido.pagoEstado === 'approved' && !pedido.envio && (
+                      <div
+                        style={{
+                          marginTop: 16, padding: '12px 14px', borderRadius: 10,
+                          background: 'color-mix(in oklab, var(--accent) 10%, var(--bg-elev))',
+                          border: '1px solid color-mix(in oklab, var(--accent) 35%, transparent)',
+                          fontSize: 12.5, lineHeight: 1.55,
+                        }}
+                      >
+                        <strong>Contra entrega por confirmar.</strong> Escríbele al cliente para confirmar el pedido y la dirección;
+                        cobrarás {formatCOP(pedido.total)} en efectivo al entregar. Cuando confirme, pulsa «Confirmado: generar guía».{' '}
+                        <a
+                          href={`https://wa.me/${(() => { const d = pedido.telefono.replace(/\D/g, ''); return d.length === 10 ? '57' + d : d; })()}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: 'var(--accent)', fontWeight: 600 }}
+                        >
+                          Abrir WhatsApp →
+                        </a>
+                      </div>
+                    )}
+
                     <div style={{ marginTop: 20 }}>
                       <div className="pay-field-label" style={{ marginBottom: 8 }}>Productos</div>
                       {pedido.lineas.map((l, i) => (
@@ -347,7 +370,7 @@ export default function AdminOrders() {
 
                       {pedido.pagoEstado === 'approved' && !pedido.envio && (
                         <button className="btn btn-primary btn-sm" disabled={trabajando} onClick={() => accionar(pedido, 'reintentar-guia')}>
-                          {pedido.esRecogerEnTienda ? 'Marcar listo para recoger' : 'Generar guía'}
+                          {pedido.esRecogerEnTienda ? 'Marcar listo para recoger' : pedido.metodo === 'COD' ? 'Confirmado: generar guía' : 'Generar guía'}
                         </button>
                       )}
 
