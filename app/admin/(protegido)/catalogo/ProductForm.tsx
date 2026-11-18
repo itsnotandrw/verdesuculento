@@ -151,7 +151,7 @@ export default function ProductForm({ modo, inicial }: Props) {
               id="p-price"
               type="number"
               min={0}
-              step={100}
+              step={10}
               className="checkout-input"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
