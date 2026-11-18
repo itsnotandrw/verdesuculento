@@ -382,6 +382,38 @@ function frontera(opciones: ShippingQuote[]): ShippingQuote[] {
   return elegidas.slice(0, 4);
 }
 
+/**
+ * TEMPORAL — sonda de solo lectura para ver cómo responde Envia a una cotización CON recaudo. Cotiza (no genera
+ * guías ni cobra nada) y devuelve campos de precio recortados. Se elimina cuando el contra entrega esté probado.
+ */
+export async function sondaRecaudo(destino: { departamento: string; ciudad: string }, monto: number) {
+  const { baseUrl } = credenciales();
+  const [origen, destinoGeo] = await Promise.all([origenResuelto(), resolverUbicacion(destino.ciudad, destino.departamento)]);
+  const dest = ubicacion({ calle: 'Calle 1 # 1-1', geo: destinoGeo }, 'Cliente');
+  const base = { weight: 2, weightUnit: 'KG', lengthUnit: 'CM', dimensions: { length: 30, width: 20, height: 15 }, amount: 1, type: 'box', content: 'Plantas vivas', insurance: 0, declaredValue: monto };
+  const salida: Record<string, unknown> = { host: new URL(baseUrl).host, monto, resultados: [] as unknown[] };
+  for (const carrier of TRANSPORTADORAS) {
+    for (const conRecaudo of [false, true]) {
+      const paquete = conRecaudo ? { ...base, additionalServices: [{ service: 'cash_on_delivery', data: { amount: String(monto) } }] } : base;
+      try {
+        const r = await llamar<Array<Record<string, unknown>>>('/ship/rate/', { origin: origen, destination: dest, packages: [paquete], shipment: { carrier, type: 1 }, settings: { currency: 'COP' } }, 15_000);
+        (salida.resultados as unknown[]).push({
+          carrier, conRecaudo,
+          tarifas: (r ?? []).map((t) => ({
+            service: t.service, desc: t.serviceDescription, eta: t.deliveryEstimate, totalPrice: t.totalPrice, basePrice: t.basePrice,
+            additionalServices: t.additionalServices, additionalServicesTaxes: t.additionalServicesTaxes, taxes: t.taxes,
+            cashOnDeliveryCommission: t.cashOnDeliveryCommission, cashOnDeliveryAmount: t.cashOnDeliveryAmount,
+            costSummary: t.costSummary, claves: Object.keys(t).filter((k) => /cash|cod|recaud|additional/i.test(k)),
+          })),
+        });
+      } catch (error) {
+        (salida.resultados as unknown[]).push({ carrier, conRecaudo, error: (error as Error).message.slice(0, 300) });
+      }
+    }
+  }
+  return salida;
+}
+
 export const enviaProvider: ShippingProvider = {
   id: ID,
   label: 'Envia.com',
