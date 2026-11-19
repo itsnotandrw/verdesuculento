@@ -177,7 +177,9 @@ export async function crearPedido(
         'cod_sin_cobertura'
       );
     }
-    codFee = cobertura.fee;
+    // Lo que se le mostró al cliente en la opción de envío (comisión real de la transportadora) o, si el proveedor no la
+    // informa por opción, el cargo de la cobertura: nunca menos de lo que el cliente vio.
+    codFee = Math.max(quote.cashOnDeliveryFee ?? 0, cobertura.fee);
   }
 
   const total = subtotal - couponDiscount + quote.cost + codFee;

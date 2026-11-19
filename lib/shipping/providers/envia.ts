@@ -278,7 +278,7 @@ interface TarifaEnvia {
   basePrice?: number;
   deliveryEstimate?: string;
   deliveryDate?: { date_from?: number; date_to?: number };
-  /** Solo vienen cuando se cotizó con `cash_on_delivery` y el servicio recauda. */
+  /** Siempre vienen; en 0 si no se pidió recaudo o el servicio no recauda. Con recaudo la comisión incluye IVA. */
   cashOnDeliveryCommission?: number | string;
   cashOnDeliveryAmount?: number | string;
 }
@@ -526,38 +526,6 @@ function tarifasConCache(request: QuoteRequest, recaudo: number, exigir: boolean
   return tarifas;
 }
 
-/**
- * TEMPORAL — sonda de solo lectura para ver cómo responde Envia a una cotización CON recaudo. Cotiza (no genera
- * guías ni cobra nada) y devuelve campos de precio recortados. Se elimina cuando el contra entrega esté probado.
- */
-export async function sondaRecaudo(destino: { departamento: string; ciudad: string }, monto: number) {
-  const { baseUrl } = credenciales();
-  const [origen, destinoGeo] = await Promise.all([origenResuelto(), resolverUbicacion(destino.ciudad, destino.departamento)]);
-  const dest = ubicacion({ calle: 'Calle 1 # 1-1', geo: destinoGeo }, 'Cliente');
-  const base = { weight: 2, weightUnit: 'KG', lengthUnit: 'CM', dimensions: { length: 30, width: 20, height: 15 }, amount: 1, type: 'box', content: 'Plantas vivas', insurance: 0, declaredValue: monto };
-  const salida: Record<string, unknown> = { host: new URL(baseUrl).host, monto, resultados: [] as unknown[] };
-  for (const carrier of TRANSPORTADORAS) {
-    for (const conRecaudo of [false, true]) {
-      const paquete = conRecaudo ? { ...base, additionalServices: [{ service: 'cash_on_delivery', data: { amount: String(monto) } }] } : base;
-      try {
-        const r = await llamar<Array<Record<string, unknown>>>('/ship/rate/', { origin: origen, destination: dest, packages: [paquete], shipment: { carrier, type: 1 }, settings: { currency: 'COP' } }, 15_000);
-        (salida.resultados as unknown[]).push({
-          carrier, conRecaudo,
-          tarifas: (r ?? []).map((t) => ({
-            service: t.service, desc: t.serviceDescription, eta: t.deliveryEstimate, totalPrice: t.totalPrice, basePrice: t.basePrice,
-            additionalServices: t.additionalServices, additionalServicesTaxes: t.additionalServicesTaxes, taxes: t.taxes,
-            cashOnDeliveryCommission: t.cashOnDeliveryCommission, cashOnDeliveryAmount: t.cashOnDeliveryAmount,
-            costSummary: t.costSummary, claves: Object.keys(t).filter((k) => /cash|cod|recaud|additional/i.test(k)),
-          })),
-        });
-      } catch (error) {
-        (salida.resultados as unknown[]).push({ carrier, conRecaudo, error: (error as Error).message.slice(0, 300) });
-      }
-    }
-  }
-  return salida;
-}
-
 export const enviaProvider: ShippingProvider = {
   id: ID,
   label: 'Envia.com',
@@ -630,20 +598,29 @@ export const enviaProvider: ShippingProvider = {
       return [] as TarifaEnvia[];
     });
 
-    const servicioConRecaudo = new Map<string, string>();
+    // VERIFICADO contra la API real (2026-11-19): Envia devuelve `cashOnDeliveryCommission` en TODA cotización, en 0
+    // cuando no se pidió recaudo o el servicio no recauda. Solo una comisión > 0 prueba que el servicio recauda. La
+    // comisión ya trae IVA y está dominada por los mínimos de cada transportadora (≈ $4.760–$5.660 en un pedido de $70.000).
+    const conComision = new Map<string, { servicio: string; comision: number }>();
     for (const t of conRecaudo) {
-      if (t.cashOnDeliveryCommission == null && t.cashOnDeliveryAmount == null) continue;
-      servicioConRecaudo.set(claveServicio(t.carrier ?? '', t.service ?? ''), t.service ?? '');
+      const comision = Number(t.cashOnDeliveryCommission);
+      if (!Number.isFinite(comision) || comision <= 0) continue;
+      conComision.set(claveServicio(t.carrier ?? '', t.service ?? ''), { servicio: t.service ?? '', comision });
     }
 
     const capaces = candidatas
-      .filter((o) => servicioConRecaudo.has(claveServicio(o.carrierCode, o.serviceCode)))
-      .map((o) => ({
-        ...o,
-        serviceCode: servicioConRecaudo.get(claveServicio(o.carrierCode, o.serviceCode)) || o.serviceCode,
-        cashOnDeliveryAvailable: true,
-        cashOnDeliveryFee: env.shipping.codFeeFlat,
-      }));
+      .filter((o) => conComision.has(claveServicio(o.carrierCode, o.serviceCode)))
+      .map((o) => {
+        const recaudo = conComision.get(claveServicio(o.carrierCode, o.serviceCode))!;
+        return {
+          ...o,
+          serviceCode: recaudo.servicio || o.serviceCode,
+          cashOnDeliveryAvailable: true,
+          // Al cliente se le suma lo que cobra la transportadora por recaudar (redondeado hacia arriba a $100); el cargo
+          // fijo configurado es el piso, para que nunca quede por debajo de lo que el vivero paga.
+          cashOnDeliveryFee: Math.max(env.shipping.codFeeFlat, Math.ceil(recaudo.comision / 100) * 100),
+        };
+      });
 
     return frontera(capaces);
   },
