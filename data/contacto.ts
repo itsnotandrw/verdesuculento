@@ -20,9 +20,9 @@ export const CONTACTO = {
       id: 'envios',
       nombre: 'Centro de entregas Soacha',
       corto: 'Entregas Soacha',
-      direccion: 'Cl. 1 #10, Soacha, Cundinamarca',
-      mapa: 'https://maps.app.goo.gl/MqiZVGRsVHoixDKbA',
-      consulta: 'Vivero Verde Suculento, Cl. 1 #10, Soacha, Cundinamarca',
+      direccion: 'Calle 6 # 13-08, El Altico, Soacha, Cundinamarca',
+      mapa: 'https://maps.app.goo.gl/1UN8epcXbmNiHuJbA',
+      coords: { lat: 4.57534, lng: -74.223399 },
     },
     {
       id: 'produccion',

@@ -2608,6 +2608,22 @@ button.cc-card { cursor: none; font-family: inherit; }
 @keyframes riderlines { 0%, 100% { opacity: 0; transform: translateX(4px); } 50% { opacity: .7; transform: translateX(-1px); } }
 @media (prefers-reduced-motion: reduce) { .bb-rider svg, .bb-rider i { animation: none; } }
 
+/* Plantas recomendadas para la zona (selector de zona de cultivo) */
+.zona-plantas { margin-top: 14px; }
+.zona-plantas-t { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-dim); margin-bottom: 8px; }
+.zona-plantas-lista { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+.zona-planta { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; max-width: 220px; padding: 6px 12px 6px 6px; border: 1px solid var(--border-strong); border-radius: 999px; text-decoration: none; color: var(--fg); font-size: 12.5px; background: var(--bg-elev); }
+.zona-planta:hover { border-color: var(--accent); }
+.zona-planta-img { width: 30px; height: 30px; border-radius: 50%; background-size: cover; background-position: center; flex: none; }
+.zona-planta-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Etiqueta de clima en las tarjetas de producto */
+.product-clima { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.product-clima span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--fg-dim); }
+.product-clima span[data-clima='calido'] { border-color: color-mix(in oklab, #e0942c 60%, transparent); color: color-mix(in oklab, #e0942c 85%, var(--fg)); }
+.product-clima span[data-clima='frio'] { border-color: color-mix(in oklab, #2d6aa8 55%, transparent); color: color-mix(in oklab, #2d6aa8 85%, var(--fg)); }
+.chip[data-active='true'] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
 /* ===== Mapa plegable (papel arrugado que se despliega) ===== */
 .mp { position: relative; height: clamp(440px, 56vh, 560px); border-radius: var(--radius-lg); perspective: 1600px; }
 .mp-mapa { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; border: 1px solid var(--border-strong); background: var(--bg-elev); }

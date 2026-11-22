@@ -20,6 +20,8 @@ import { MISMO_DIA_MUNICIPIOS, TIEMPO_ENTREGA, MISMO_DIA_CORTE_TEXTO } from '@/d
 import { usePromo } from '@/context/PromoContext';
 import PrecioPromo from '@/components/PrecioPromo';
 import { Truck } from 'lucide-react';
+import AptitudZona from '@/components/AptitudZona';
+import { climasDe } from '@/lib/clima';
 
 interface Props {
   product: Product;
@@ -265,6 +267,8 @@ export default function ProductContent({ product, related, crossSell }: Props) {
               </div>
 
               {/* Entrega el mismo día (mensajería local) */}
+              {(product.altitud || climasDe(product).length > 0) && <AptitudZona altitud={product.altitud} climas={climasDe(product)} />}
+
               <div className="bb-delivery">
                 <span className="bb-rider" aria-hidden="true"><i /><i /><Truck size={18} /></span>
                 <span><strong>Llega hoy</strong> en {MISMO_DIA_MUNICIPIOS.join(', ')} si compras {MISMO_DIA_CORTE_TEXTO} <em>· hora de Bogotá</em></span>

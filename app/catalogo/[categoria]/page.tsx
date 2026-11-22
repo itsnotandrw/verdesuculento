@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CATEGORIES, formatCOP } from '@/data/catalog';
 import { getProductsByCategory } from '@/lib/catalog/store';
-import ProductCard from '@/components/ProductCard';
+import GrillaConClima from '@/components/GrillaConClima';
 
 interface Props {
   params: { categoria: string };
@@ -54,11 +54,7 @@ export default async function CategoryPage({ params }: Props) {
           ))}
         </div>
 
-        <div data-product-grid style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        <GrillaConClima products={products} />
       </div>
     </div>
   );

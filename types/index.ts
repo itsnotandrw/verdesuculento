@@ -12,6 +12,9 @@ export interface ProductSpecs {
   dificultad: string;
 }
 
+/** Clima de una planta: cálido, o «frío a templado». Puede tener los dos. */
+export type Clima = 'calido' | 'frio';
+
 export interface Product {
   id: string;
   name: string;
@@ -29,6 +32,10 @@ export interface Product {
   activo?: boolean;
   /** Peso y medidas del paquete para cotizar el envío (las pide la transportadora). Si falta, se usa el dato de Mercado Libre. */
   logistica?: ProductLogistics;
+  /** Altitud recomendada (metros sobre el nivel del mar). Sirve para recomendar la planta según la zona de cultivo del cliente. */
+  altitud?: { min: number; max: number };
+  /** Climas en los que se da la planta (los marca el administrador). Filtra el catálogo y recomienda por zona. */
+  climas?: Clima[];
 }
 
 export interface Category {

@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { CATEGORIES, CATEGORY_PHOTOS } from '@/data/catalog';
 import MapaEmbed from '@/components/MapaEmbed';
-import { precalentarMapas, urlAbrirMapa } from '@/lib/mapas';
+import { precalentarMapas } from '@/lib/mapas';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
+import { EVENTO_ZONA } from '@/hooks/useZonaCultivo';
 import { MUNICIPIOS, PISO_INFO, ZONA_KEY, cargarMunicipios, claveZona, masCercano, pisoDe, type Municipio } from '@/data/zonas';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -51,6 +52,7 @@ export default function ZoneSelector() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Municipio | null>(null);
+  const [plantas, setPlantas] = useState<{ id: string; name: string; price: number; image: string | null; exacta: boolean }[]>([]);
   const [todos, setTodos] = useState<Municipio[]>(MUNICIPIOS);
   const [activo, setActivo] = useState(0);
   const [pos, setPos] = useState({ top: 72, right: 16 });
@@ -119,11 +121,23 @@ export default function ZoneSelector() {
 
   useEffect(() => setActivo(0), [q]);
 
+  // Paso 3 («Ver mis plantas»): plantas concretas que se dan a la altitud del municipio elegido.
+  useEffect(() => {
+    if (paso !== 2 || !sel) { setPlantas([]); return; }
+    let vivo = true;
+    fetch(`/api/zona/plantas?msnm=${sel.msnm}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (vivo) setPlantas(d?.plantas ?? []); })
+      .catch(() => vivo && setPlantas([]));
+    return () => { vivo = false; };
+  }, [paso, sel]);
+
   const guardar = (m: Municipio | null) => {
     try {
       if (m) localStorage.setItem(ZONA_KEY, claveZona(m));
       else localStorage.removeItem(ZONA_KEY);
     } catch { /* sin storage */ }
+    window.dispatchEvent(new Event(EVENTO_ZONA));
   };
   const irA = (n: number) => { setDir(n >= paso ? 1 : -1); setPaso(Math.max(0, Math.min(PASOS.length - 1, n))); };
   const choose = (m: Municipio) => {
@@ -294,7 +308,6 @@ export default function ZoneSelector() {
                           <span>{sel.name}</span>
                           <div>
                             <button type="button" onClick={() => setSat((v) => !v)}>{sat ? 'Mapa' : 'Satélite'}</button>
-                            <a href={urlAbrirMapa(`${sel.lat},${sel.lng}`)} target="_blank" rel="noopener noreferrer">Abrir</a>
                           </div>
                         </div>
                       </div>
@@ -303,6 +316,7 @@ export default function ZoneSelector() {
                 )}
 
                 {paso === 2 && sel && info && (
+                  <>
                   <div className={`bento bento-plantas n-${Math.min(info.categorias.length, 4)}`}>
                     {info.categorias.map((id, i) => {
                       const c = CATEGORIES.find((x) => x.id === id);
@@ -321,6 +335,20 @@ export default function ZoneSelector() {
                       );
                     })}
                   </div>
+                  {plantas.length > 0 && (
+                    <div className="zona-plantas">
+                      <div className="zona-plantas-t">Plantas que se dan en {sel.name} ({sel.msnm.toLocaleString('es-CO')} msnm)</div>
+                      <div className="zona-plantas-lista">
+                        {plantas.map((p) => (
+                          <Link key={p.id} href={`/producto/${p.id}`} onClick={() => setOpen(false)} className="zona-planta">
+                            {p.image && <span className="zona-planta-img" style={{ backgroundImage: `url(${p.image})` }} />}
+                            <span className="zona-planta-n">{p.name}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  </>
                 )}
               </div>
             </div>

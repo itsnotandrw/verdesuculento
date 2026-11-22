@@ -17,7 +17,9 @@ import { useRouter } from 'next/navigation';
 import { CATEGORIES } from '@/data/catalog';
 import type { Product, ProductColor, ProductSpecs } from '@/types';
 import { urlImagen } from '@/lib/image-loader';
-import InteraccionInicio, { aplicarInteraccion, type SeleccionPuntos } from './InteraccionInicio';
+import AltitudRecomendada from './AltitudRecomendada';
+import InteraccionInicio, { aplicarInteraccion, type RangoAltitud, type SeleccionPuntos } from './InteraccionInicio';
+import type { Clima } from '@/types';
 
 const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: '', altura: '', dificultad: '' };
 
@@ -45,6 +47,8 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
   );
   const [stock, setStock] = useState(stockInicial === null || stockInicial === undefined ? '' : String(stockInicial));
   // Interacción en el inicio (punto en «Elige tu frutal por clima»): solo se guarda si el administrador la tocó.
+  const [altitud, setAltitud] = useState<RangoAltitud | null>(inicial?.altitud ?? null);
+  const [climas, setClimas] = useState<Clima[] | undefined>(inicial?.climas);
   const interaccion = useRef<SeleccionPuntos | null>(null);
   const yaCreado = useRef(false);
   const [peso, setPeso] = useState(inicial?.logistica ? String(inicial.logistica.weightGrams / 1000) : '');
@@ -84,6 +88,8 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
         activo,
         // Vacío = sin control de inventario (se vende sin límite). Con número, el sitio descuenta al vender.
         stock: stock.trim() === '' ? null : Number(stock),
+        altitud,
+        climas,
         description,
         specs,
         sizes: sizes.map((s) => s.trim()).filter(Boolean),
@@ -204,8 +210,13 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
           </p>
         </div>
 
+        <AltitudRecomendada valor={altitud} onChange={setAltitud} />
+
         <InteraccionInicio
           productId={inicial?.id ?? ''}
+          altitud={altitud}
+          climasIniciales={inicial?.climas}
+          onClimas={setClimas}
           nombre={name}
           imagen={images[0]}
           onCambio={(sel) => { interaccion.current = sel; }}

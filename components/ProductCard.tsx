@@ -14,6 +14,7 @@ import SoldCount from './SoldCount';
 import { usePromo } from '@/context/PromoContext';
 import PrecioPromo from '@/components/PrecioPromo';
 import type { Product } from '@/types';
+import { CLIMA_CORTO, climasDe } from '@/lib/clima';
 
 interface ProductCardProps {
   product: Product;
@@ -103,6 +104,11 @@ export default function ProductCard({ product, compact = false, discountPct: pct
                 <StarRating rating={rating.rating} count={rating.reviewCount} size={11} showValue />
               )}
               {!compact && rating && <SoldCount count={rating.soldCount} size={11} />}
+            </div>
+          )}
+          {climasDe(product).length > 0 && (
+            <div className="product-clima" aria-label="Clima">
+              {climasDe(product).map((c) => <span key={c} data-clima={c}>{CLIMA_CORTO[c]}</span>)}
             </div>
           )}
           {!compact && <div className="product-card-tag">{product.tagline}</div>}

@@ -68,6 +68,19 @@ export function parseProducto(body: Record<string, unknown>, idExistente?: strin
     };
   }
 
+  let altitud: Product['altitud'];
+  const al = body.altitud as Record<string, unknown> | null | undefined;
+  if (al && typeof al === 'object' && (al.min != null || al.max != null)) {
+    const min = entero(al.min, 'la altitud mínima (msnm)', 0, 5000);
+    const max = entero(al.max, 'la altitud máxima (msnm)', 0, 5000);
+    if (min > max) throw new ValidationError('La altitud mínima no puede ser mayor que la máxima.');
+    altitud = { min, max };
+  }
+
+  const climas = (Array.isArray(body.climas) ? body.climas : [])
+    .filter((c): c is 'calido' | 'frio' => c === 'calido' || c === 'frio')
+    .filter((c, i, a) => a.indexOf(c) === i);
+
   const badge = texto(body.badge, 'la insignia', { max: 40, requerido: false });
   const accent = texto(body.accent, 'el acento', { max: 40, requerido: false });
 
@@ -86,5 +99,7 @@ export function parseProducto(body: Record<string, unknown>, idExistente?: strin
     images,
     activo: body.activo !== false,
     ...(logistica ? { logistica } : {}),
+    ...(altitud ? { altitud } : {}),
+    ...(climas.length ? { climas } : {}),
   };
 }
