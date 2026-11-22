@@ -23,6 +23,10 @@
 import { getProductById } from '@/lib/catalog/store';
 import { aplicarCupon, precioProducto } from '@/lib/promo-precios';
 import { campanasVigentes } from '@/lib/promo-servidor';
+import { tomarCandado } from '@/lib/orders/candado';
+import { liberar as liberarInventario, reservar as reservarInventario } from '@/lib/inventario';
+import { toCents } from '@/lib/money';
+import { transaccionesPorReferencia, wompiProvider } from '@/lib/payments/providers/wompi';
 import { liberarUsoCupon, reservarUsoCupon } from '@/lib/promotions-store';
 import { getPromoConfig } from '@/lib/promotions-store';
 import { nuevaReferenciaPago, nuevaReferenciaPedido, nuevoOrderId } from '@/lib/ids';
@@ -53,6 +57,7 @@ export class OrderError extends Error {
       | 'pedido_no_encontrado'
       | 'estado_invalido'
       | 'almacenamiento_no_apto'
+      | 'sin_stock'
   ) {
     super(message);
     this.name = 'OrderError';
@@ -126,6 +131,7 @@ export async function crearPedido(
   let couponDiscount = 0;
   let cuponAplicado: { id: string; code: string; pct: number } | undefined;
   let usoCuponReservado = false;
+  let inventarioReservado = false;
   if (input.couponCode?.trim()) {
     const config = await getPromoConfig();
     const resultado = aplicarCupon(
@@ -239,6 +245,21 @@ export async function crearPedido(
     usoCuponReservado = true;
   }
 
+  // --- reserva atómica de inventario (solo productos con control). Se devuelve si el pedido no llega a crearse,
+  // y también si expira sin pagarse.
+  const reserva = await reservarInventario(lines.map((l) => ({ productId: l.productId, qty: l.qty })));
+  if (!reserva.ok) {
+    if (usoCuponReservado && cuponAplicado) await liberarUsoCupon(cuponAplicado.id);
+    const nombre = lines.find((l) => l.productId === reserva.productId)?.name ?? 'ese producto';
+    throw new OrderError(
+      reserva.disponible > 0
+        ? `Solo quedan ${reserva.disponible} unidad(es) de ${nombre}. Ajusta la cantidad e intenta de nuevo.`
+        : `${nombre} se agotó. Escríbenos por WhatsApp y te avisamos cuando haya de nuevo.`,
+      'sin_stock'
+    );
+  }
+  inventarioReservado = true;
+
   // --- intento de pago
   let intent: PaymentIntent;
   try {
@@ -280,6 +301,7 @@ export async function crearPedido(
   } catch (error) {
     // El pedido no llegó a existir: se devuelve el uso reservado del cupón
     if (usoCuponReservado && cuponAplicado) await liberarUsoCupon(cuponAplicado.id);
+    if (inventarioReservado) await liberarInventario(lines.map((l) => ({ productId: l.productId, qty: l.qty })));
     throw error;
   }
 
@@ -303,6 +325,21 @@ export async function crearPedido(
  * una factura duplicada con la transportadora.
  */
 export async function crearGuia(orderId: string, cashOnDelivery?: number): Promise<Order | null> {
+  // Candado por pedido: el webhook de la pasarela y el regreso del cliente llegan casi a la vez y ambos llegan
+  // aquí. El cerrojo de escritura solo protege el guardado; la COMPRA de la guía (que cuesta dinero) va antes.
+  const liberar = await tomarCandado(`guia:${orderId}`, 120);
+  if (!liberar) {
+    console.warn(`[orchestrator] ya se está generando la guía de ${orderId}; esta llamada no hace nada.`);
+    return orders.byId(orderId);
+  }
+  try {
+    return await crearGuiaConCandado(orderId, cashOnDelivery);
+  } finally {
+    await liberar();
+  }
+}
+
+async function crearGuiaConCandado(orderId: string, cashOnDelivery?: number): Promise<Order | null> {
   const pedido = await orders.byId(orderId);
   if (!pedido) return null;
 
@@ -605,6 +642,7 @@ export async function onPaymentWebhook(evento: {
   intentId: string;
   status: string;
   amount: number;
+  voided?: boolean;
 }): Promise<{ procesado: boolean; motivo?: string }> {
   const pedido = await orders.byPaymentReference(evento.reference);
   if (!pedido) return { procesado: false, motivo: 'referencia desconocida' };
@@ -613,10 +651,26 @@ export async function onPaymentWebhook(evento: {
     return { procesado: false, motivo: 'evento ya procesado' };
   }
 
+  // Anulación o rechazo DESPUÉS de haber aprobado: no se deshace nada solo (puede haber guía comprada), pero el
+  // pedido queda marcado para que una persona lo revise y el cliente no reciba mercancía sin que se haya cobrado.
+  if (pedido.payment.status === 'approved' && evento.status === 'declined') {
+    await orders.update(pedido.id, (order) => {
+      order.processedEventIds.push(evento.eventId);
+      order.alerta = evento.voided
+        ? 'Wompi ANULÓ el pago ya aprobado. Revisar si hay que cancelar el envío y reembolsar.'
+        : 'Wompi reporta el pago como rechazado después de aprobarlo. Revisar en el panel de Wompi.';
+      registrar(order, { type: 'pago_revertido', actor: 'webhook', message: order.alerta });
+      return order;
+    });
+    console.error(`[orchestrator] ALERTA: pago revertido en el pedido ${pedido.reference}.`);
+    return { procesado: true, motivo: 'pago revertido: marcado para revisión' };
+  }
+
   // El monto tiene que cuadrar. Un pago parcial no despacha.
   if (evento.status === 'approved' && evento.amount !== pedido.total) {
     await orders.update(pedido.id, (order) => {
       order.processedEventIds.push(evento.eventId);
+      order.alerta = `Se recibieron ${evento.amount.toLocaleString('es-CO')} COP y el pedido vale ${order.total.toLocaleString('es-CO')}.`;
       registrar(order, {
         type: 'pago_monto_no_coincide',
         actor: 'webhook',
@@ -628,16 +682,22 @@ export async function onPaymentWebhook(evento: {
   }
 
   await orders.update(pedido.id, (order) => {
-    order.processedEventIds.push(evento.eventId);
     order.payment.intentId = evento.intentId;
     return order;
   });
 
+  // Primero se aplica el efecto y DESPUÉS se marca el evento como procesado: si aprobar falla a la mitad, la
+  // pasarela reintenta y el evento no se descarta como "ya procesado" (aprobarPago es idempotente).
   if (evento.status === 'approved') {
     await aprobarPago(pedido.id, 'webhook');
   } else if (evento.status === 'declined') {
     await rechazarPago(pedido.id, 'webhook', 'La pasarela rechazó el pago.');
   }
+
+  await orders.update(pedido.id, (order) => {
+    if (!order.processedEventIds.includes(evento.eventId)) order.processedEventIds.push(evento.eventId);
+    return order;
+  });
 
   return { procesado: true };
 }
@@ -740,6 +800,62 @@ export async function marcarRecogido(orderId: string, quien: string): Promise<Or
 // -------------------------------------------------------------- expiración
 
 /**
+ * Pregunta a Wompi, con la llave privada, qué pasó con el pago de un pedido. A diferencia de `getStatus`, exige que
+ * la transacción aprobada sea de la referencia del pedido y por el monto EXACTO: un abono distinto no aprueba nada
+ * (queda como alerta para revisar a mano).
+ */
+async function estadoVerificadoWompi(pedido: Order): Promise<'approved' | 'declined' | 'pending' | 'monto'> {
+  const txs = await transaccionesPorReferencia(pedido.payment.reference);
+  const propias = txs.filter((t) => t.reference === pedido.payment.reference);
+  const aprobada = propias.find((t) => t.status === 'approved');
+  if (aprobada) return aprobada.amountInCents === toCents(pedido.total) ? 'approved' : 'monto';
+  if (propias.length > 0 && propias.every((t) => t.status === 'declined')) return 'declined';
+  return 'pending';
+}
+
+/**
+ * Red de seguridad contra webhooks perdidos: revisa los pedidos Wompi que siguen sin pago confirmado pasados unos
+ * minutos y los aprueba si Wompi dice que sí cobró. Se corre cada pocos minutos (instrumentation-node.ts) y también
+ * dentro del cron diario, para que un cliente que pagó y cerró la pestaña no espere horas por su guía.
+ */
+export async function conciliarWompiPendientes(): Promise<{ revisados: number; aprobados: number }> {
+  if (!wompiProvider.isConfigured()) return { revisados: 0, aprobados: 0 };
+  const lista = await orders.list({ limite: 300 });
+  const hace = Date.now() - 3 * 60_000;
+  const candidatos = lista.filter(
+    (o) =>
+      o.payment.method === 'WOMPI' &&
+      o.payment.status === 'pending' &&
+      new Date(o.createdAt).getTime() < hace &&
+      new Date(o.expiresAt).getTime() > Date.now()
+  );
+  let aprobados = 0;
+  for (const pedido of candidatos) {
+    try {
+      const estado = await estadoVerificadoWompi(pedido);
+      if (estado === 'approved') {
+        await aprobarPago(pedido.id, 'webhook');
+        aprobados++;
+      } else if (estado === 'monto') {
+        await marcarAlertaMonto(pedido.id);
+      }
+    } catch (error) {
+      console.error(`[orchestrator] no se pudo conciliar ${pedido.reference}:`, error);
+    }
+  }
+  return { revisados: candidatos.length, aprobados };
+}
+
+async function marcarAlertaMonto(orderId: string): Promise<void> {
+  await orders.update(orderId, (order) => {
+    if (order.alerta) return order;
+    order.alerta = 'Wompi cobró un monto distinto al del pedido. No se aprobó solo: revisar en el panel de Wompi.';
+    registrar(order, { type: 'pago_monto_no_coincide', actor: 'sistema', message: order.alerta });
+    return order;
+  });
+}
+
+/**
  * Expira los pedidos cuyo pago nunca llegó.
  *
  * Antes de expirar uno consulta el estado real en la pasarela: PSE puede
@@ -755,7 +871,14 @@ export async function expirarPendientes(): Promise<{ expirados: number; rescatad
     const proveedor = paymentProviderById(pedido.payment.provider);
     if (!proveedor.requiresManualVerification && proveedor.id !== 'cod' && pedido.payment.method !== 'COD') {
       try {
-        const estado = await proveedor.getStatus(pedido.payment.intentId ?? pedido.payment.reference);
+        const estado =
+          pedido.payment.method === 'WOMPI'
+            ? await estadoVerificadoWompi(pedido)
+            : await proveedor.getStatus(pedido.payment.intentId ?? pedido.payment.reference);
+        if (estado === 'monto') {
+          await marcarAlertaMonto(pedido.id);
+          continue; // no se expira: una persona debe mirarlo
+        }
         if (estado === 'approved') {
           await aprobarPago(pedido.id, 'webhook');
           rescatados++;
@@ -768,6 +891,7 @@ export async function expirarPendientes(): Promise<{ expirados: number; rescatad
       }
     }
 
+    await liberarInventario(pedido.lines.map((l) => ({ productId: l.productId, qty: l.qty })));
     await orders.update(pedido.id, (order) => {
       order.payment.status = 'expired';
       order.status = derivarEstado(order.payment, order.shipment);

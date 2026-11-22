@@ -1,8 +1,9 @@
 # Seguridad del admin — mapa para endurecerla después
 
-Estado actual: funcional, con login de un solo usuario (correo + contraseña con hash) y cookie de sesión firmada.
-El objetivo de este documento es que, cuando llegue el momento (IDP, 2FA, roles), el cambio se haga en pocos lugares
-y sin tocar las pantallas ni los endpoints de negocio.
+Estado actual (2026-11-21): login con **Better Auth** (`lib/auth.ts`): "Continuar con Google" y enlace mágico al correo (Resend), sin contraseñas.
+Lista blanca cerrada `ADMIN_EMAILS`, aplicada al enviar el enlace, al admitir al usuario (`user.validateUserInfo`) y en CADA petición
+(`sesionActual()`): quitar un correo corta su acceso al instante. Sesiones en Redis (7 días, sin caché de cookie: cerrar sesión las
+invalida ya). Cuando llegue Postgres basta añadir `database:` en `lib/auth.ts`.
 
 ## Dónde vive hoy la autenticación (los únicos 4 puntos)
 
@@ -10,16 +11,16 @@ y sin tocar las pantallas ni los endpoints de negocio.
 |---|---|---|
 | Páginas `/admin/*` | `middleware.ts` | Corta antes de renderizar: sin cookie válida → 307 a `/admin/login`. |
 | APIs `/api/admin/*` | `lib/api.ts` → `autorizarAdmin()` | Sesión de cookie, o `Authorization: Bearer ADMIN_API_TOKEN`. Devuelve 401/403/503. |
-| Sesión | `lib/admin/session.ts` | Crea y verifica el token `base64url({email,exp}).hmacSha256`. Dura 7 días. |
-| Login | `app/api/admin/login/route.ts` + `lib/admin/store.ts` | Verifica correo/contraseña (hash), historial de ingresos, límite de intentos. |
+| Sesión | `lib/auth.ts` + `lib/admin/session.ts` | Better Auth emite la cookie; `sesionActual()` la verifica y exige estar en `ADMIN_EMAILS`. |
+| Login | `app/api/auth/[...all]` + `app/admin/login` | Google y enlace mágico; historial de ingresos en `lib/admin/store.ts`. |
 
 Todo endpoint de negocio solo llama a `autorizarAdmin(request)` en su primera línea. Si se cambia por un IDP, basta con
 reemplazar la implementación de esas 4 piezas; el resto no se entera.
 
 ## Lista de pendientes para "buena seguridad" (en orden de valor)
 
-1. **IDP / SSO** (Google Workspace, Auth0, Clerk…): sustituir login+sesión; mantener el nombre `autorizarAdmin`.
-2. **2FA** (TOTP o llave de acceso) para el rol dueño.
+1. ~~IDP / SSO~~ HECHO (Google + enlace mágico con Better Auth).
+2. **2FA**: Google ya aporta el suyo; para el enlace mágico, valorar llaves de acceso (plugin passkey) cuando haya Postgres.
 3. **Roles**: `dueño` (todo), `operador` (pedidos, catálogo, promociones), `solo lectura`. Hoy todos los endpoints exigen
    "estar dentro"; añadir un segundo parámetro `autorizarAdmin(request, 'catalogo:escribir')`.
 4. **Quitar `ADMIN_API_TOKEN`** (token fijo) o limitarlo a integraciones concretas y rotarlo.

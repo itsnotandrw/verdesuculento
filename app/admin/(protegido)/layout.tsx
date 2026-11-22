@@ -18,7 +18,7 @@ import '../admin.css';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProtegidoLayout({ children }: { children: React.ReactNode }) {
-  if (!env.adminOpen && !sesionActual()) redirect('/admin/login');
+  if (!env.adminOpen && !(await sesionActual())) redirect('/admin/login');
 
   let pendientesVentas = 0;
   const avisos: Aviso[] = [];
@@ -26,7 +26,9 @@ export default async function AdminProtegidoLayout({ children }: { children: Rea
     const [lista, promos] = await Promise.all([orders.list({ limite: 300 }), getPromoConfig()]);
     const porVerificar = lista.filter((o) => o.status === 'payment_in_review').length;
     const porEnviar = lista.filter((o) => o.status === 'paid').length;
-    pendientesVentas = porVerificar + porEnviar;
+    const conAlerta = lista.filter((o) => o.alerta).length;
+    pendientesVentas = porVerificar + porEnviar + conAlerta;
+    if (conAlerta) avisos.push({ label: `${conAlerta} pedido(s) con una alerta de pago por revisar`, href: '/admin/pedidos' });
     if (porVerificar) avisos.push({ label: `${porVerificar} pago(s) por verificar`, href: '/admin/pedidos' });
     if (porEnviar) avisos.push({ label: `${porEnviar} pedido(s) pagados por enviar`, href: '/admin/pedidos' });
     const ahora = new Date();

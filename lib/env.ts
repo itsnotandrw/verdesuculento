@@ -142,14 +142,21 @@ export const env = {
   adminOpen: bool('ADMIN_DEV_OPEN', false) && process.env.NODE_ENV !== 'production',
 
   /**
-   * Login del panel /admin (navegador humano, no scripts). Los tres hacen
-   * falta juntos para que el login funcione — ver .env.example para cómo
-   * generar `ADMIN_PASSWORD_HASH` (con scrypt, no en texto plano) y
-   * `ADMIN_SESSION_SECRET` (openssl rand -hex 32).
+   * Login del panel /admin con Better Auth (lib/auth.ts): Google + enlace mágico al correo.
+   * Solo entran los correos de ADMIN_EMAILS (separados por coma): es la lista blanca CERRADA; cualquier otro
+   * correo, aunque tenga cuenta de Google, es rechazado. Quitar un correo de la lista cierra su acceso al instante.
    */
-  adminEmail: str('ADMIN_EMAIL'),
-  adminPasswordHash: str('ADMIN_PASSWORD_HASH'),
-  adminSessionSecret: str('ADMIN_SESSION_SECRET'),
+  adminEmails: (process.env.ADMIN_EMAILS ?? '')
+    .split(/[,;\s]+/)
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
+  /** Secreto de Better Auth (openssl rand -hex 32). Obligatorio en producción. */
+  authSecret: str('BETTER_AUTH_SECRET'),
+  googleClientId: str('GOOGLE_CLIENT_ID'),
+  googleClientSecret: str('GOOGLE_CLIENT_SECRET'),
+  /** Correo del enlace mágico, vía Resend (https://resend.com). `RESEND_FROM`: "Verde Suculento <acceso@tudominio.com>". */
+  resendApiKey: str('RESEND_API_KEY'),
+  resendFrom: str('RESEND_FROM'),
 
   /**
    * Secreto que debe traer el header `Authorization: Bearer` de quien llame

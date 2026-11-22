@@ -10,7 +10,7 @@ import { mlConfigurado, sincronizarConML } from '@/lib/ml-sync';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {

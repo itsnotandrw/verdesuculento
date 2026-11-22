@@ -57,6 +57,7 @@ interface Pedido {
   aprobadoEn?: string;
   verificadoPor?: string;
   nota?: string;
+  alerta?: string | null;
   envio: {
     carrier: string;
     service: string;
@@ -241,6 +242,7 @@ export default function AdminOrders() {
             return (
               <div key={pedido.id} className="pay-panel" style={{ padding: 20 }}>
                 <button
+                  className="ped-row"
                   onClick={() => setAbierto(expandido ? null : pedido.id)}
                   style={{ width: '100%', textAlign: 'left', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', cursor: 'none' }}
                   aria-expanded={expandido}
@@ -252,14 +254,25 @@ export default function AdminOrders() {
                   )}
                   <span className="mono" style={{ fontSize: 13, fontWeight: 600, flexShrink: 0 }}>{pedido.reference}</span>
                   <span className="status-pill" data-tone={TONO[pedido.status] ?? 'wait'}>{pedido.statusLabel}</span>
-                  <span style={{ fontSize: 13, color: 'var(--fg-dim)', minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {pedido.alerta && <span className="status-pill" data-tone="bad">Revisar</span>}
+                  <span className="ped-info" style={{ fontSize: 13, color: 'var(--fg-dim)', minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pedido.cliente} · {pedido.destino}
                   </span>
-                  <span className="mono" style={{ fontSize: 14, flexShrink: 0 }}>{formatCOP(pedido.total)}</span>
+                  <span className="mono ped-total" style={{ fontSize: 14, flexShrink: 0 }}>{formatCOP(pedido.total)}</span>
                 </button>
 
                 {expandido && (
                   <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+                    {pedido.alerta && (
+                      <div className="admin-alerta" role="alert" style={{ marginBottom: 16 }}>
+                        <b>Requiere revisión:</b> {pedido.alerta}
+                        <div style={{ marginTop: 10 }}>
+                          <button className="btn btn-primary btn-sm" disabled={trabajando} onClick={() => accionar(pedido, 'resolver-alerta')}>
+                            Ya lo revisé
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="admin-detalle">
                       <Dato etiqueta="Referencia de pago" valor={pedido.pagoReferencia} mono />
                       <Dato etiqueta="Método" valor={pedido.metodo} />

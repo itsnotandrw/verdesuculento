@@ -6,11 +6,12 @@
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok } from '@/lib/api';
 import { catalogoEditable, getAllProducts, upsertProduct } from '@/lib/catalog/store';
 import { parseProducto } from '@/lib/catalog/validar';
+import { fijarStock, leerStock } from '@/lib/inventario';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -38,7 +39,9 @@ export async function POST(request: Request) {
       return fail(`Ya existe un producto con el id "${producto.id}".`, 409);
     }
 
+    const stock = leerStock(body.stock);
     await upsertProduct(producto);
+    if (stock !== undefined) await fijarStock(producto.id, stock);
     return ok({ product: producto }, 201);
   } catch (error) {
     if (error instanceof ValidationError) return fail(error.message, 422);

@@ -252,7 +252,7 @@ export default function CatalogAdmin() {
                 const q = calidad(p);
                 return (
                   <tr key={p.id} className={sel.has(p.id) ? 'sel' : ''} style={{ opacity: p.activo === false ? .6 : 1 }}>
-                    <td><input type="checkbox" checked={sel.has(p.id)} onChange={() => setSel((s) => { const n = new Set(s); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })} aria-label={`Seleccionar ${p.name}`} /></td>
+                    <td className="adm-cell-sel"><input type="checkbox" checked={sel.has(p.id)} onChange={() => setSel((s) => { const n = new Set(s); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })} aria-label={`Seleccionar ${p.name}`} /></td>
                     <td>
                       <div className="adm-prod">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -286,7 +286,7 @@ export default function CatalogAdmin() {
                         <span className={`adm-badge ${p.activo === false ? 'bad' : 'ok'}`}>{p.activo === false ? 'Pausada' : 'Activa'}</span>
                       </label>
                     </td>
-                    <td style={{ position: 'relative' }}>
+                    <td className="adm-cell-menu" style={{ position: 'relative' }}>
                       <button className="adm-x" aria-label="Más opciones" onClick={(e) => {
                         e.stopPropagation();
                         const r = e.currentTarget.getBoundingClientRect();

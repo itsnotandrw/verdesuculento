@@ -23,9 +23,11 @@ const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: 
 interface Props {
   modo: 'crear' | 'editar';
   inicial?: Product;
+  /** Unidades disponibles guardadas; null/ausente = sin control de inventario. */
+  stockInicial?: number | null;
 }
 
-export default function ProductForm({ modo, inicial }: Props) {
+export default function ProductForm({ modo, inicial, stockInicial }: Props) {
   const router = useRouter();
   const [id, setId] = useState(inicial?.id ?? '');
   const [name, setName] = useState(inicial?.name ?? '');
@@ -40,6 +42,7 @@ export default function ProductForm({ modo, inicial }: Props) {
   const [colors, setColors] = useState<ProductColor[]>(
     inicial?.colors?.length ? inicial.colors : [{ name: '', hex: '#7a9a8a' }]
   );
+  const [stock, setStock] = useState(stockInicial === null || stockInicial === undefined ? '' : String(stockInicial));
   const [peso, setPeso] = useState(inicial?.logistica ? String(inicial.logistica.weightGrams / 1000) : '');
   const [largo, setLargo] = useState(inicial?.logistica ? String(inicial.logistica.lengthCm) : '');
   const [ancho, setAncho] = useState(inicial?.logistica ? String(inicial.logistica.widthCm) : '');
@@ -75,6 +78,8 @@ export default function ProductForm({ modo, inicial }: Props) {
         price: Number(price),
         badge: badge.trim() || undefined,
         activo,
+        // Vacío = sin control de inventario (se vende sin límite). Con número, el sitio descuenta al vender.
+        stock: stock.trim() === '' ? null : Number(stock),
         description,
         specs,
         sizes: sizes.map((s) => s.trim()).filter(Boolean),
@@ -172,6 +177,15 @@ export default function ProductForm({ modo, inicial }: Props) {
               Visible en la tienda
             </label>
           </div>
+        </div>
+
+        <div>
+          <label className="checkout-label" htmlFor="p-stock">Unidades disponibles (vacío = sin control)</label>
+          <input id="p-stock" className="checkout-input" inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="ej. 25" style={{ maxWidth: 220 }} />
+          <p style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: 6 }}>
+            Con un número, cada pedido descuenta unidades y el sitio deja de vender al llegar a 0. Si el pedido vence sin pagarse, las unidades regresan.
+            Si también vendes por Mercado Libre, mantén este número al día a mano.
+          </p>
         </div>
 
         <div>

@@ -137,9 +137,9 @@ export async function limitarPeticion(request: Request, nombre: NombreLimite): P
  * abierto: un endpoint que marca pedidos como pagados no puede tener
  * autenticación opcional.
  */
-export function autorizarAdmin(request: Request): NextResponse | null {
+export async function autorizarAdmin(request: Request): Promise<NextResponse | null> {
   if (env.adminOpen) return null; // solo desarrollo (ver lib/env.ts)
-  const sesion = sesionActual();
+  const sesion = await sesionActual();
   if (sesion) return null;
 
   if (env.adminToken) {
@@ -152,7 +152,7 @@ export function autorizarAdmin(request: Request): NextResponse | null {
     }
   }
 
-  const loginConfigurado = Boolean(env.adminEmail && env.adminPasswordHash && env.adminSessionSecret);
+  const loginConfigurado = Boolean(env.adminEmails.length && env.authSecret);
   if (!env.adminToken && !loginConfigurado) {
     return fail(
       'El panel no está habilitado: falta configurar el login (ver .env.example) o ADMIN_API_TOKEN.',

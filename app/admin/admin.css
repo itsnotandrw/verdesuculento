@@ -286,6 +286,68 @@
   .adm-kpi { border-right: 0; border-bottom: 1px solid var(--a-line); }
   .adm-kpi:last-child { border-bottom: 0; }
 }
+/* ── Celular: tablas como tarjetas, toques cómodos, filas de pedidos apiladas ── */
+@media (max-width: 700px) {
+  .adm-main { padding: 18px 14px 56px; }
+  .adm-header { padding: 0 12px; gap: 10px; }
+  .adm-tabs { padding: 0 8px; }
+  .adm-pagehead { align-items: stretch; }
+  .adm-pagehead .adm-btn { flex: 1 1 auto; }
+
+  /* Tabla → tarjeta */
+  .adm-tablewrap { overflow-x: visible; }
+  .adm-table { min-width: 0 !important; display: block; }
+  .adm-table thead { display: none; }
+  .adm-table tbody { display: block; }
+  .adm-table tbody tr { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-bottom: 1px solid var(--a-line); position: relative; }
+  .adm-table tbody tr:last-child { border-bottom: 0; }
+  .adm-table td { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0; border: 0; flex-wrap: wrap; }
+  .adm-table td[data-l]::before { content: attr(data-l); color: var(--a-mute); font-size: 12px; font-weight: 600; flex: none; }
+  .adm-table td:has(.adm-prod)::before { display: none; }
+  .adm-table td:has(.adm-prod) { display: block; padding-right: 76px; }
+  .adm-prod { min-width: 0; }
+  /* checkbox y menú ⋮ del catálogo: arriba a la derecha de la tarjeta */
+  .adm-table td.adm-cell-sel { position: absolute; top: 14px; right: 52px; width: 28px; height: 28px; justify-content: center; }
+  .adm-table td.adm-cell-sel input { width: 20px; height: 20px; }
+  .adm-table td.adm-cell-menu { position: absolute !important; top: 8px; right: 8px; padding: 0; }
+  /* acciones al final de la fila (editar / duplicar / borrar) */
+  .adm-table td:last-child:not([data-l]):not(.adm-cell-menu):not([colspan]) { justify-content: flex-end; }
+  .adm-table td[colspan] { display: block; }
+
+  /* Toques de 40 px */
+  .adm-btn { height: 42px; }
+  .adm-btn.sm { height: 38px; }
+  .adm-x { width: 40px; height: 40px; }
+  .adm-chip { height: 38px; }
+  .adm-seg button { height: 36px; }
+  .adm-input, .adm-select { height: 44px; font-size: 16px; } /* 16 px evita el zoom automático de iOS al enfocar */
+  .adm-textarea { font-size: 16px; }
+  .adm .checkout-input, .adm select.checkout-input { font-size: 16px; min-height: 44px; }
+  .adm .btn { min-height: 42px; }
+  .adm-bulk { padding: 12px; }
+  .adm-bulk .adm-spacer { margin-left: 0; }
+
+  /* Ventanas: casi a pantalla completa, pie pegado abajo */
+  .adm-modalbg { padding: 0; place-items: end center; }
+  .adm-modal, .adm-modal.wide { width: 100%; border-radius: 16px 16px 0 0; max-height: 92vh; display: flex; flex-direction: column; }
+  .adm-modal-b { max-height: none; flex: 1; overflow-y: auto; padding: 16px; }
+  .adm-modal-h, .adm-modal-f { padding: 14px 16px; }
+  .adm-modal-f { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+  .adm-toasts { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
+  .adm-toast { min-width: 0; max-width: none; }
+  .adm-menu { max-width: calc(100vw - 24px); }
+
+  /* Pedidos: número + estado arriba, cliente en su propia línea, total a la derecha */
+  .ped-row .ped-info { flex: 1 1 100% !important; order: 5; min-width: 100% !important; white-space: normal !important; overflow: visible !important; line-height: 1.35; }
+  .ped-row .ped-total { order: 6; margin-left: auto; font-size: 15px !important; }
+  .adm .pay-panel { padding: 14px !important; }
+  .adm-cal { gap: 3px; padding: 0 10px 14px; }
+  .adm-task { padding: 14px; }
+  .adm-kpi { padding: 14px 16px; }
+}
+@media (max-width: 380px) {
+  .adm-brand span { display: none; }
+}
 @media (prefers-reduced-motion: reduce) { .adm * { animation: none !important; transition: none !important; } }
 
 /* ── Compatibilidad: las pantallas heredadas (Ventas, Preferencias, formulario de producto) usan las

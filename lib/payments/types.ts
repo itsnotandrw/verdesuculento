@@ -57,6 +57,8 @@ export interface PaymentWebhookEvent {
   status: PaymentStatus;
   amount: number;
   occurredAt: string;
+  /** La pasarela ANULÓ la transacción (distinto de un simple rechazo). */
+  voided?: boolean;
 }
 
 export class PaymentNotConfiguredError extends Error {

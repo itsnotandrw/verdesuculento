@@ -11,7 +11,7 @@ import { orders } from '@/lib/orders/store';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
   try {
     const [productos, promociones, pedidos] = await Promise.all([getAllProducts(true), getPromoConfig(), orders.list({ limite: 5000 })]);

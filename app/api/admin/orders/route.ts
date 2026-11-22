@@ -52,6 +52,7 @@ function resumen(order: Order) {
     aprobadoEn: order.payment.approvedAt,
     verificadoPor: order.payment.verifiedBy,
     nota: order.payment.notes,
+    alerta: order.alerta ?? null,
     envio: order.shipment
       ? {
           carrier: order.shipment.carrier,
@@ -83,7 +84,7 @@ function resumen(order: Order) {
 }
 
 export async function GET(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -107,7 +108,7 @@ export async function GET(request: Request) {
     ).length;
 
     return ok({
-      resumen: { total: lista.length, porVerificar, pagadosSinGuia, recaudosPendientes },
+      resumen: { total: lista.length, porVerificar, pagadosSinGuia, recaudosPendientes, conAlerta: lista.filter((o) => o.alerta).length },
       // Diagnóstico: si el almacenamiento no es apto, el checkout está
       // rechazando pedidos y el operador tiene que enterarse aquí, no por un
       // cliente molesto.

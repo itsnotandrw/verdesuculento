@@ -80,6 +80,27 @@ export default function AdminShell({ children, avisos, pendientesVentas }: Props
 
   useEffect(() => { setDrawer(false); setPalette(false); }, [pathname]);
 
+  // En celular las tablas se muestran como tarjetas (ver admin.css): cada celda lleva el nombre de su columna en data-l.
+  // Se hace aquí, una sola vez para todas las tablas, y se repite cuando la tabla cambia (filtros, páginas, carga).
+  useEffect(() => {
+    const marcar = () => {
+      document.querySelectorAll('table.adm-table').forEach((t) => {
+        const cab = Array.from(t.querySelectorAll('thead th')).map((h) => (h.textContent ?? '').trim());
+        t.querySelectorAll('tbody tr').forEach((tr) => {
+          Array.from(tr.children).forEach((td, i) => {
+            if (cab[i] && td.getAttribute('data-l') !== cab[i]) td.setAttribute('data-l', cab[i]);
+          });
+        });
+      });
+    };
+    marcar();
+    const main = document.querySelector('.adm-main');
+    if (!main) return;
+    const mo = new MutationObserver(marcar);
+    mo.observe(main, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [pathname]);
+
   const isOn = (href: string, exact?: boolean) => (exact ? pathname === href : pathname.startsWith(href));
 
   const comandos = [
@@ -93,7 +114,7 @@ export default function AdminShell({ children, avisos, pendientesVentas }: Props
   const abrir = useCallback((href: string) => { setPalette(false); setQ(''); router.push(href); }, [router]);
 
   const salir = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => undefined);
+    await fetch('/api/auth/sign-out', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => undefined);
     router.push('/admin/login');
   };
 
@@ -102,7 +123,7 @@ export default function AdminShell({ children, avisos, pendientesVentas }: Props
   return (
     <div className="adm" data-adm-theme={theme}>
       <header className="adm-header">
-        <button className="adm-hbtn adm-burger" aria-label="Abrir menú" onClick={() => setDrawer(true)} style={{ display: 'none', padding: 0, width: 36, justifyContent: 'center' }}>
+        <button className="adm-hbtn adm-burger" aria-label="Abrir menú" onClick={() => setDrawer(true)} style={{ padding: 0, width: 36, justifyContent: 'center' }}>
           <Menu size={20} />
         </button>
         <Link href="/admin" className="adm-brand">

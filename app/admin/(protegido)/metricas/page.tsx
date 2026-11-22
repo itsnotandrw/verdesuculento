@@ -61,8 +61,8 @@ export default async function MetricasPage() {
           <h2 className="adm-h2" style={{ marginBottom: 12 }}>Productos más vendidos (histórico)</h2>
           <div style={{ display: 'grid', gap: 12 }}>
             {top.map(({ p, vendidos }) => (
-              <div key={p.id}>
-                <div className="adm-row" style={{ justifyContent: 'space-between', fontSize: 13 }}><span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{p.name}</span><b>{vendidos}</b></div>
+              <div key={p.id} style={{ minWidth: 0 }}>
+                <div className="adm-row" style={{ justifyContent: 'space-between', fontSize: 13, flexWrap: 'nowrap' }}><span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{p.name}</span><b>{vendidos}</b></div>
                 <div style={{ height: 8, borderRadius: 4, background: 'var(--a-line)', overflow: 'hidden', marginTop: 4 }}><div style={{ width: `${(vendidos / maxV) * 100}%`, height: '100%', background: 'var(--a-accent)' }} /></div>
               </div>
             ))}

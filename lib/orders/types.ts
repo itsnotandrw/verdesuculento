@@ -193,6 +193,8 @@ export interface Order {
 
   /** Ids de webhook ya procesados. Base de la idempotencia. */
   processedEventIds: string[];
+  /** Algo raro que una persona debe revisar (pago anulado, monto distinto…). Se ve en rojo en el panel. */
+  alerta?: string;
 }
 
 export interface CreateOrderInput {

@@ -18,16 +18,16 @@ import {
   rechazarPago,
   reintentarPago,
 } from '@/lib/orders/orchestrator';
-import { orders } from '@/lib/orders/store';
+import { orders, registrar } from '@/lib/orders/store';
 import { etiquetaEstadoPedido } from '@/lib/orders/types';
 
 export const dynamic = 'force-dynamic';
 
-const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido'] as const;
+const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido', 'resolver-alerta'] as const;
 type Accion = (typeof ACCIONES)[number];
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -79,6 +79,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
       case 'conciliar':
         resultado = await conciliarRecaudo(pedido.id, quien);
+        break;
+
+      case 'resolver-alerta':
+        // Una persona ya revisó el aviso (pago anulado, monto distinto…): se quita de la lista de pendientes.
+        resultado = await orders.update(pedido.id, (order) => {
+          if (!order.alerta) return order;
+          registrar(order, { type: 'alerta_resuelta', actor: 'admin', message: `${quien} revisó la alerta: ${order.alerta}` });
+          order.alerta = undefined;
+          return order;
+        });
         break;
 
       case 'marcar-recogido':

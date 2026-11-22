@@ -11,7 +11,7 @@ import { catalogoEditable, modificarCatalogo } from '@/lib/catalog/store';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {

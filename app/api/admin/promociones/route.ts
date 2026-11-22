@@ -162,7 +162,7 @@ function parseConfig(body: Raw): PromoConfig {
 }
 
 export async function GET(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
   try {
     return ok({ config: await getPromoConfig(), editable: promosEditables() });
@@ -172,7 +172,7 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
   try {
     if (!promosEditables()) return fail('Las promociones son de solo lectura: falta configurar REDIS_URL.', 503);

@@ -6,7 +6,7 @@ import { redis } from '@/lib/redis';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
   try {
     if (!redis) return ok({ errores: [] });

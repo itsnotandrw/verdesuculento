@@ -20,7 +20,7 @@ function campo(info: string, nombre: string): string | undefined {
 }
 
 export async function GET(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
   try {
     const salida: Record<string, unknown> = {

@@ -215,6 +215,19 @@ export async function consultarTransaccion(id: string): Promise<{ status: Paymen
   return { status: ESTADOS[t.status] ?? 'pending', reference: t.reference, amountInCents: t.amount_in_cents, method: t.payment_method_type };
 }
 
+/** Todas las transacciones de Wompi de una referencia de pago, con su monto (para conciliar sin confiar en nada del navegador). */
+export async function transaccionesPorReferencia(
+  referencia: string
+): Promise<Array<{ id: string; status: PaymentStatus; reference: string; amountInCents: number }>> {
+  const lista = await llamar<TransaccionWompi[]>(`/transactions?reference=${encodeURIComponent(referencia)}`);
+  return (Array.isArray(lista) ? lista : []).map((t) => ({
+    id: t.id,
+    status: ESTADOS[t.status] ?? 'pending',
+    reference: t.reference,
+    amountInCents: t.amount_in_cents,
+  }));
+}
+
 export const wompiProvider: PaymentProvider = {
   id: ID,
   label: 'Wompi',
@@ -401,6 +414,7 @@ export const wompiProvider: PaymentProvider = {
       intentId: transaccion.id,
       status: ESTADOS[transaccion.status] ?? 'pending',
       amount: Math.round(transaccion.amount_in_cents / 100),
+      voided: transaccion.status === 'VOIDED',
       occurredAt: evento.sent_at ?? new Date().toISOString(),
     };
   },

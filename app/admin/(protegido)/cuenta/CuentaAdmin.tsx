@@ -13,14 +13,6 @@ interface Acceso {
 export default function CuentaAdmin() {
   const router = useRouter();
   const [accesos, setAccesos] = useState<Acceso[]>([]);
-  const [editable, setEditable] = useState(true);
-
-  const [actual, setActual] = useState('');
-  const [nueva, setNueva] = useState('');
-  const [confirmar, setConfirmar] = useState('');
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [exito, setExito] = useState<string | null>(null);
 
   const cargarHistorial = useCallback(async () => {
     const respuesta = await fetch('/api/admin/login-history', { cache: 'no-store' });
@@ -31,7 +23,6 @@ export default function CuentaAdmin() {
     const datos = await respuesta.json();
     if (respuesta.ok) {
       setAccesos(datos.accesos ?? []);
-      setEditable(Boolean(datos.passwordEditable));
     }
   }, [router]);
 
@@ -39,84 +30,18 @@ export default function CuentaAdmin() {
     cargarHistorial();
   }, [cargarHistorial]);
 
-  const cambiarPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setExito(null);
-
-    if (nueva !== confirmar) {
-      setError('La confirmación no coincide con la contraseña nueva.');
-      return;
-    }
-
-    setGuardando(true);
-    try {
-      const respuesta = await fetch('/api/admin/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword: actual, newPassword: nueva }),
-      });
-      const datos = await respuesta.json();
-      if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo cambiar la contraseña.');
-      setExito('Contraseña actualizada.');
-      setActual('');
-      setNueva('');
-      setConfirmar('');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cambiar la contraseña.');
-    } finally {
-      setGuardando(false);
-    }
-  };
-
   return (
     <div style={{ paddingTop: 20, paddingBottom: 80 }}>
       <div className="eyebrow" style={{ marginBottom: 10 }}>PANEL INTERNO</div>
       <h1 className="display" style={{ fontSize: 'clamp(28px, 5vw, 42px)', marginBottom: 28 }}>Cuenta</h1>
 
-      <div style={{ maxWidth: 440, marginBottom: 56 }}>
-        <div className="checkout-label" style={{ marginBottom: 14 }}>Cambiar contraseña</div>
-
-        {!editable && (
-          <div className="admin-alerta" role="alert" style={{ marginBottom: 20 }}>
-            Falta configurar Redis (REDIS_URL) — sin eso, la contraseña
-            solo se puede cambiar actualizando ADMIN_PASSWORD_HASH directo en Railway.
-          </div>
-        )}
-
-        <form onSubmit={cambiarPassword} style={{ display: 'grid', gap: 16 }}>
-          <div>
-            <label className="checkout-label" htmlFor="c-actual">Contraseña actual</label>
-            <input
-              id="c-actual" type="password" className="checkout-input"
-              value={actual} onChange={(e) => setActual(e.target.value)}
-              autoComplete="current-password" required disabled={!editable}
-            />
-          </div>
-          <div>
-            <label className="checkout-label" htmlFor="c-nueva">Contraseña nueva (mínimo 10 caracteres)</label>
-            <input
-              id="c-nueva" type="password" className="checkout-input"
-              value={nueva} onChange={(e) => setNueva(e.target.value)}
-              autoComplete="new-password" minLength={10} required disabled={!editable}
-            />
-          </div>
-          <div>
-            <label className="checkout-label" htmlFor="c-confirmar">Confirmar contraseña nueva</label>
-            <input
-              id="c-confirmar" type="password" className="checkout-input"
-              value={confirmar} onChange={(e) => setConfirmar(e.target.value)}
-              autoComplete="new-password" required disabled={!editable}
-            />
-          </div>
-
-          {error && <p style={{ fontSize: 13, color: '#ef4444' }}>{error}</p>}
-          {exito && <p style={{ fontSize: 13, color: 'var(--accent)' }}>{exito}</p>}
-
-          <button className="btn btn-primary" disabled={guardando || !editable} style={{ justifyContent: 'center' }}>
-            {guardando ? 'Guardando…' : 'Cambiar contraseña'}
-          </button>
-        </form>
+      <div style={{ maxWidth: 520, marginBottom: 48 }}>
+        <div className="checkout-label" style={{ marginBottom: 10 }}>Cómo se entra al panel</div>
+        <p style={{ color: 'var(--fg-dim)', fontSize: 13.5, lineHeight: 1.6 }}>
+          El acceso es con Google o con un enlace que llega al correo; no hay contraseñas que recordar ni cambiar. Solo
+          entran los correos autorizados. Para dar o quitar acceso a alguien se edita la lista de administradores
+          (<span className="mono">ADMIN_EMAILS</span>) en Railway: el cambio corta o abre el acceso de inmediato.
+        </p>
       </div>
 
       <div>

@@ -23,14 +23,15 @@ import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { autorizarAdmin, fail, fallo, ok } from '@/lib/api';
 import { env } from '@/lib/env';
-import { expirarPendientes } from '@/lib/orders/orchestrator';
+import { conciliarWompiPendientes, expirarPendientes } from '@/lib/orders/orchestrator';
 
 export const dynamic = 'force-dynamic';
 
 async function correr() {
   try {
+    const conciliados = await conciliarWompiPendientes();
     const resultado = await expirarPendientes();
-    return ok({ ...resultado, corridoEn: new Date().toISOString() });
+    return ok({ ...resultado, conciliados, corridoEn: new Date().toISOString() });
   } catch (error) {
     return fallo(error, 'expirar pedidos');
   }
@@ -54,7 +55,7 @@ function autorizarCron(request: Request): NextResponse | null {
 }
 
 export async function POST(request: Request) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
   return correr();
 }

@@ -8,6 +8,7 @@
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok } from '@/lib/api';
 import { catalogoEditable, deleteProduct, getProductById, upsertProduct } from '@/lib/catalog/store';
 import { parseProducto } from '@/lib/catalog/validar';
+import { fijarStock, leerStock } from '@/lib/inventario';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ interface Params {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -29,7 +30,9 @@ export async function PATCH(request: Request, { params }: Params) {
 
     const body = await cuerpo(request, 600_000);
     const producto = parseProducto(body, params.id);
+    const stock = leerStock(body.stock);
     await upsertProduct(producto);
+    if (stock !== undefined) await fijarStock(producto.id, stock);
     return ok({ product: producto });
   } catch (error) {
     if (error instanceof ValidationError) return fail(error.message, 422);
@@ -38,7 +41,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
-  const noAutorizado = autorizarAdmin(request);
+  const noAutorizado = await autorizarAdmin(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -50,6 +53,7 @@ export async function DELETE(request: Request, { params }: Params) {
     if (!existente) return fail('Ese producto no existe.', 404);
 
     await deleteProduct(params.id);
+    await fijarStock(params.id, null);
     return ok({ ok: true });
   } catch (error) {
     return fallo(error, 'DELETE /api/admin/products/[id]');
