@@ -13,10 +13,11 @@
  */
 
 import { betterAuth } from 'better-auth';
-import { createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { magicLink } from 'better-auth/plugins';
 import { env } from '@/lib/env';
 import { redis } from '@/lib/redis';
+import { limitar } from '@/lib/ratelimit';
 import { registrarIntentoLogin } from '@/lib/admin/store';
 import { enviarEnlaceMagico } from '@/lib/admin/correo';
 
@@ -83,8 +84,7 @@ function almacen() {
   };
 }
 
-const ipDeCtx = (headers?: Headers | null) =>
-  headers?.get('x-real-ip') ?? headers?.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'desconocida';
+const ipDeCtx = (headers?: Headers | null) => headers?.get('x-real-ip') ?? 'desconocida';
 
 function crear() {
   return betterAuth({
@@ -134,9 +134,17 @@ function crear() {
       before: createAuthMiddleware(async (ctx) => {
         // Enlace mágico: a un correo fuera de la lista NO se le manda nada, pero la respuesta es idéntica (no se
         // revela quién es administrador).
+        const demasiados = () => new APIError('TOO_MANY_REQUESTS', { message: 'Demasiados intentos. Espera unos minutos.' });
+        const ip = ipDeCtx(ctx.headers);
+        if (ctx.path === '/sign-in/social' && !(await limitar('admin-social', ip))) throw demasiados();
+        if (ctx.path.startsWith('/magic-link/verify') && !(await limitar('admin-verificar', ip))) throw demasiados();
+
         if (ctx.path === '/sign-in/magic-link') {
           const correo = (ctx.body as { email?: unknown } | undefined)?.email;
+          if (!(await limitar('admin-enlace-ip', ip))) throw demasiados();
           if (!esCorreoAdmin(correo)) {
+            // Quien insiste con correos ajenos queda bloqueado un rato, aunque cambie de correo en cada intento.
+            if (!(await limitar('admin-intruso', ip))) throw demasiados();
             console.warn(`[admin] enlace mágico NO enviado (correo fuera de la lista): ${String(correo).slice(0, 80)}`);
             await registrarIntentoLogin({
               email: String(correo ?? '').slice(0, 160),
@@ -145,6 +153,7 @@ function crear() {
             });
             return ctx.json({ status: true });
           }
+          if (!(await limitar('admin-enlace-correo', String(correo).trim().toLowerCase()))) throw demasiados();
         }
       }),
       after: createAuthMiddleware(async (ctx) => {

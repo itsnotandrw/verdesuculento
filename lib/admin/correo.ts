@@ -26,6 +26,7 @@ export async function enviarEnlaceMagico(para: string, url: string): Promise<voi
         <h2 style="color:#0b4f2c">Verde Suculento · Panel</h2>
         <p>Pulsa el botón para entrar. El enlace vale <b>10 minutos</b> y se usa una sola vez.</p>
         <p style="margin:24px 0"><a href="${url}" style="background:#0b4f2c;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">Entrar al panel</a></p>
+        <p style="font-size:12px;color:#5f6368;word-break:break-all">Si el botón no funciona, copia este enlace en tu navegador:<br>${url}</p>
         <p style="font-size:12px;color:#5f6368">Si no lo pediste tú, ignora este correo: nadie entra sin pulsarlo.</p></div>`,
     }),
   });

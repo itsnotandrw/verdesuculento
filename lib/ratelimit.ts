@@ -118,6 +118,12 @@ const LIMITES = {
   declarar: [10, 60_000],
   rastreo: [30, 60_000],
   metodos: [40, 60_000],
+  // Login del panel (Better Auth). Se suman a los límites propios de Better Auth (3 cada 10 s por ruta de inicio de sesión).
+  'admin-enlace-ip': [6, 600_000], // enlaces pedidos desde una misma IP en 10 min
+  'admin-enlace-correo': [3, 600_000], // enlaces a un mismo correo en 10 min (evita llenarle la bandeja a un admin)
+  'admin-intruso': [4, 900_000], // intentos con correos fuera de la lista en 15 min: pasado esto, esa IP queda bloqueada
+  'admin-social': [10, 600_000], // inicios de sesión con Google por IP en 10 min
+  'admin-verificar': [10, 600_000], // enlaces abiertos por IP en 10 min
 } as const satisfies Record<string, readonly [number, number]>;
 
 export type NombreLimite = keyof typeof LIMITES;
