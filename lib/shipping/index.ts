@@ -51,7 +51,7 @@ export function shippingProvider(): ShippingProvider {
 /** Cotiza contra el proveedor activo. */
 export async function cotizar(request: QuoteRequest): Promise<ShippingQuote[]> {
   const opciones = await shippingProvider().quote(request);
-  // Soacha, Bogotá y Mosquera: además de la transportadora, entrega el mismo día (no aplica a contra entrega).
+  // Bogotá, Chía y Soacha, antes de la hora de corte: además de la transportadora, entrega el mismo día (no aplica a contra entrega).
   if (!request.cashOnDelivery && aplicaMismoDia(request.destination)) return [cotizacionMismoDia(), ...opciones];
   return opciones;
 }

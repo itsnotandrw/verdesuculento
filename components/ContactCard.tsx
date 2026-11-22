@@ -27,8 +27,8 @@ export default function ContactCard() {
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
   const sedeActual = CONTACTO.sedes.find((s) => s.id === sede) ?? CONTACTO.sedes[0];
-  const consulta = sedeActual.coords ? `${sedeActual.coords.lat},${sedeActual.coords.lng}` : sedeActual.direccion;
-  const rutaUrl = urlRuta(consulta);
+  const consulta = sedeActual.consulta ?? (sedeActual.coords ? `${sedeActual.coords.lat},${sedeActual.coords.lng}` : sedeActual.direccion);
+  const rutaUrl = urlRuta(sedeActual.coords ? `${sedeActual.coords.lat},${sedeActual.coords.lng}` : consulta);
 
   useEffect(() => {
     const panel = panelRef.current;

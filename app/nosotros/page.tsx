@@ -19,18 +19,21 @@ const TEAM: { name: string; role: string; bio: string; initials: string; photo?:
     role: 'Fundador y Agrónomo jefe',
     bio: 'Ingeniero agrónomo. Lidera la producción vegetal del vivero y la asesoría de cultivo para los clientes.',
     initials: 'FR',
+    photo: '/images/equipo/fabian.jpg',
   },
   {
     name: 'Daniel Pinzón',
     role: 'Logística y envíos',
     bio: 'Se encarga del alistamiento de los pedidos, la poslogística y los despachos a todo el país.',
     initials: 'DP',
+    photo: '/images/equipo/daniel.jpg',
   },
   {
     name: 'Karen Dayana Ramírez',
     role: 'Atención al cliente y ventas',
     bio: 'Asesoría comercial y atención por chat: acompaña cada pedido desde la consulta hasta la entrega.',
     initials: 'KR',
+    photo: '/images/equipo/karen.jpg',
   },
 ];
 
@@ -220,7 +223,7 @@ export default function NosotrosPage() {
                 Dos sedes en <em style={{ color: 'var(--accent)' }}>Cundinamarca.</em>
               </h2>
               <p style={{ color: 'var(--fg-dim)', fontSize: 16, lineHeight: 1.75, marginBottom: 28 }}>
-                En Soacha funciona el centro de envíos y entregas, y en Santandercito el centro de producción vegetal. Atendemos de lunes a sábado.
+                En Soacha funciona el centro de entregas, y en Santandercito (San Antonio del Tequendama) el vivero de propagación. Atendemos de lunes a sábado.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 36 }}>
                 {CONTACTO.sedes.map((sede) => (

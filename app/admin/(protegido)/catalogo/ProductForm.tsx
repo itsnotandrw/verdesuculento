@@ -12,11 +12,12 @@
  * servicio de imágenes aparte, deliberadamente fuera de este alcance).
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES } from '@/data/catalog';
 import type { Product, ProductColor, ProductSpecs } from '@/types';
 import { urlImagen } from '@/lib/image-loader';
+import InteraccionInicio, { aplicarInteraccion, type SeleccionPuntos } from './InteraccionInicio';
 
 const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: '', altura: '', dificultad: '' };
 
@@ -43,6 +44,9 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
     inicial?.colors?.length ? inicial.colors : [{ name: '', hex: '#7a9a8a' }]
   );
   const [stock, setStock] = useState(stockInicial === null || stockInicial === undefined ? '' : String(stockInicial));
+  // Interacción en el inicio (punto en «Elige tu frutal por clima»): solo se guarda si el administrador la tocó.
+  const interaccion = useRef<SeleccionPuntos | null>(null);
+  const yaCreado = useRef(false);
   const [peso, setPeso] = useState(inicial?.logistica ? String(inicial.logistica.weightGrams / 1000) : '');
   const [largo, setLargo] = useState(inicial?.logistica ? String(inicial.logistica.lengthCm) : '');
   const [ancho, setAncho] = useState(inicial?.logistica ? String(inicial.logistica.widthCm) : '');
@@ -90,8 +94,9 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
           : undefined,
       };
 
-      const url = modo === 'crear' ? '/api/admin/products' : `/api/admin/products/${inicial!.id}`;
-      const method = modo === 'crear' ? 'POST' : 'PATCH';
+      const creando = modo === 'crear' && !yaCreado.current;
+      const url = creando ? '/api/admin/products' : `/api/admin/products/${inicial?.id ?? id}`;
+      const method = creando ? 'POST' : 'PATCH';
 
       const respuesta = await fetch(url, {
         method,
@@ -100,6 +105,17 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo guardar.');
+      yaCreado.current = true;
+
+      if (interaccion.current) {
+        try {
+          await aplicarInteraccion(datos.product?.id ?? id, interaccion.current);
+        } catch (er) {
+          setError(`El producto quedó guardado, pero la interacción del inicio no: ${er instanceof Error ? er.message : 'error desconocido'}. Pulsa de nuevo «Guardar» para reintentar.`);
+          setGuardando(false);
+          return;
+        }
+      }
 
       router.push('/admin/catalogo');
       router.refresh();
@@ -187,6 +203,13 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
             Si también vendes por Mercado Libre, mantén este número al día a mano.
           </p>
         </div>
+
+        <InteraccionInicio
+          productId={inicial?.id ?? ''}
+          nombre={name}
+          imagen={images[0]}
+          onCambio={(sel) => { interaccion.current = sel; }}
+        />
 
         <div>
           <label className="checkout-label" htmlFor="p-description">Descripción</label>

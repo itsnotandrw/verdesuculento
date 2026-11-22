@@ -109,8 +109,10 @@ export const env = {
      */
     codAutoGuide: bool('SHIPPING_COD_AUTO_GUIDE', false),
 
-    /** Costo del domicilio de entrega el mismo día (Soacha, Bogotá, Mosquera). 0 = se confirma por WhatsApp. */
+    /** Costo del domicilio de entrega el mismo día (Bogotá, Chía, Soacha). 0 = se confirma por WhatsApp. */
     sameDayFee: num('SHIPPING_SAME_DAY_FEE', 0),
+    /** Hora límite (Bogotá, 0-23) para pedir entrega el mismo día. Pasada esa hora la opción no se ofrece. */
+    sameDayCutoffHour: num('SHIPPING_SAME_DAY_CUTOFF_HOUR', 12),
 
     mipaquete: {
       apiKey: str('MIPAQUETE_API_KEY'),

@@ -110,7 +110,7 @@ export default function WhyBuySection() {
               <li><strong>Empaque especializado</strong> para plantas vivas, preparado por el vivero antes del despacho.</li>
               <li><strong>Llega en {TIEMPO_ENTREGA}</strong>, según la ciudad de destino.</li>
               <li>
-                <strong>Entrega el mismo día en Bogotá, Soacha y Mosquera.</strong> El costo del envío se cotiza en el carrito según tu destino.
+                <strong>Entrega el mismo día en Bogotá, Chía y Soacha</strong> si compras antes de las 12:00 m. (hora de Bogotá). El costo del envío se cotiza en el carrito según tu destino.
               </li>
               <li>Si tu planta no sobrevive al envío, la reponemos.</li>
             </ol>

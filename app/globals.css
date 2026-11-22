@@ -2675,10 +2675,12 @@ html { overflow-x: clip; max-width: 100%; }
 
 /* Menú Catálogo en móvil: tarjetas apiladas dentro de la hoja inferior */
 .mobile-catalog-stack { max-height: 72dvh; overscroll-behavior: contain; padding: 4px 14px 18px; }
-.mobile-catalog-stack .cs-card { height: 96px; }
-.mobile-catalog-stack .cs-oferta .cs-card { height: 54px; }
-.mobile-catalog-stack .cs-name { font-size: 24px; bottom: 30px; }
-.mobile-catalog-stack .cs-oferta .cs-name { font-size: 14px; }
+.mobile-catalog-stack .cs-card { height: 62px; border-radius: 12px; }
+.mobile-catalog-stack .cs-oferta .cs-card { height: 46px; }
+.mobile-catalog-stack .cs-name { font-size: 20px; left: 14px; bottom: 24px; }
+.mobile-catalog-stack .cs-count { left: 14px; bottom: 8px; font-size: 10px; }
+.mobile-catalog-stack .cs-num { top: 8px; left: 14px; font-size: 9px; }
+.mobile-catalog-stack .cs-oferta .cs-name { font-size: 13px; bottom: auto; }
 
 /* ===== Precio estilo Mercado Libre: el descuento y el cupón se ven de inmediato ===== */
 .pml { display: inline-flex; flex-direction: column; gap: 3px; font-family: var(--font-mono); line-height: 1.15; }
