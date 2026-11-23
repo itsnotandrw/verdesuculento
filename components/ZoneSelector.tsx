@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
-import { CATEGORIES, CATEGORY_PHOTOS } from '@/data/catalog';
+import { CATEGORIES, CATEGORY_PHOTOS, formatCOP } from '@/data/catalog';
 import MapaEmbed from '@/components/MapaEmbed';
 import { precalentarMapas } from '@/lib/mapas';
 import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { EVENTO_ZONA } from '@/hooks/useZonaCultivo';
 import { MUNICIPIOS, PISO_INFO, ZONA_KEY, cargarMunicipios, claveZona, masCercano, pisoDe, type Municipio } from '@/data/zonas';
+import { urlImagen } from '@/lib/image-loader';
+import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const MAX_MSNM = 3000;
@@ -52,7 +54,9 @@ export default function ZoneSelector() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Municipio | null>(null);
-  const [plantas, setPlantas] = useState<{ id: string; name: string; price: number; image: string | null; exacta: boolean }[]>([]);
+  const [plantas, setPlantas] = useState<{ id: string; name: string; price: number; image: string | null; category: string; resumen: string; exacta: boolean }[]>([]);
+  // Paso 3: lo que se está previsualizando dentro de la ventana (una categoría o una planta), sin salir del sitio.
+  const [vista, setVista] = useState<{ tipo: 'cat'; id: string } | { tipo: 'prod'; id: string; desde: string } | null>(null);
   const [todos, setTodos] = useState<Municipio[]>(MUNICIPIOS);
   const [activo, setActivo] = useState(0);
   const [pos, setPos] = useState({ top: 72, right: 16 });
@@ -100,13 +104,13 @@ export default function ZoneSelector() {
     document.addEventListener('keydown', onKey);
     const t = setTimeout(() => input.current?.focus({ preventScroll: true }), 60);
     const movil = window.matchMedia('(max-width: 720px)').matches;
-    if (movil) document.body.classList.add('scroll-locked');
+    if (movil) bloquearScroll();
     return () => {
       clearTimeout(t);
       window.removeEventListener('resize', medir);
       document.removeEventListener('pointerdown', onDown);
       document.removeEventListener('keydown', onKey);
-      document.body.classList.remove('scroll-locked');
+      desbloquearScroll();
     };
   }, [open, medir]);
 
@@ -139,8 +143,9 @@ export default function ZoneSelector() {
     } catch { /* sin storage */ }
     window.dispatchEvent(new Event(EVENTO_ZONA));
   };
-  const irA = (n: number) => { setDir(n >= paso ? 1 : -1); setPaso(Math.max(0, Math.min(PASOS.length - 1, n))); };
+  const irA = (n: number) => { setVista(null); setDir(n >= paso ? 1 : -1); setPaso(Math.max(0, Math.min(PASOS.length - 1, n))); };
   const choose = (m: Municipio) => {
+    setVista(null);
     setSel(m);
     setDir(1);
     setPaso(1);
@@ -151,6 +156,7 @@ export default function ZoneSelector() {
     scroller.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const clear = () => {
+    setVista(null);
     setSel(null);
     setDir(-1);
     setPaso(0);
@@ -315,41 +321,72 @@ export default function ZoneSelector() {
                   </div>
                 )}
 
-                {paso === 2 && sel && info && (
-                  <>
-                  <div className={`bento bento-plantas n-${Math.min(info.categorias.length, 4)}`}>
-                    {info.categorias.map((id, i) => {
-                      const c = CATEGORIES.find((x) => x.id === id);
-                      if (!c) return null;
-                      const n = counts[id] ?? c.count;
-                      return (
-                        <Tile key={id} cls={`b-cat${i === 0 ? ' b-cat-main' : ''}`}>
-                          <Link href={`/catalogo/${id}`} onClick={() => setOpen(false)} className="b-cat-link">
-                            <span className="b-cat-foto" style={{ backgroundImage: CATEGORY_PHOTOS[id] ? `url(${CATEGORY_PHOTOS[id]})` : undefined }} />
-                            <span className="b-cat-sombra" />
-                            {i === 0 && <span className="b-cat-tag">Lo mejor para tu zona</span>}
-                            <span className="b-cat-nombre">{c.name}</span>
-                            <span className="b-cat-n">{n} productos →</span>
-                          </Link>
-                        </Tile>
-                      );
-                    })}
-                  </div>
-                  {plantas.length > 0 && (
-                    <div className="zona-plantas">
-                      <div className="zona-plantas-t">Plantas que se dan en {sel.name} ({sel.msnm.toLocaleString('es-CO')} msnm)</div>
-                      <div className="zona-plantas-lista">
-                        {plantas.map((p) => (
-                          <Link key={p.id} href={`/producto/${p.id}`} onClick={() => setOpen(false)} className="zona-planta">
-                            {p.image && <span className="zona-planta-img" style={{ backgroundImage: `url(${p.image})` }} />}
-                            <span className="zona-planta-n">{p.name}</span>
-                          </Link>
-                        ))}
+                {paso === 2 && sel && info && (() => {
+                  const delaCat = (id: string) => plantas.filter((p) => p.category === id);
+                  const cat = vista ? CATEGORIES.find((c) => c.id === (vista.tipo === 'cat' ? vista.id : vista.desde)) : null;
+                  const planta = vista?.tipo === 'prod' ? plantas.find((p) => p.id === vista.id) : null;
+                  if (vista?.tipo === 'prod' && planta) {
+                    return (
+                      <div className="zv">
+                        <button type="button" className="zv-back" onClick={() => setVista({ tipo: 'cat', id: vista.desde })}>← {cat?.name ?? 'Volver'}</button>
+                        <div className="zv-prod">
+                          <span className="zv-prod-img" style={{ backgroundImage: planta.image ? `url(${urlImagen(planta.image, 768)})` : undefined }} />
+                          <div className="zv-prod-info">
+                            <div className="b-k">Se da bien en {sel.name}</div>
+                            <h3 className="zv-prod-n">{planta.name}</h3>
+                            <div className="zv-prod-p">{formatCOP(planta.price)}</div>
+                            <p className="zv-prod-d">{planta.resumen}{planta.resumen.length >= 170 ? '…' : ''}</p>
+                            <Link href={`/producto/${planta.id}`} className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>Ver ficha completa <span className="btn-arrow">→</span></Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (vista?.tipo === 'cat' && cat) {
+                    const lista = delaCat(cat.id);
+                    return (
+                      <div className="zv">
+                        <button type="button" className="zv-back" onClick={() => setVista(null)}>← Todas las categorías</button>
+                        <h3 className="zv-t">{cat.name}</h3>
+                        <p className="zv-s">{lista.length ? `${lista.length} ${lista.length === 1 ? 'planta que se da' : 'plantas que se dan'} en ${sel.name}. Toca una para verla.` : `Aún no tenemos plantas de esta categoría confirmadas para ${sel.msnm.toLocaleString('es-CO')} msnm, pero puedes explorarla completa.`}</p>
+                        <div className="zv-grid">
+                          {lista.map((p) => (
+                            <button type="button" key={p.id} className="zv-card" onClick={() => setVista({ tipo: 'prod', id: p.id, desde: cat.id })}>
+                              <span className="zv-card-img" style={{ backgroundImage: p.image ? `url(${urlImagen(p.image, 384)})` : undefined }} />
+                              <span className="zv-card-n">{p.name}</span>
+                              <span className="zv-card-p">{formatCOP(p.price)}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <Link href={`/catalogo/${cat.id}`} className="zv-all" onClick={() => setOpen(false)}>Ver toda la categoría {cat.name} →</Link>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="zv">
+                      <h3 className="zv-t">Qué sembrar en {sel.name}</h3>
+                      <p className="zv-s">A {sel.msnm.toLocaleString('es-CO')} msnm estas categorías se dan mejor. Toca una para ver las plantas aquí mismo.</p>
+                      <div className="zv-cats">
+                        {info.categorias.map((id, i) => {
+                          const c = CATEGORIES.find((x) => x.id === id);
+                          if (!c) return null;
+                          const n = delaCat(id).length;
+                          return (
+                            <button type="button" key={id} className="zv-cat" onClick={() => setVista({ tipo: 'cat', id })}>
+                              <span className="zv-cat-foto" style={{ backgroundImage: CATEGORY_PHOTOS[id] ? `url(${CATEGORY_PHOTOS[id]})` : undefined }} />
+                              <span className="zv-cat-body">
+                                {i === 0 && <span className="zv-cat-tag">Lo mejor para tu zona</span>}
+                                <span className="zv-cat-n">{c.name}</span>
+                                <span className="zv-cat-b">{c.blurb}</span>
+                                <span className="zv-cat-c">{n ? `${n} ${n === 1 ? 'planta' : 'plantas'} para tu zona` : `${counts[id] ?? c.count} productos`} · Previsualizar →</span>
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
-                  </>
-                )}
+                  );
+                })()}
               </div>
             </div>
 
@@ -360,10 +397,8 @@ export default function ZoneSelector() {
               {paso === 1 && <button type="button" className="btn btn-primary btn-sm" onClick={() => irA(2)}>Ver mis plantas <span className="btn-arrow">→</span></button>}
               {paso === 2 && info && (
                 <>
+                  <span className="zone-foot-hint">{vista ? '' : 'Toca una categoría para previsualizarla'}</span>
                   <button type="button" className="zone-clear" onClick={clear}>Cambiar zona</button>
-                  <Link href={`/catalogo/${info.categorias[0]}`} className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>
-                    Ir al catálogo <span className="btn-arrow">→</span>
-                  </Link>
                 </>
               )}
             </div>
@@ -521,6 +556,34 @@ export default function ZoneSelector() {
         .b-cat-tag{position:absolute;top:14px;left:14px;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--accent);color:var(--accent-fg)}
         .b-cat-nombre{font-family:var(--font-display);font-size:24px;line-height:1.05}
         .b-cat-n{font-family:var(--font-mono);font-size:11px;opacity:.85}
+        .zv{display:grid;gap:14px;padding-bottom:6px}
+        .zv-t{font-family:var(--font-display);font-size:28px;line-height:1.1;margin:0}
+        .zv-s{font-size:14px;line-height:1.6;color:var(--fg-dim);margin:0}
+        .zv-back{justify-self:start;background:none;border:0;padding:4px 0;font:inherit;font-size:13px;color:var(--fg-dim);cursor:pointer}
+        .zv-back:hover{color:var(--fg)}
+        .zv-cats{display:grid;gap:14px}
+        .zv-cat{display:grid;grid-template-columns:150px 1fr;gap:0;text-align:left;border-radius:16px;overflow:hidden;background:var(--bg);border:1px solid var(--border);cursor:pointer;color:inherit;font:inherit;padding:0;transition:border-color .25s ease,transform .3s var(--ease-out)}
+        .zv-cat:hover{border-color:var(--accent);transform:translateY(-2px)}
+        .zv-cat-foto{background-size:cover;background-position:center;min-height:132px}
+        .zv-cat-body{display:grid;gap:6px;align-content:center;padding:16px 18px}
+        .zv-cat-tag{justify-self:start;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--accent);color:var(--accent-fg)}
+        .zv-cat-n{font-family:var(--font-display);font-size:22px;line-height:1.1}
+        .zv-cat-b{font-size:13.5px;line-height:1.55;color:var(--fg-dim)}
+        .zv-cat-c{font-family:var(--font-mono);font-size:11.5px;color:var(--accent)}
+        .zv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+        .zv-card{display:grid;gap:8px;text-align:left;padding:10px;border-radius:14px;background:var(--bg);border:1px solid var(--border);cursor:pointer;color:inherit;font:inherit;transition:border-color .25s ease}
+        .zv-card:hover{border-color:var(--accent)}
+        .zv-card-img{aspect-ratio:1/1;border-radius:10px;background:var(--bg-elev-2) center/cover}
+        .zv-card-n{font-size:13.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .zv-card-p{font-family:var(--font-mono);font-size:12.5px;color:var(--accent)}
+        .zv-all{justify-self:start;font-size:13.5px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+        .zv-prod{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:22px;align-items:start}
+        .zv-prod-img{aspect-ratio:1/1;border-radius:16px;background:var(--bg-elev-2) center/cover;border:1px solid var(--border)}
+        .zv-prod-info{display:grid;gap:10px;justify-items:start}
+        .zv-prod-n{font-family:var(--font-display);font-size:26px;line-height:1.15;margin:0}
+        .zv-prod-p{font-family:var(--font-mono);font-size:18px;color:var(--accent)}
+        .zv-prod-d{font-size:14px;line-height:1.65;color:var(--fg-dim);margin:0}
+        @media (max-width:720px){.zv-cat{grid-template-columns:96px 1fr}.zv-prod{grid-template-columns:1fr}}
         @media (max-width:720px){.bento-plantas{grid-template-columns:1fr 1fr;grid-auto-rows:130px}.zs-lbl{display:none}.zs-i.on .zs-lbl{display:inline}}
       ` }} />
     </div>

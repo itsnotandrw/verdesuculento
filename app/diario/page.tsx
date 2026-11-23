@@ -15,7 +15,8 @@ const ARTICLE_PHOTOS: Record<string, string> = {
 };
 
 export const metadata: Metadata = {
-  title: 'Diario agronómico — Vivero Verde Suculento',
+  title: 'Diario agronómico',
+  alternates: { canonical: '/diario' },
   description: 'Guías de cultivo, manejo agronómico y consejos para tu huerto. Contenido educativo del equipo de Vivero Verde Suculento',
 };
 

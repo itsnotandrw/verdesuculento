@@ -22,7 +22,8 @@ import { RATINGS } from '@/data/ratings';
 import type { Product } from '@/types';
 
 export const metadata: Metadata = {
-  title: 'Vivero Verde Suculento — Agricultura Moderna',
+  title: { absolute: 'Vivero Verde Suculento — Frutales, plantas y agricultura moderna en Colombia' },
+  alternates: { canonical: '/' },
   description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos. Envío a toda Colombia con garantía de plantas vivas.',
 };
 

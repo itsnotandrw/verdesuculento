@@ -15,6 +15,7 @@ import { usePromo } from '@/context/PromoContext';
 import PrecioPromo from '@/components/PrecioPromo';
 import type { Product } from '@/types';
 import { CLIMA_CORTO, climasDe } from '@/lib/clima';
+import { useAgotado } from '@/hooks/useAgotados';
 
 interface ProductCardProps {
   product: Product;
@@ -27,6 +28,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, compact = false, discountPct: pctOverride, sizes = '(max-width: 480px) 94vw, (max-width: 720px) 47vw, 25vw' }: ProductCardProps) {
   const { add } = useCart();
   const { open } = useQuickView();
+  const agotado = useAgotado(product.id);
   const [activeColor, setActiveColor] = useState(product.colors[0]);
   const rating = RATINGS[product.id];
   const badgeLabel = rating?.bestsellerRank ? 'Más vendido' : product.badge;
@@ -62,6 +64,7 @@ export default function ProductCard({ product, compact = false, discountPct: pct
         ) : (
           <ProductShape product={product} activeColorHex={activeColor.hex} />
         )}
+        {agotado && <span className="product-agotado">Agotado</span>}
         <div className="product-card-actions">
           <button
             className="product-card-quickview"
@@ -69,7 +72,7 @@ export default function ProductCard({ product, compact = false, discountPct: pct
           >
             Vista rápida
           </button>
-          <button
+          {!agotado && <button
             className="product-card-add"
             onClick={(e) => {
               e.preventDefault();
@@ -89,7 +92,7 @@ export default function ProductCard({ product, compact = false, discountPct: pct
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12h14" />
             </svg>
-          </button>
+          </button>}
         </div>
       </Link>
 

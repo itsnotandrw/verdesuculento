@@ -36,6 +36,7 @@ import type { PaymentIntent } from '@/lib/payments/types';
 import { armarPaquete, logisticaDe, resolverCotizacion, shippingProvider } from '@/lib/shipping';
 import type { ShippingQuote } from '@/lib/shipping/types';
 import { almacenamiento, orders, pedidosVencidos, registrar } from './store';
+import { correoComprobante, correoPedidoRecibido, enviarSinFallar } from './correos';
 import {
   derivarEstado,
   type CreateOrderInput,
@@ -140,6 +141,12 @@ export async function crearPedido(
       config.coupons
     );
     if (!resultado.ok) throw new OrderError(resultado.motivo, 'cupon_invalido');
+    // Los cupones son solo para la primera compra: quien ya tiene un pedido vigente o pagado con este correo no puede usarlos.
+    const correoCliente = input.customer.email.trim().toLowerCase();
+    const previos = await orders.list({ limite: 500 });
+    if (previos.some((o) => o.customer.email.trim().toLowerCase() === correoCliente && o.status !== 'cancelled' && o.status !== 'expired')) {
+      throw new OrderError('Los cupones son solo para la primera compra. Quita el cupón para continuar.', 'cupon_invalido');
+    }
     couponDiscount = resultado.descuento;
     cuponAplicado = { id: resultado.coupon.id, code: resultado.coupon.code, pct: resultado.coupon.pct };
   }
@@ -312,6 +319,7 @@ export async function crearPedido(
   }
 
   const guardado = (await orders.byId(order.id)) ?? order;
+  enviarSinFallar(correoPedidoRecibido(guardado), 'pedido recibido');
   return { order: guardado, intent };
 }
 
@@ -572,7 +580,7 @@ export async function aprobarPago(
     return pedido.shipment ? pedido : crearGuia(orderId);
   }
 
-  await orders.update(orderId, (order) => {
+  const aprobado = await orders.update(orderId, (order) => {
     order.payment.status = 'approved';
     order.payment.approvedAt = new Date().toISOString();
     if (quien) order.payment.verifiedBy = quien;
@@ -588,6 +596,9 @@ export async function aprobarPago(
     });
     return order;
   });
+
+  // Comprobante de pago al correo (solo la primera vez: arriba se sale si ya estaba aprobado)
+  if (aprobado && pedido.payment.method !== 'COD') enviarSinFallar(correoComprobante(aprobado), 'comprobante de pago');
 
   return crearGuia(orderId, pedido.payment.method === 'COD' ? pedido.total : undefined);
 }

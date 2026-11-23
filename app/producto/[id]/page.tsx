@@ -4,6 +4,7 @@ import { CATEGORIES } from '@/data/catalog';
 import { getProductById, getRelatedProducts, getCrossSellProducts } from '@/lib/catalog/store';
 import { SOCIAL_PROOF } from '@/data/socialProof';
 import { env } from '@/lib/env';
+import { obtenerStock } from '@/lib/inventario';
 import ProductContent from './ProductContent';
 import { campanasVigentes } from '@/lib/promo-servidor';
 import { precioProducto } from '@/lib/promo-precios';
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const foto = product.images[0] ? urlCompartir(product.images[0]) : undefined;
   const url = `${base}/producto/${product.id}`;
   return {
-    title: `${product.name} — Vivero Verde Suculento`,
+    title: product.name,
     description: descripcion,
     alternates: { canonical: url },
     openGraph: { title: product.name, description: descripcion, url, type: 'website', ...(foto ? { images: [{ url: foto.startsWith('http') ? foto : `${base}${foto}` }] } : {}) },
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * documentado como pendiente propio, así que se hace bien acá desde el
  * arranque en vez de repetirlo.
  */
-function jsonLd(product: Product, precioVigente: number) {
+function jsonLd(product: Product, precioVigente: number, agotado: boolean) {
   const baseUrl = env.siteUrl.replace(/\/$/, '');
   const categoria = CATEGORIES.find((c) => c.id === product.category);
   const social = SOCIAL_PROOF[product.id];
@@ -69,7 +70,9 @@ function jsonLd(product: Product, precioVigente: number) {
       // en tiempo real) — InStock es la representación honesta mientras el
       // producto siga publicado; si en el futuro hay control de inventario,
       // este campo es el primero que debe volverse dinámico.
-      availability: 'https://schema.org/InStock',
+      availability: agotado ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'Vivero Verde Suculento' },
+      shippingDetails: { '@type': 'OfferShippingDetails', shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'CO' }, deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' } } },
       itemCondition: 'https://schema.org/NewCondition',
     },
   };
@@ -89,7 +92,7 @@ function jsonLd(product: Product, precioVigente: number) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Catálogo', item: `${baseUrl}/catalogo` },
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: baseUrl },
       ...(categoria
         ? [{ '@type': 'ListItem', position: 2, name: categoria.name, item: `${baseUrl}/catalogo/${categoria.id}` }]
         : []),
@@ -107,6 +110,7 @@ export default async function ProductPage({ params }: Props) {
   // Calculado acá (servidor) y pasado como prop en vez de que ProductContent
   // (cliente) importe el catálogo directo — el catálogo ahora puede vivir en
   // Redis, y un componente cliente no puede leer ahí.
+  const stock = await obtenerStock(product.id).catch(() => null);
   const [related, crossSell, campanas] = await Promise.all([
     getRelatedProducts(product, 3),
     getCrossSellProducts(product),
@@ -115,7 +119,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      {jsonLd(product, precioProducto(product, 1, campanas).unit).map((ld, i) => (
+      {jsonLd(product, precioProducto(product, 1, campanas).unit, stock !== null && stock <= 0).map((ld, i) => (
         <script
           key={i}
           type="application/ld+json"

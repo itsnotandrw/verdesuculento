@@ -9,6 +9,7 @@ import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { useOffers } from '@/context/OffersContext';
 import { useSearch } from '@/context/SearchContext';
 import CatalogStack from '@/components/CatalogStack';
+import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -32,9 +33,9 @@ export default function MobileNav() {
   }, [pathname]);
 
   useEffect(() => {
-    if (catalogOpen || moreOpen) document.body.classList.add('scroll-locked');
-    else document.body.classList.remove('scroll-locked');
-    return () => document.body.classList.remove('scroll-locked');
+    if (catalogOpen || moreOpen) bloquearScroll();
+    else desbloquearScroll();
+    return () => desbloquearScroll();
   }, [catalogOpen, moreOpen]);
 
   // Mide la altura real del tab bar (varia por safe-area entre dispositivos)

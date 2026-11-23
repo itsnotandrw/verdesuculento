@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuickView } from '@/context/QuickViewContext';
 import { useCart } from '@/context/CartContext';
+import { useAgotado } from '@/hooks/useAgotados';
 import { formatCOP } from '@/data/catalog';
 import { RATINGS } from '@/data/ratings';
 import { usePromo } from '@/context/PromoContext';
@@ -11,11 +12,13 @@ import ProductShape from './ProductShape';
 import ImageCarousel from './ImageCarousel';
 import StarRating from './StarRating';
 import type { ProductColor } from '@/types';
+import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
 
 export default function QuickView() {
   const { product, close } = useQuickView();
   const { precio } = usePromo();
   const { add } = useCart();
+  const agotado = useAgotado(product?.id ?? '');
   const [activeColor, setActiveColor] = useState<ProductColor | null>(null);
   const [activeSize, setActiveSize] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -36,11 +39,11 @@ export default function QuickView() {
   // Body scroll lock
   useEffect(() => {
     if (product) {
-      document.body.classList.add('scroll-locked');
+      bloquearScroll();
     } else {
-      document.body.classList.remove('scroll-locked');
+      desbloquearScroll();
     }
-    return () => document.body.classList.remove('scroll-locked');
+    return () => desbloquearScroll();
   }, [product]);
 
   // Focus trap
@@ -158,12 +161,13 @@ export default function QuickView() {
             <button
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}
+              disabled={agotado}
               onClick={() => {
                 if (color && size) add(product, { color, size });
                 close();
               }}
             >
-              Añadir — {formatCOP(precio(product, 1).unit)}
+              {agotado ? 'Agotado por ahora' : <>Añadir — {formatCOP(precio(product, 1).unit)}</>}
             </button>
           </div>
         </div>

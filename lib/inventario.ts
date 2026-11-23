@@ -105,3 +105,12 @@ export function leerStock(valor: unknown): number | null | undefined {
   }
   return Math.floor(n);
 }
+
+/** Ids de los productos con control de inventario y 0 unidades (públicamente es lo único que se expone del inventario). */
+export async function listarAgotados(): Promise<string[]> {
+  if (redis) {
+    const todo = await redis.hgetall(CLAVE);
+    return Object.entries(todo).filter(([, v]) => Number(v) <= 0).map(([id]) => id);
+  }
+  return [...memoria.entries()].filter(([, v]) => v <= 0).map(([id]) => id);
+}

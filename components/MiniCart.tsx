@@ -7,6 +7,7 @@ import { formatCOP } from '@/data/catalog';
 import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from './ProductShape';
 import PrecioPromo from './PrecioPromo';
+import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
 
 export default function MiniCart() {
   const { items, open, setOpen, updateQty, remove, subtotal, count, linePrice } = useCart();
@@ -25,11 +26,11 @@ export default function MiniCart() {
   // Body scroll lock
   useEffect(() => {
     if (open) {
-      document.body.classList.add('scroll-locked');
+      bloquearScroll();
     } else {
-      document.body.classList.remove('scroll-locked');
+      desbloquearScroll();
     }
-    return () => document.body.classList.remove('scroll-locked');
+    return () => desbloquearScroll();
   }, [open]);
 
   return (

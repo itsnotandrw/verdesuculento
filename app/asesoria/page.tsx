@@ -4,7 +4,8 @@ import Reveal from '@/components/Reveal';
 import { CONTACTO } from '@/data/contacto';
 
 export const metadata: Metadata = {
-  title: 'Asesoría agronómica — Vivero Verde Suculento',
+  title: 'Asesoría agronómica',
+  alternates: { canonical: '/asesoria' },
   description: 'Asesoría agronómica personalizada con nuestro equipo de expertos. Incluida gratis por 6 meses con cada compra.',
 };
 

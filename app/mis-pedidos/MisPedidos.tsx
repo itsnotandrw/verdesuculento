@@ -1,57 +1,39 @@
 'use client';
 
 /**
- * "Mis pedidos" — alternativa a una cuenta con contraseña: el cliente busca
- * por correo y ve un resumen (sin dirección ni teléfono, ver la ruta de la
- * API) de cada pedido, con link al detalle completo por su referencia.
+ * "Mis pedidos": el cliente encuentra su pedido de dos formas, sin cuenta ni contraseña:
+ *  - con su TICKET (VS-XXXXXX, llega al correo al comprar) → abre el pedido directo;
+ *  - con su correo → le enviamos la lista de sus pedidos por correo (no se muestra en pantalla, por privacidad).
  */
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { formatCOP } from '@/data/catalog';
-
-interface PedidoResumen {
-  reference: string;
-  orderNumber: number | null;
-  createdAt: string;
-  status: string;
-  statusLabel: string;
-  total: number;
-  etaLabel: string;
-}
-
-const TONO: Record<string, 'wait' | 'ok' | 'bad'> = {
-  awaiting_payment: 'wait',
-  payment_in_review: 'wait',
-  paid: 'ok',
-  shipped: 'ok',
-  delivered: 'ok',
-  cancelled: 'bad',
-  expired: 'bad',
-};
+import { useRouter } from 'next/navigation';
 
 export default function MisPedidos() {
-  const [email, setEmail] = useState('');
-  const [pedidos, setPedidos] = useState<PedidoResumen[] | null>(null);
+  const router = useRouter();
+  const [modo, setModo] = useState<'ticket' | 'correo'>('ticket');
+  const [valor, setValor] = useState('');
   const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   const buscar = async (e: React.FormEvent) => {
     e.preventDefault();
     setBuscando(true);
     setError(null);
-    setPedidos(null);
+    setAviso(null);
     try {
       const respuesta = await fetch('/api/orders/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(modo === 'ticket' ? { ticket: valor } : { email: valor }),
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo buscar.');
-      setPedidos(datos.orders ?? []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo buscar.');
+      if (datos.reference) router.push(`/pedido/${datos.reference}`);
+      else setAviso(datos.mensaje ?? 'Listo. Revisa tu correo.');
+    } catch (er) {
+      setError(er instanceof Error ? er.message : 'No se pudo buscar.');
     } finally {
       setBuscando(false);
     }
@@ -64,55 +46,39 @@ export default function MisPedidos() {
         <h1 className="display" style={{ fontSize: 'clamp(34px, 7vw, 56px)', marginBottom: 14 }}>
           Mis pedidos<em style={{ color: 'var(--accent)' }}>.</em>
         </h1>
-        <p style={{ color: 'var(--fg-dim)', marginBottom: 32, fontSize: 15, lineHeight: 1.6 }}>
-          Escribe el correo con el que hiciste tu compra para ver tus pedidos.
+        <p style={{ color: 'var(--fg-dim)', marginBottom: 24, fontSize: 15, lineHeight: 1.6 }}>
+          Al comprar te enviamos un correo con tu <b>ticket</b> (por ejemplo VS-A7K4M2) y tu comprobante de pago. Con el ticket abres tu pedido al instante.
         </p>
 
-        <form onSubmit={buscar} style={{ display: 'flex', gap: 10, marginBottom: 32, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }} role="tablist">
+          {([['ticket', 'Tengo mi ticket'], ['correo', 'Busco con mi correo']] as const).map(([id, texto]) => (
+            <button key={id} type="button" role="tab" aria-selected={modo === id} className={`chip ${modo === id ? 'active' : ''}`}
+              onClick={() => { setModo(id); setValor(''); setError(null); setAviso(null); }}>{texto}</button>
+          ))}
+        </div>
+
+        <form onSubmit={buscar} style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
           <input
-            type="email"
+            key={modo}
+            type={modo === 'correo' ? 'email' : 'text'}
             className="checkout-input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="tucorreo@ejemplo.com"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder={modo === 'ticket' ? 'VS-A7K4M2' : 'tucorreo@ejemplo.com'}
+            autoCapitalize={modo === 'ticket' ? 'characters' : 'none'}
             required
             style={{ flex: 1, minWidth: 220 }}
           />
           <button className="btn btn-primary" disabled={buscando}>
-            {buscando ? 'Buscando…' : 'Buscar'}
+            {buscando ? 'Buscando…' : modo === 'ticket' ? 'Ver pedido' : 'Enviarme mis pedidos'}
           </button>
         </form>
 
-        {error && <p style={{ fontSize: 13, color: '#ef4444', marginBottom: 24 }}>{error}</p>}
-
-        {pedidos && pedidos.length === 0 && (
-          <p style={{ color: 'var(--fg-dim)' }}>No encontramos pedidos con ese correo.</p>
+        {modo === 'correo' && !aviso && (
+          <p style={{ fontSize: 13, color: 'var(--fg-dim)' }}>Por tu privacidad no mostramos pedidos en pantalla: te enviamos la lista al correo con el que compraste.</p>
         )}
-
-        {pedidos && pedidos.length > 0 && (
-          <div style={{ display: 'grid', gap: 12 }}>
-            {pedidos.map((p) => (
-              <Link
-                key={p.reference}
-                href={`/pedido/${p.reference}`}
-                className="pay-panel"
-                style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', textDecoration: 'none', color: 'inherit' }}
-              >
-                {p.orderNumber != null && (
-                  <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
-                    #{p.orderNumber}
-                  </span>
-                )}
-                <span className="mono" style={{ fontSize: 12.5, color: 'var(--fg-dim)', flexShrink: 0 }}>
-                  {new Date(p.createdAt).toLocaleDateString('es-CO')}
-                </span>
-                <span className="status-pill" data-tone={TONO[p.status] ?? 'wait'}>{p.statusLabel}</span>
-                <span className="mono" style={{ fontSize: 14, marginLeft: 'auto', flexShrink: 0 }}>{formatCOP(p.total)}</span>
-                <span className="btn-arrow" style={{ flexShrink: 0 }}>→</span>
-              </Link>
-            ))}
-          </div>
-        )}
+        {error && <p role="alert" style={{ fontSize: 13, color: '#ef4444' }}>{error}</p>}
+        {aviso && <p role="status" style={{ fontSize: 14, color: 'var(--accent)', lineHeight: 1.6 }}>{aviso}</p>}
       </div>
     </div>
   );

@@ -586,6 +586,21 @@ export default function CheckoutPage() {
                     <LogoPago metodo={m.id} />
                   </label>
                 ))}
+                {!metodos.some((m) => m.id === 'COD') && (
+                  <div className="option-card" aria-disabled="true" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                    <input type="radio" disabled style={{ flexShrink: 0 }} />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>Contra entrega <span className="badge-inline">No disponible en este pedido</span></div>
+                      <div style={{ fontSize: 12.5, color: 'var(--fg-dim)', marginTop: 4, lineHeight: 1.5 }}>
+                        {modoEntrega === 'recoger'
+                          ? 'No aplica a recoger en tienda: lo cobra la transportadora al entregar. Pagas con cualquiera de los otros métodos.'
+                          : quote?.id.startsWith('local:')
+                            ? 'No aplica a la entrega el mismo día. Pagas con cualquiera de los otros métodos.'
+                            : 'Pagas en efectivo al recibir, solo en destinos con cobertura de recaudo. No está disponible para este destino o este pedido.'}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="checkout-note">

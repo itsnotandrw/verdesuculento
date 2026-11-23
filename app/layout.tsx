@@ -7,6 +7,8 @@ import MobileNav from '@/components/MobileNav';
 import FloatingActions from '@/components/FloatingActions';
 import ChromeGate from '@/components/ChromeGate';
 import Trafico from '@/components/Trafico';
+import { negocioJsonLd } from '@/lib/seo';
+import { env } from '@/lib/env';
 import { CategoryCountsProvider } from '@/context/CategoryCountsContext';
 import { getAllProducts } from '@/lib/catalog/store';
 import { getActiveCoupons, getOfertas } from '@/lib/promotions-store';
@@ -44,6 +46,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const revalidate = 60;
 
 export const metadata: Metadata = {
+  metadataBase: new URL(env.siteUrl),
+  alternates: { canonical: '/' },
+  applicationName: 'Vivero Verde Suculento',
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },
   title: {
     default: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',
     template: '%s | Vivero Verde Suculento',
@@ -56,9 +63,12 @@ export const metadata: Metadata = {
     siteName: 'Vivero Verde Suculento',
     locale: 'es_CO',
     type: 'website',
+    url: '/',
+    images: [{ url: '/logo-full.png', alt: 'Vivero Verde Suculento' }],
   },
   twitter: {
     card: 'summary_large_image',
+    images: ['/logo-full.png'],
     title: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',
     description: 'Frutales, ornamentales, suculentas e insumos agrícolas seleccionados por agrónomos.',
   },
@@ -83,6 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ` }} />
       </head>
       <body>
+        {negocioJsonLd().map((ld, i) => <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />)}
         <Providers campanas={campanas} cupones={cupones}>
           <Trafico />
           <CategoryCountsProvider counts={counts}>

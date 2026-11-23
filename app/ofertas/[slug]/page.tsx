@@ -6,6 +6,7 @@ import { getAllProducts } from '@/lib/catalog/store';
 import { getOfertas } from '@/lib/promotions-store';
 import { aplicaScope } from '@/lib/promotions';
 import ProductCard from '@/components/ProductCard';
+import CuponAyuda from '@/components/CuponAyuda';
 
 export const revalidate = 60;
 export async function generateStaticParams() {
@@ -21,7 +22,7 @@ async function buscar(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const o = await buscar(params.slug);
   if (!o) return {};
-  return { title: `${o.title} — ${o.pct}% OFF · Vivero Verde Suculento`, description: `Catálogo exclusivo: ${o.pct}% de descuento en ${o.title}.` };
+  return { title: `${o.title} — ${o.pct}% OFF`, alternates: { canonical: `/ofertas/${params.slug}` }, description: `Catálogo exclusivo: ${o.pct}% de descuento en ${o.title}.` };
 }
 
 export default async function OfertaPage({ params }: Props) {
@@ -50,11 +51,7 @@ export default async function OfertaPage({ params }: Props) {
               : `Selección especial con ${oferta.pct}% de descuento: ya está aplicado en el precio de cada producto.`}
             {hasta ? ` Disponible hasta el ${hasta}.` : ''}
           </p>
-          {oferta.code && (
-            <p className="mono" style={{ marginTop: 16, fontSize: 12.5, color: 'var(--fg-dim)' }}>
-              Tu cupón: <b style={{ color: 'var(--accent)', letterSpacing: '0.12em' }}>{oferta.code}</b> · escríbelo en el carrito. No se suma a las promociones: en una compra vale uno solo.
-            </p>
-          )}
+          {oferta.code && <CuponAyuda code={oferta.code} pct={oferta.pct} minPurchase={oferta.minPurchase} maxDiscount={oferta.maxDiscount} hasta={hasta} />}
         </header>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>

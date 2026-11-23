@@ -7,7 +7,8 @@ import { CONTACTO } from '@/data/contacto';
 import MapaPlegable from '@/components/MapaPlegable';
 
 export const metadata: Metadata = {
-  title: 'Nosotros — Vivero Verde Suculento',
+  title: 'Nosotros',
+  alternates: { canonical: '/nosotros' },
   description: 'Conoce el equipo detrás de Vivero Verde Suculento Agrónomos y amantes de las plantas comprometidos con la agricultura moderna en Colombia.',
 };
 

@@ -23,8 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = ARTICLES.find((a) => a.slug === params.slug);
   if (!article) return {};
   return {
-    title: `${article.title} — Diario Vivero Verde Suculento`,
+    title: `${article.title} — Diario`,
     description: article.excerpt,
+    alternates: { canonical: `/diario/${params.slug}` },
   };
 }
 

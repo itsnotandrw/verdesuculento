@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
 
 interface LightboxProps {
   images: string[];
@@ -23,7 +24,7 @@ export default function Lightbox({ images, alt, index, onIndexChange, onClose }:
   const goTo = (i: number) => onIndexChange(clamp(i));
 
   useEffect(() => {
-    document.body.classList.add('scroll-locked');
+    bloquearScroll();
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') goTo(index - 1);
@@ -31,7 +32,7 @@ export default function Lightbox({ images, alt, index, onIndexChange, onClose }:
     };
     document.addEventListener('keydown', handleKey);
     return () => {
-      document.body.classList.remove('scroll-locked');
+      desbloquearScroll();
       document.removeEventListener('keydown', handleKey);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -22,6 +22,8 @@ import PrecioPromo from '@/components/PrecioPromo';
 import { Truck } from 'lucide-react';
 import AptitudZona from '@/components/AptitudZona';
 import { climasDe, textoClima } from '@/lib/clima';
+import { useAgotado } from '@/hooks/useAgotados';
+import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
 
 interface Props {
   product: Product;
@@ -32,6 +34,7 @@ interface Props {
 
 export default function ProductContent({ product, related, crossSell }: Props) {
   const { add, count } = useCart();
+  const agotado = useAgotado(product.id);
   const router = useRouter();
   const [activeColor, setActiveColor] = useState<ProductColor>(product.colors[0]);
   const [activeSize, setActiveSize] = useState(product.sizes[0]);
@@ -70,10 +73,10 @@ export default function ProductContent({ product, related, crossSell }: Props) {
       }
     };
     document.addEventListener('keydown', handleKey);
-    document.body.classList.add('scroll-locked');
+    bloquearScroll();
     return () => {
       document.removeEventListener('keydown', handleKey);
-      document.body.classList.remove('scroll-locked');
+      desbloquearScroll();
     };
   }, [storyOpen, descOpen]);
 
@@ -246,6 +249,9 @@ export default function ProductContent({ product, related, crossSell }: Props) {
 
               {/* Main CTA */}
               <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                {agotado ? (
+                  <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} disabled>Agotado por ahora</button>
+                ) : (<>
                 <button ref={ctaRef} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 200 }} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
                   Añadir al carrito — {formatCOP(precioQty.unit * qty)} <span className="btn-arrow">→</span>
                 </button>
@@ -264,6 +270,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
                 >
                   Comprar ya
                 </button>
+                </>)}
               </div>
 
               {/* Entrega el mismo día (mensajería local) */}
@@ -406,8 +413,8 @@ export default function ProductContent({ product, related, crossSell }: Props) {
           <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</div>
           <div className="mono" style={{ fontSize: 12, color: 'var(--fg-dim)' }}>{formatCOP(precioPromo.unit)}</div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
-          Añadir <span className="btn-arrow">→</span>
+        <button className="btn btn-primary btn-sm" disabled={agotado} onClick={(e) => { handleAdd(); pulse(e.currentTarget); }}>
+          {agotado ? 'Agotado' : <>Añadir <span className="btn-arrow">→</span></>}
         </button>
       </div>
 
