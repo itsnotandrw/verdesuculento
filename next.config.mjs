@@ -31,6 +31,18 @@ const nextConfig = {
     instrumentationHook: true,
   },
 
+  // Dominio canónico: sin "www". Cualquier petición que llegue por www se redirige (301) al dominio raíz, conservando la ruta.
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.viveroverdesuculento.co' }],
+        destination: 'https://viveroverdesuculento.co/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       // Imágenes y datos propios: caché larga en el navegador (los nombres de las variantes no cambian de contenido)
