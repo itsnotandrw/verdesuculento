@@ -10,6 +10,8 @@
  * `.env.example`) sin tocar una línea de código.
  */
 
+import { CONTACTO } from '@/data/contacto';
+
 function str(key: string, fallback = ''): string {
   return (process.env[key] ?? fallback).trim();
 }
@@ -26,6 +28,8 @@ function bool(key: string, fallback: boolean): boolean {
   if (raw == null) return fallback;
   return ['1', 'true', 'si', 'sí', 'yes'].includes(raw.trim().toLowerCase());
 }
+
+const SEDE_ENVIOS = CONTACTO.sedes[0];
 
 export const env = {
   /** URL pública del sitio. La usan los webhooks y los enlaces de seguimiento. */
@@ -83,9 +87,11 @@ export const env = {
       cityCode: str('SHIPPING_ORIGIN_CITY_CODE', '25754000'),
       /** El esquema lo exige, pero con el DANE presente Envia no lo usa. */
       postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', ''),
-      direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Calle 6 # 13-08'),
+      // FIJOS desde la sede de Soacha (data/contacto.ts): es la misma dirección que se publica y la que viaja en la guía.
+      // Una variable de Railway con otro valor (llegó a haber «Calle 6 # 3c-08») dejaría guías saliendo de un lugar distinto.
+      direccion: SEDE_ENVIOS.direccion.split(',')[0].trim(),
       /** Barrio de la bodega (lo lee el mensajero de la recogida). */
-      barrio: str('SHIPPING_ORIGIN_DISTRICT', 'El Altico'),
+      barrio: (SEDE_ENVIOS.direccion.split(',')[1] ?? '').trim(),
     },
 
     /** Contra entrega: se ofrece solo si el proveedor confirma cobertura. */

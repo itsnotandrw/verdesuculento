@@ -21,8 +21,9 @@ export const CONTACTO = {
       nombre: 'Centro de entregas Soacha',
       corto: 'Entregas Soacha',
       direccion: 'Calle 6 # 13-08, El Altico, Soacha, Cundinamarca',
-      mapa: 'https://maps.app.goo.gl/1UN8epcXbmNiHuJbA',
-      coords: { lat: 4.57534, lng: -74.223399 },
+      // Ficha de Google Maps del vivero (la más exacta, indicada por el negocio el 2026-11-23).
+      mapa: 'https://maps.app.goo.gl/rswLdK2L58yKARaz6',
+      coords: { lat: 4.5752459, lng: -74.2234033 },
     },
     {
       id: 'produccion',

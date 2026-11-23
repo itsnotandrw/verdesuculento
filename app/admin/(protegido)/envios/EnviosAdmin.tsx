@@ -16,7 +16,6 @@ interface Estado {
   ambiente: 'produccion' | 'pruebas';
   transportadoras: string[];
   origen: { ciudad: string; departamento: string; direccion: string };
-  direccionPublicada: string;
   contraEntrega: boolean;
   webhookSecretConfigurado: boolean;
   urlWebhook: string;
@@ -78,8 +77,6 @@ export default function EnviosAdmin() {
     }
   };
 
-  const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const direccionDistinta = estado ? norm(estado.origen.direccion) !== norm(estado.direccionPublicada) : false;
   const pill = (tono: 'ok' | 'bad' | 'wait', texto: string) => <span className="status-pill" data-tone={tono}>{texto}</span>;
 
   return (
@@ -95,13 +92,8 @@ export default function EnviosAdmin() {
             {pill(estado.contraEntrega ? 'wait' : 'ok', estado.contraEntrega ? 'Contra entrega ACTIVA' : 'Contra entrega apagada')}
             {pill(estado.webhookSecretConfigurado ? 'ok' : 'wait', estado.webhookSecretConfigurado ? 'Secreto de webhook puesto' : 'Webhook sin secreto')}
           </div>
-          {direccionDistinta && (
-            <div role="alert" style={{ padding: '10px 12px', borderRadius: 10, background: 'color-mix(in oklab, #ef4444 12%, var(--bg-elev))', border: '1px solid color-mix(in oklab, #ef4444 40%, transparent)', fontSize: 13, lineHeight: 1.55 }}>
-              <b>Revisa la dirección de la bodega.</b> Las guías saldrán desde «{estado?.origen.direccion}», pero la dirección publicada del negocio es «{estado?.direccionPublicada}». Corrige la variable <span className="mono">SHIPPING_ORIGIN_ADDRESS</span> en Railway (o bórrala para usar la correcta) antes de generar guías reales.
-            </div>
-          )}
           <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--fg-dim)' }}>
-            Bodega: {estado.origen.direccion}, {estado.origen.ciudad}, {estado.origen.departamento}.<br />
+            Bodega (fija, la sede de Soacha): {estado.origen.direccion}, {estado.origen.ciudad}, {estado.origen.departamento}.<br />
             El checkout cotiza con: <span className="mono">{estado.transportadoras.join(', ')}</span>. Para sumar o quitar una, edita la variable{' '}
             <span className="mono">ENVIA_CARRIERS</span> en Railway.
           </div>
