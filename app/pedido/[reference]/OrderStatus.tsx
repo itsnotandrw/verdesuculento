@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatCOP } from '@/data/catalog';
 import { DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 interface PublicOrder {
   reference: string;
@@ -421,7 +422,7 @@ export default function OrderStatus({
         </div>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 48 }}>
-          <Link href="/catalogo" className="btn btn-primary">Seguir comprando <span className="btn-arrow">→</span></Link>
+          <BotonCatalogo className="btn btn-primary">Seguir comprando <span className="btn-arrow">→</span></BotonCatalogo>
           <Link href="/diario" className="btn btn-ghost">Guías de cultivo</Link>
         </div>
 

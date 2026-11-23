@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 export default function NotFound() {
   return (
@@ -13,9 +14,9 @@ export default function NotFound() {
           Es posible que el enlace esté roto o que la página haya sido movida. Explora nuestro catálogo para encontrar lo que necesitas.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/catalogo" className="btn btn-primary">
+          <BotonCatalogo className="btn btn-primary">
             Ver catálogo <span className="btn-arrow">→</span>
-          </Link>
+          </BotonCatalogo>
           <Link href="/" className="btn btn-ghost">
             Volver al inicio
           </Link>

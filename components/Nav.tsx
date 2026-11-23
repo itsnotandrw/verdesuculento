@@ -12,6 +12,7 @@ import { useCategoryCounts } from '@/context/CategoryCountsContext';
 import { useOffers } from '@/context/OffersContext';
 import { useSearch } from '@/context/SearchContext';
 import CatalogStack from '@/components/CatalogStack';
+import { EVENTO_ABRIR_CATALOGO } from '@/components/BotonCatalogo';
 
 export default function Nav() {
   const pathname = usePathname();
@@ -37,6 +38,27 @@ export default function Nav() {
   useEffect(() => {
     setCatalogOpen(false);
   }, [pathname]);
+
+  // Botones «Ver catálogo» de las páginas: abren este menú; se cierra al tocar fuera.
+  useEffect(() => {
+    // Solo reacciona si el menú de escritorio se ve (en el celular abre el panel inferior de MobileNav).
+    const abrir = () => {
+      const trigger = panelRef.current?.parentElement;
+      if (!trigger || trigger.getBoundingClientRect().width === 0) return;
+      openCatalogMenu();
+    };
+    window.addEventListener(EVENTO_ABRIR_CATALOGO, abrir);
+    return () => window.removeEventListener(EVENTO_ABRIR_CATALOGO, abrir);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!catalogOpen) return;
+    const fuera = (e: PointerEvent) => {
+      if (!(e.target as Element | null)?.closest?.('.nav-dropdown')) setCatalogOpen(false);
+    };
+    document.addEventListener('pointerdown', fuera);
+    return () => document.removeEventListener('pointerdown', fuera);
+  }, [catalogOpen]);
 
   const links = [
     { href: '/diario', label: 'Diario' },

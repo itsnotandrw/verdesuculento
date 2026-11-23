@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import { CONTACTO, TIEMPO_ENTREGA } from '@/data/contacto';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 const WHATSAPP = CONTACTO.whatsappUrl;
 
@@ -20,7 +21,7 @@ type Benefit = {
 
 const BENEFITS: Benefit[] = [
   { n: '01', t: 'Envíos a toda Colombia', d: `Empaque especializado para plantas vivas. Llegada en ${TIEMPO_ENTREGA}.`, action: 'card', cta: 'Cómo funcionan los envíos', visible: true },
-  { n: '02', t: 'Plantas seleccionadas', d: 'Material genético certificado. Cada plántula pasa por inspección agronómica antes del despacho.', action: '/catalogo', cta: 'Ver productos destacados', visible: true },
+  { n: '02', t: 'Plantas seleccionadas', d: 'Material genético certificado. Cada plántula pasa por inspección agronómica antes del despacho.', action: 'catalogo', cta: 'Ver productos destacados', visible: true },
   { n: '03', t: 'Asesoría especializada', d: 'Acompañamiento de un agrónomo desde la compra hasta la primera cosecha. Sin costo adicional.', action: '/asesoria', cta: 'Hablar con un asesor', visible: true },
   // OCULTO por decisión del cliente (se conserva para reactivarlo).
   { n: '04', t: 'Garantía planta viva', d: 'Si tu planta no sobrevive al envío, la reponemos sin preguntas. Es nuestra promesa.', action: '/asesoria', cta: 'Saber más', visible: false },
@@ -62,6 +63,13 @@ export default function WhyBuySection() {
               </>
             );
             const style = { display: 'block', textAlign: 'left', background: 'none', border: 0, padding: 0, color: 'inherit', font: 'inherit', cursor: 'pointer', textDecoration: 'none' } as const;
+            if (item.action === 'catalogo') {
+              return (
+                <BotonCatalogo key={item.n} style={style}>
+                  {inner}
+                </BotonCatalogo>
+              );
+            }
             return item.action === 'card' ? (
               <button key={item.n} type="button" style={style} onClick={() => setOpen(true)} aria-haspopup="dialog">
                 {inner}

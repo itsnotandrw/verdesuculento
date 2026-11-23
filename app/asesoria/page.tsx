@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import { CONTACTO } from '@/data/contacto';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 export const metadata: Metadata = {
   title: 'Asesoría agronómica',
@@ -89,7 +90,7 @@ export default function AsesoriaPage() {
               <a href={CONTACTO.whatsappUrl} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
                 Hablar con un agrónomo <span className="btn-arrow">→</span>
               </a>
-              <Link href="/catalogo" className="btn btn-ghost">Ver plantas</Link>
+              <BotonCatalogo className="btn btn-ghost">Ver plantas</BotonCatalogo>
             </div>
           </Reveal>
         </div>
@@ -237,9 +238,9 @@ export default function AsesoriaPage() {
               Escoge tu planta, recíbela con instrucciones personalizadas y ten un agrónomo disponible por 6 meses.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/catalogo" className="btn btn-primary" style={{ fontSize: 16, padding: '16px 32px' }}>
+              <BotonCatalogo className="btn btn-primary" style={{ fontSize: 16, padding: '16px 32px' }}>
                 Ver catálogo <span className="btn-arrow">→</span>
-              </Link>
+              </BotonCatalogo>
               <a href={CONTACTO.whatsappUrl} className="btn btn-ghost" target="_blank" rel="noopener noreferrer">
                 Preguntar por WhatsApp
               </a>

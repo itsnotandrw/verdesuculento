@@ -8,6 +8,7 @@ import { useRemoveAnimation } from '@/lib/useRemoveAnimation';
 import ProductShape from './ProductShape';
 import PrecioPromo from './PrecioPromo';
 import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 export default function MiniCart() {
   const { items, open, setOpen, updateQty, remove, subtotal, count, linePrice } = useCart();
@@ -56,14 +57,9 @@ export default function MiniCart() {
             <div className="minicart-empty">
               <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.3 }}>🌱</div>
               <div>Tu carrito aún está vacío.</div>
-              <Link
-                href="/catalogo"
-                className="btn btn-ghost"
-                style={{ marginTop: 24 }}
-                onClick={() => setOpen(false)}
-              >
+              <BotonCatalogo className="btn btn-ghost" style={{ marginTop: 24 }} onClick={() => setOpen(false)}>
                 Explorar catálogo →
-              </Link>
+              </BotonCatalogo>
             </div>
           ) : (
             items.map((item) => (
@@ -116,14 +112,14 @@ export default function MiniCart() {
             >
               Finalizar compra <span className="btn-arrow">→</span>
             </Link>
-            <Link
-              href="/catalogo"
+            <button
+              type="button"
               className="btn btn-ghost"
               style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}
               onClick={() => setOpen(false)}
             >
               Seguir comprando
-            </Link>
+            </button>
             <Link
               href="/carrito"
               className="btn btn-ghost"

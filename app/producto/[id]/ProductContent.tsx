@@ -24,6 +24,7 @@ import AptitudZona from '@/components/AptitudZona';
 import { climasDe, textoClima } from '@/lib/clima';
 import { useAgotado } from '@/hooks/useAgotados';
 import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 interface Props {
   product: Product;
@@ -95,7 +96,7 @@ export default function ProductContent({ product, related, crossSell }: Props) {
       <div className="container">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" style={{ marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Link href="/catalogo" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</Link>
+          <BotonCatalogo style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</BotonCatalogo>
           <span style={{ color: 'var(--fg-mute)' }}>/</span>
           {category && (
             <>

@@ -20,6 +20,7 @@ import ReviewsGallery, { type ReviewItem } from '@/components/ReviewsGallery';
 import { RESENAS } from '@/data/resenas';
 import { RATINGS } from '@/data/ratings';
 import type { Product } from '@/types';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 export const metadata: Metadata = {
   title: { absolute: 'Vivero Verde Suculento — Frutales, plantas y agricultura moderna en Colombia' },
@@ -147,7 +148,7 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
-              <Link href="/catalogo" className="btn btn-primary">Explorar catálogo <span className="btn-arrow">→</span></Link>
+              <BotonCatalogo className="btn btn-primary">Explorar catálogo <span className="btn-arrow">→</span></BotonCatalogo>
             </Reveal>
           </div>
         </div>

@@ -5,6 +5,7 @@ import CountUp from '@/components/CountUp';
 import BlurText from '@/components/BlurText';
 import { CONTACTO } from '@/data/contacto';
 import MapaPlegable from '@/components/MapaPlegable';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 export const metadata: Metadata = {
   title: 'Nosotros',
@@ -253,7 +254,7 @@ export default function NosotrosPage() {
                 <a href={CONTACTO.whatsappUrl} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
                   WhatsApp <span className="btn-arrow">→</span>
                 </a>
-                <Link href="/catalogo" className="btn btn-ghost">Ver catálogo</Link>
+                <BotonCatalogo className="btn btn-ghost">Ver catálogo</BotonCatalogo>
               </div>
             </Reveal>
             <Reveal className="reveal-right">
@@ -275,9 +276,9 @@ export default function NosotrosPage() {
               Explora nuestro catálogo, elige tu variedad y el equipo agronómico estará contigo desde el primer día.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/catalogo" className="btn btn-primary">
+              <BotonCatalogo className="btn btn-primary">
                 Ver catálogo <span className="btn-arrow">→</span>
-              </Link>
+              </BotonCatalogo>
               <Link href="/asesoria" className="btn btn-ghost">Conocer asesoría</Link>
             </div>
           </Reveal>

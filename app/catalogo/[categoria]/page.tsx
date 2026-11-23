@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { CATEGORIES, formatCOP } from '@/data/catalog';
 import { getProductsByCategory } from '@/lib/catalog/store';
 import GrillaConClima from '@/components/GrillaConClima';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 interface Props {
   params: { categoria: string };
@@ -35,7 +36,7 @@ export default async function CategoryPage({ params }: Props) {
     <div className="page-section" style={{ paddingTop: 120 }}>
       <div className="container">
         <nav style={{ marginBottom: 40, display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Link href="/catalogo" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</Link>
+          <BotonCatalogo style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</BotonCatalogo>
           <span style={{ color: 'var(--fg-mute)' }}>/</span>
           <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>{cat.name}</span>
         </nav>

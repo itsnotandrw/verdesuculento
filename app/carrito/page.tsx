@@ -12,8 +12,14 @@ import ProductShape from '@/components/ProductShape';
 import PrecioPromo from '@/components/PrecioPromo';
 import CuponBox from '@/components/CuponBox';
 import { useCupon } from '@/hooks/useCupon';
+import BotonCatalogo from '@/components/BotonCatalogo';
+import { abrirCatalogo } from '@/components/BotonCatalogo';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
+  const router = useRouter();
+  // «Seguir comprando»: vuelve a donde estaba el cliente (no al inicio); si entró directo, abre el menú de catálogo.
+  const seguirComprando = () => { if (window.history.length > 1) router.back(); else abrirCatalogo(); };
   const { items, subtotal, listSubtotal, linePrice, count, updateQty, remove, shipping, setShipping } = useCart();
   const cupon = useCupon();
   const { removingKeys, registrarFila, handleRemove } = useRemoveAnimation(remove);
@@ -112,7 +118,7 @@ export default function CartPage() {
           Tu carrito está <em style={{ color: 'var(--accent)' }}>vacío.</em>
         </h1>
         <p style={{ color: 'var(--fg-dim)', marginBottom: 32 }}>Explora nuestro catálogo y encuentra la planta perfecta para ti.</p>
-        <Link href="/catalogo" className="btn btn-primary">Ver catálogo <span className="btn-arrow">→</span></Link>
+        <BotonCatalogo className="btn btn-primary">Ver catálogo <span className="btn-arrow">→</span></BotonCatalogo>
       </div>
     );
   }
@@ -121,7 +127,7 @@ export default function CartPage() {
     <div className="page-section" style={{ paddingTop: 120 }}>
       <div className="container">
         <nav style={{ marginBottom: 40, display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Link href="/catalogo" style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</Link>
+          <BotonCatalogo style={{ color: 'var(--fg-dim)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Catálogo</BotonCatalogo>
           <span style={{ color: 'var(--fg-mute)' }}>/</span>
           <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>Carrito</span>
         </nav>
@@ -287,9 +293,9 @@ export default function CartPage() {
             <Link href="/checkout" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
               Finalizar compra <span className="btn-arrow">→</span>
             </Link>
-            <Link href="/catalogo" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>
+            <button type="button" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} onClick={seguirComprando}>
               Seguir comprando
-            </Link>
+            </button>
 
             {/* Trust signals */}
             <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>

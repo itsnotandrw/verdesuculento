@@ -10,6 +10,7 @@ import { useOffers } from '@/context/OffersContext';
 import { useSearch } from '@/context/SearchContext';
 import CatalogStack from '@/components/CatalogStack';
 import { bloquearScroll, desbloquearScroll } from '@/lib/scroll-lock';
+import { EVENTO_ABRIR_CATALOGO } from '@/components/BotonCatalogo';
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -31,6 +32,18 @@ export default function MobileNav() {
     setCatalogOpen(false);
     setMoreOpen(false);
   }, [pathname]);
+
+  // Botones «Ver catálogo» de las páginas: abren este panel.
+  useEffect(() => {
+    // Solo reacciona si la barra del celular es la que se ve (en escritorio abre el menú desplegable de Nav).
+    const abrir = () => {
+      if (!navRef.current || navRef.current.getBoundingClientRect().width === 0) return;
+      setCatalogOpen(true);
+      setMoreOpen(false);
+    };
+    window.addEventListener(EVENTO_ABRIR_CATALOGO, abrir);
+    return () => window.removeEventListener(EVENTO_ABRIR_CATALOGO, abrir);
+  }, []);
 
   useEffect(() => {
     if (catalogOpen || moreOpen) bloquearScroll();

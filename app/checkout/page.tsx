@@ -15,6 +15,7 @@ import { LogoEnvio, LogoPago } from '@/components/LogosCheckout';
 import { useCupon } from '@/hooks/useCupon';
 import { tokenRecaptcha } from '@/lib/recaptcha-cliente';
 import AvisoRecaptcha from '@/components/AvisoRecaptcha';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 const STEPS = ['Envío', 'Pago'];
 
@@ -247,7 +248,7 @@ export default function CheckoutPage() {
     return (
       <div className="page-section" style={{ paddingTop: 160, textAlign: 'center' }}>
         <h1 className="display" style={{ fontSize: 'clamp(44px, 9vw, 72px)', marginBottom: 20 }}>Carrito vacío.</h1>
-        <Link href="/catalogo" className="btn btn-primary">Ver catálogo →</Link>
+        <BotonCatalogo className="btn btn-primary">Ver catálogo →</BotonCatalogo>
       </div>
     );
   }

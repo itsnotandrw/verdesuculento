@@ -2693,10 +2693,15 @@ html { overflow-x: clip; max-width: 100%; }
 .mobile-catalog-stack { max-height: 72dvh; overscroll-behavior: contain; padding: 4px 14px 18px; }
 .mobile-catalog-stack .cs-card { height: 62px; border-radius: 12px; }
 .mobile-catalog-stack .cs-oferta .cs-card { height: 46px; }
-.mobile-catalog-stack .cs-name { font-size: 20px; left: 14px; bottom: 24px; }
-.mobile-catalog-stack .cs-count { left: 14px; bottom: 8px; font-size: 10px; }
-.mobile-catalog-stack .cs-num { top: 8px; left: 14px; font-size: 9px; }
-.mobile-catalog-stack .cs-oferta .cs-name { font-size: 13px; bottom: auto; }
+/* Misma altura de tarjeta, pero número, nombre y cantidad en UNA fila (antes se pisaban dentro de 62 px). */
+.mobile-catalog-stack .cs-card { display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.mobile-catalog-stack .cs-num, .mobile-catalog-stack .cs-name, .mobile-catalog-stack .cs-count { position: static; }
+.mobile-catalog-stack .cs-num { font-size: 10px; flex: none; min-width: 20px; }
+.mobile-catalog-stack .cs-name { flex: 1; min-width: 0; font-size: 20px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mobile-catalog-stack .cs-count { flex: none; font-size: 10.5px; white-space: nowrap; }
+.mobile-catalog-stack .cs-num, .mobile-catalog-stack .cs-name, .mobile-catalog-stack .cs-count { text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75); }
+.mobile-catalog-stack .cs-oferta .cs-card { justify-content: space-between; }
+.mobile-catalog-stack .cs-oferta .cs-name { flex: 1; font-size: 13px; }
 
 /* ===== Precio estilo Mercado Libre: el descuento y el cupón se ven de inmediato ===== */
 .pml { display: inline-flex; flex-direction: column; gap: 3px; font-family: var(--font-mono); line-height: 1.15; }

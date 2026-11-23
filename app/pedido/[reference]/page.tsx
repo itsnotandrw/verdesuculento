@@ -5,6 +5,7 @@ import { toPublicOrder } from '@/lib/orders/types';
 import { env } from '@/lib/env';
 import { urlCheckout, wompiProvider } from '@/lib/payments/providers/wompi';
 import OrderStatus from './OrderStatus';
+import BotonCatalogo from '@/components/BotonCatalogo';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,7 +75,7 @@ function PedidoNoEncontrado({ referencia }: { referencia: string }) {
         </div>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/catalogo" className="btn btn-primary">Ver catálogo <span className="btn-arrow">→</span></Link>
+          <BotonCatalogo className="btn btn-primary">Ver catálogo <span className="btn-arrow">→</span></BotonCatalogo>
           <Link href="/asesoria" className="btn btn-ghost">Contactar al vivero</Link>
         </div>
       </div>
