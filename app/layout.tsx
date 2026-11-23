@@ -6,6 +6,7 @@ import Nav from '@/components/Nav';
 import MobileNav from '@/components/MobileNav';
 import FloatingActions from '@/components/FloatingActions';
 import ChromeGate from '@/components/ChromeGate';
+import Trafico from '@/components/Trafico';
 import { CategoryCountsProvider } from '@/context/CategoryCountsContext';
 import { getAllProducts } from '@/lib/catalog/store';
 import { getActiveCoupons, getOfertas } from '@/lib/promotions-store';
@@ -83,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <Providers campanas={campanas} cupones={cupones}>
+          <Trafico />
           <CategoryCountsProvider counts={counts}>
           <OffersProvider offers={ofertas}>
           <a href="#main-content" className="skip-to-content">Saltar al contenido principal</a>

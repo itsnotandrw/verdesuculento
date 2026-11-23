@@ -1,6 +1,6 @@
 /**
  * Métricas — ventas de la tienda (pedidos pagados) y desempeño histórico de las publicaciones.
- * Visitas y conversión llegan cuando se conecte analítica; hoy se muestra lo que sí se puede medir.
+ * Tráfico propio de la tienda (sin cookies ni datos personales), ventas y desempeño de las publicaciones.
  */
 
 import type { Metadata } from 'next';
@@ -9,13 +9,14 @@ import { CATEGORIES } from '@/data/catalog';
 import { RATINGS } from '@/data/ratings';
 import { getAllProducts } from '@/lib/catalog/store';
 import { orders } from '@/lib/orders/store';
+import { fechaBogota, leerTrafico, sumarPorPrefijo } from '@/lib/trafico';
 
 export const metadata: Metadata = { title: 'Métricas · Dashboard', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
 const DIA = 86400000;
 
 export default async function MetricasPage() {
-  const [lista, productos] = await Promise.all([orders.list({ limite: 1000 }), getAllProducts(true)]);
+  const [lista, productos, trafico] = await Promise.all([orders.list({ limite: 1000 }), getAllProducts(true), leerTrafico(30)]);
   const pagados = lista.filter((o) => o.payment.status === 'approved');
   const hoy0 = new Date(new Date().setHours(0, 0, 0, 0));
   const inicio = new Date(hoy0.getTime() - 29 * DIA);
@@ -29,6 +30,52 @@ export default async function MetricasPage() {
   });
   const max = Math.max(1, ...dias.map((x) => x.total));
 
+  // ---- tráfico
+  const hayTrafico = trafico.some((d) => d.pv > 0);
+  const sesiones = trafico.reduce((a, d) => a + d.ses, 0);
+  const paginas = trafico.reduce((a, d) => a + d.pv, 0);
+  const unicos = trafico.reduce((a, d) => a + d.unicos, 0);
+  const hoyT = trafico.find((d) => d.fecha === fechaBogota());
+  const maxPv = Math.max(1, ...trafico.map((d) => d.pv));
+  const rutas = sumarPorPrefijo(trafico, 'p:');
+  const vistasProducto = rutas.filter((r) => r.nombre.startsWith('/producto/')).reduce((a, r) => a + r.n, 0);
+  const vistasCheckout = rutas.find((r) => r.nombre === '/checkout')?.n ?? 0;
+  const alCarrito = trafico.reduce((a, d) => a + (d.campos['ev:carrito'] ?? 0), 0);
+  const nombreDe = new Map(productos.map((p) => [p.id, p.name]));
+  const masVistos = rutas.filter((r) => r.nombre.startsWith('/producto/')).slice(0, 8).map((r) => ({ nombre: nombreDe.get(r.nombre.replace('/producto/', '')) ?? r.nombre, n: r.n }));
+  const paginasTop = rutas.filter((r) => !r.nombre.startsWith('/producto/')).slice(0, 8);
+  const fuentes = sumarPorPrefijo(trafico, 'r:').slice(0, 8);
+  const dispositivos = sumarPorPrefijo(trafico, 'd:');
+  const etiquetaDisp: Record<string, string> = { movil: 'Celular', escritorio: 'Computador', tablet: 'Tableta' };
+  const conversion = sesiones ? Math.round((rango.length / sesiones) * 1000) / 10 : 0;
+  const embudo = [
+    { t: 'Visitas', n: sesiones },
+    { t: 'Vieron un producto', n: vistasProducto },
+    { t: 'Añadieron al carrito', n: alCarrito },
+    { t: 'Entraron al pago', n: vistasCheckout },
+    { t: 'Pagaron', n: rango.length },
+  ];
+  const maxE = Math.max(1, ...embudo.map((e) => e.n));
+  const barra = (n: number, tope: number, color = 'var(--a-accent)') => (
+    <div style={{ height: 8, borderRadius: 4, background: 'var(--a-line)', overflow: 'hidden', marginTop: 4 }}><div style={{ width: `${Math.min(100, (n / Math.max(1, tope)) * 100)}%`, height: '100%', background: color }} /></div>
+  );
+  const filasTop = (filas: { nombre: string; n: number }[], color?: string) => {
+    const tope = Math.max(1, ...filas.map((f) => f.n));
+    return (
+      <div style={{ display: 'grid', gap: 10 }}>
+        {filas.length === 0 && <p className="adm-hint">Todavía sin datos.</p>}
+        {filas.map((f) => (
+          <div key={f.nombre} style={{ minWidth: 0 }}>
+            <div className="adm-row" style={{ justifyContent: 'space-between', fontSize: 13, flexWrap: 'nowrap' }}>
+              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{f.nombre}</span><b>{f.n.toLocaleString('es-CO')}</b>
+            </div>
+            {barra(f.n, tope, color)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const hist = productos
     .map((p) => ({ p, vendidos: RATINGS[p.id]?.soldCount ?? 0, rating: RATINGS[p.id]?.rating ?? null }))
     .sort((a, b) => b.vendidos - a.vendidos);
@@ -41,6 +88,56 @@ export default async function MetricasPage() {
     <>
       <div className="adm-pagehead"><div><h1 className="adm-title">Métricas</h1><p className="adm-desc">Cómo le va a tu tienda propia y qué productos son los favoritos.</p></div></div>
 
+      <h2 className="adm-h2" style={{ marginBottom: 10 }}>Tráfico · últimos 30 días</h2>
+      <div className="adm-kpis" style={{ marginBottom: 16 }}>
+        <div className="adm-kpi"><small>Visitas</small><b>{sesiones.toLocaleString('es-CO')}</b></div>
+        <div className="adm-kpi"><small>Visitantes únicos (aprox.)</small><b>{unicos.toLocaleString('es-CO')}</b></div>
+        <div className="adm-kpi"><small>Páginas vistas</small><b>{paginas.toLocaleString('es-CO')}</b></div>
+        <div className="adm-kpi"><small>Hoy · visitantes</small><b>{(hoyT?.unicos ?? 0).toLocaleString('es-CO')}</b></div>
+        <div className="adm-kpi"><small>Conversión (pedidos / visitas)</small><b>{conversion}%</b></div>
+      </div>
+
+      <section className="adm-card pad" style={{ marginBottom: 16 }}>
+        <h2 className="adm-h2">Visitas por día</h2>
+        <div className="adm-chart" style={{ gap: 4 }} role="img" aria-label="Páginas vistas por día">
+          {trafico.map((d) => <div key={d.fecha} title={`${d.fecha}: ${d.pv} páginas vistas · ${d.unicos} visitantes`}><div className={`adm-bar${d.pv ? '' : ' zero'}`} style={{ height: `${Math.max(4, (d.pv / maxPv) * 120)}px`, maxWidth: 18, background: d.pv ? 'var(--a-info)' : undefined }} /></div>)}
+        </div>
+        {!hayTrafico && <p className="adm-hint" style={{ marginTop: 10 }}>El conteo de visitas empieza desde que se publicó esta versión: los datos aparecen conforme entra gente al sitio.</p>}
+        <p className="adm-hint" style={{ marginTop: 8 }}>Se cuenta sin cookies y sin guardar IP ni datos personales. «Únicos» suma los visitantes de cada día: quien vuelve otro día cuenta de nuevo. No incluye al panel de administración ni a robots.</p>
+      </section>
+
+      <div className="adm-grid adm-g2" style={{ marginBottom: 16 }}>
+        <section className="adm-card pad">
+          <h2 className="adm-h2" style={{ marginBottom: 12 }}>Del interés a la compra</h2>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {embudo.map((e, i) => (
+              <div key={e.t}>
+                <div className="adm-row" style={{ justifyContent: 'space-between', fontSize: 13, flexWrap: 'nowrap' }}>
+                  <span>{e.t}</span><b>{e.n.toLocaleString('es-CO')}{i > 0 && embudo[i - 1].n > 0 ? <small style={{ color: 'var(--a-mute)', fontWeight: 400 }}> · {Math.round((e.n / embudo[i - 1].n) * 100)}% del paso anterior</small> : null}</b>
+                </div>
+                {barra(e.n, maxE, i === embudo.length - 1 ? 'var(--a-accent)' : 'var(--a-info)')}
+              </div>
+            ))}
+          </div>
+          <p className="adm-hint" style={{ marginTop: 10 }}>Son conteos de acciones, no de personas: una visita puede ver varios productos.</p>
+        </section>
+        <section className="adm-card pad">
+          <h2 className="adm-h2" style={{ marginBottom: 12 }}>De dónde llegan</h2>
+          {filasTop(fuentes, 'var(--a-info)')}
+          <h2 className="adm-h2" style={{ margin: '20px 0 12px' }}>Con qué entran</h2>
+          {filasTop(dispositivos.map((d) => ({ nombre: etiquetaDisp[d.nombre] ?? d.nombre, n: d.n })), 'var(--a-accent)')}
+        </section>
+        <section className="adm-card pad">
+          <h2 className="adm-h2" style={{ marginBottom: 12 }}>Publicaciones más vistas</h2>
+          {filasTop(masVistos)}
+        </section>
+        <section className="adm-card pad">
+          <h2 className="adm-h2" style={{ marginBottom: 12 }}>Páginas más visitadas</h2>
+          {filasTop(paginasTop.map((r) => ({ nombre: r.nombre === '/' ? 'Inicio' : r.nombre, n: r.n })), 'var(--a-info)')}
+        </section>
+      </div>
+
+      <h2 className="adm-h2" style={{ marginBottom: 10 }}>Ventas · últimos 30 días</h2>
       <div className="adm-kpis" style={{ marginBottom: 16 }}>
         <div className="adm-kpi"><small>Ventas brutas · 30 días</small><b>{formatCOP(ventas)}</b></div>
         <div className="adm-kpi"><small>Pedidos pagados</small><b>{rango.length}</b></div>

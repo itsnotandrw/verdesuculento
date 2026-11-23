@@ -17,9 +17,8 @@ import { useRouter } from 'next/navigation';
 import { CATEGORIES } from '@/data/catalog';
 import type { Product, ProductColor, ProductSpecs } from '@/types';
 import { urlImagen } from '@/lib/image-loader';
-import AltitudRecomendada from './AltitudRecomendada';
-import InteraccionInicio, { aplicarInteraccion, type RangoAltitud, type SeleccionPuntos } from './InteraccionInicio';
-import type { Clima } from '@/types';
+import AltitudClima from './AltitudClima';
+import { altitudSugerida, type RangoAltitud } from '@/lib/clima';
 
 const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: '', altura: '', dificultad: '' };
 
@@ -47,10 +46,11 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
   );
   const [stock, setStock] = useState(stockInicial === null || stockInicial === undefined ? '' : String(stockInicial));
   // Interacción en el inicio (punto en «Elige tu frutal por clima»): solo se guarda si el administrador la tocó.
-  const [altitud, setAltitud] = useState<RangoAltitud | null>(inicial?.altitud ?? null);
-  const [climas, setClimas] = useState<Clima[] | undefined>(inicial?.climas);
-  const interaccion = useRef<SeleccionPuntos | null>(null);
-  const yaCreado = useRef(false);
+  // Altitud recomendada: dato único y obligatorio (manda en el clima de todo el sitio). Las publicaciones antiguas sin altitud
+  // arrancan con una sugerencia que hay que confirmar a mano.
+  const [altitud, setAltitudValor] = useState<RangoAltitud>(inicial?.altitud ?? altitudSugerida(inicial ?? { category: 'berries' }));
+  const [altitudConfirmada, setAltitudConfirmada] = useState(Boolean(inicial?.altitud));
+  const setAltitud = (v: RangoAltitud) => { setAltitudValor(v); setAltitudConfirmada(true); };
   const [peso, setPeso] = useState(inicial?.logistica ? String(inicial.logistica.weightGrams / 1000) : '');
   const [largo, setLargo] = useState(inicial?.logistica ? String(inicial.logistica.lengthCm) : '');
   const [ancho, setAncho] = useState(inicial?.logistica ? String(inicial.logistica.widthCm) : '');
@@ -78,6 +78,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
     setGuardando(true);
     setError(null);
     try {
+      if (!altitudConfirmada) throw new Error('Define la altitud recomendada (msnm) de la planta: es obligatoria.');
       const payload = {
         id,
         name,
@@ -89,7 +90,6 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
         // Vacío = sin control de inventario (se vende sin límite). Con número, el sitio descuenta al vender.
         stock: stock.trim() === '' ? null : Number(stock),
         altitud,
-        climas,
         description,
         specs,
         sizes: sizes.map((s) => s.trim()).filter(Boolean),
@@ -100,7 +100,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
           : undefined,
       };
 
-      const creando = modo === 'crear' && !yaCreado.current;
+      const creando = modo === 'crear';
       const url = creando ? '/api/admin/products' : `/api/admin/products/${inicial?.id ?? id}`;
       const method = creando ? 'POST' : 'PATCH';
 
@@ -111,17 +111,6 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo guardar.');
-      yaCreado.current = true;
-
-      if (interaccion.current) {
-        try {
-          await aplicarInteraccion(datos.product?.id ?? id, interaccion.current);
-        } catch (er) {
-          setError(`El producto quedó guardado, pero la interacción del inicio no: ${er instanceof Error ? er.message : 'error desconocido'}. Pulsa de nuevo «Guardar» para reintentar.`);
-          setGuardando(false);
-          return;
-        }
-      }
 
       router.push('/admin/catalogo');
       router.refresh();
@@ -210,17 +199,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
           </p>
         </div>
 
-        <AltitudRecomendada valor={altitud} onChange={setAltitud} />
-
-        <InteraccionInicio
-          productId={inicial?.id ?? ''}
-          altitud={altitud}
-          climasIniciales={inicial?.climas}
-          onClimas={setClimas}
-          nombre={name}
-          imagen={images[0]}
-          onCambio={(sel) => { interaccion.current = sel; }}
-        />
+        <AltitudClima valor={altitud} confirmada={altitudConfirmada} onChange={setAltitud} />
 
         <div>
           <label className="checkout-label" htmlFor="p-description">Descripción</label>
@@ -288,7 +267,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
         <div>
           <div className="checkout-label" style={{ marginBottom: 8 }}>Ficha técnica</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {(Object.keys(SPECS_VACIAS) as (keyof ProductSpecs)[]).map((campo) => (
+            {(Object.keys(SPECS_VACIAS) as (keyof ProductSpecs)[]).filter((campo) => campo !== 'clima').map((campo) => (
               <input
                 key={campo}
                 className="checkout-input"

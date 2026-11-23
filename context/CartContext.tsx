@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { CartItem, Product, ProductColor } from '@/types';
 import { usePromo } from '@/context/PromoContext';
 import type { PrecioProducto } from '@/lib/promo-precios';
+import { trackEvento } from '@/components/Trafico';
 
 interface AddOptions {
   color?: ProductColor;
@@ -44,6 +45,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const linePrice = useCallback((item: CartItem) => precio(item.product, item.qty), [precio]);
 
   const add = useCallback((product: Product, opts: AddOptions = {}) => {
+    trackEvento('carrito');
     const color = opts.color ?? product.colors[0];
     const size = opts.size ?? product.sizes[0];
     const variantKey = `${product.id}-${color.hex}-${size}`;

@@ -119,6 +119,7 @@ const LIMITES = {
   rastreo: [30, 60_000],
   metodos: [40, 60_000],
   'zona-plantas': [30, 60_000],
+  trafico: [120, 60_000],
   // Login del panel (Better Auth). Se suman a los límites propios de Better Auth (3 cada 10 s por ruta de inicio de sesión).
   'admin-enlace-ip': [6, 600_000], // enlaces pedidos desde una misma IP en 10 min
   'admin-enlace-correo': [3, 600_000], // enlaces a un mismo correo en 10 min (evita llenarle la bandeja a un admin)
