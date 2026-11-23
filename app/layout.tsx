@@ -49,7 +49,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
   alternates: { canonical: '/' },
   applicationName: 'Vivero Verde Suculento',
-  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
+  // Token público de Search Console (etiqueta meta). Va en el HTML de todas las páginas: no es un secreto.
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION || 'XD7Bz14JYrQ_0z1UJzPmTHqXqVi3JUK2hOL0JUcThFY' },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },
   title: {
     default: 'Vivero Verde Suculento — Suculentas, Frutales & Agricultura Moderna',
