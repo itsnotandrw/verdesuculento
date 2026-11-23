@@ -12,9 +12,9 @@ sandbox de Envía; lo que no se puede probar sin dinero real (guía facturable, 
 | `SHIPPING_PROVIDER` | `envia` | |
 | `ENVIA_TOKEN` | la llave de **producción** | una llave solo sirve en su ambiente |
 | `ENVIA_BASE_URL` | `https://api.envia.com` | sandbox es `https://api-test.envia.com` |
-| `SHIPPING_ORIGIN_*` | dirección de la bodega (Soacha) | ya tiene valores por defecto correctos |
+| `SHIPPING_ORIGIN_ADDRESS` | `Calle 6 # 13-08` | **debe coincidir con la dirección publicada**: viaja en la guía. El panel → Envíos avisa si difiere |
 | `SHIPPING_ORIGIN_POSTAL_CODE` | código postal de la bodega | solo lo exige **agendar recogida**; por defecto `250051` (Soacha), confírmalo |
-| `ENVIA_CARRIERS` | `tcc,interRapidisimo,serviEntrega,coordinadora,jtexpress` | opcional: qué transportadoras ve el cliente |
+| `ENVIA_CARRIERS` | `tcc,interRapidisimo,serviEntrega,coordinadora` | opcional (es el valor por defecto): qué transportadoras ve el cliente. DHL también cubre pero cuesta ≈ $49.000: se agrega añadiendo `dhl` |
 | `SHIPPING_COD_ENABLED` | `false` | contra entrega apagada hasta tener Ecart Pay |
 
 **Cuenta de Envía:** saldo **prepagado** suficiente (guía + recogida; ≈ $25.000–$45.000 para una prueba).

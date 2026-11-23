@@ -12,6 +12,7 @@
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok, texto } from '@/lib/api';
 import { env } from '@/lib/env';
 import { baseUrl } from '@/lib/seo';
+import { CONTACTO } from '@/data/contacto';
 import { diagnosticoTransportadoras, listarWebhooksEnvia, registrarWebhookEnvia } from '@/lib/shipping/providers/envia';
 import { DestinoNoResueltoError } from '@/lib/shipping/types';
 
@@ -32,8 +33,10 @@ export async function GET(request: Request) {
         proveedorActivo: env.shipping.provider,
         enviaConfigurado: Boolean(env.shipping.envia.token),
         ambiente: enProduccion() ? 'produccion' : 'pruebas',
-        transportadoras: (env.shipping.envia.carriers || 'tcc,interRapidisimo,serviEntrega,coordinadora,jtexpress').split(',').map((c) => c.trim()).filter(Boolean),
+        transportadoras: (env.shipping.envia.carriers || 'tcc,interRapidisimo,serviEntrega,coordinadora').split(',').map((c) => c.trim()).filter(Boolean),
         origen: { ciudad: env.shipping.origin.ciudad, departamento: env.shipping.origin.departamento, direccion: env.shipping.origin.direccion },
+        // La dirección que viaja en las guías debe ser la misma que el negocio publica: si difieren, el panel avisa.
+        direccionPublicada: CONTACTO.sedes[0].direccion.split(',')[0],
         contraEntrega: env.shipping.codEnabled,
         webhookSecretConfigurado: Boolean(env.shipping.envia.webhookSecret),
         urlWebhook: `${baseUrl()}/api/webhooks/shipping`,

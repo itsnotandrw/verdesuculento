@@ -191,12 +191,13 @@ async function conReintento<T>(fn: () => Promise<T>, intentos = 1): Promise<T> {
  * sumar o quitar una sin desplegar. Cada transportadora se consulta por separado y la que no cubra la ruta (o falle)
  * simplemente no aparece: nunca tumba al resto.
  *
- * Por defecto las nacionales de paquetería: TCC, Inter Rapidísimo, Servientrega, Coordinadora y J&T Express. Quedan
- * fuera a propósito el carrier propio `envia` (servicios type 3: tractomula, rechazan cajas) y la mensajería urbana
- * inmediata (cabify, 99minutos, lastMile, welivery: solo ciudades puntuales y muy cara para plantas); si se quisieran,
- * basta añadirlas a la variable.
+ * Por defecto las cuatro nacionales de paquetería: TCC, Inter Rapidísimo, Servientrega y Coordinadora. Verificado en
+ * producción (2026-11-23, panel /admin/envios) que son las que cubren el país; J&T Express no existe en el catálogo de
+ * Envia para Colombia. Quedan fuera a propósito el carrier propio `envia` (servicios type 3: tractomula, rechazan cajas),
+ * la mensajería urbana inmediata (cabify, 99minutos, lastMile, welivery, mensajerosUrbanos: solo ciudades puntuales) y
+ * DHL (cubre, pero ≈ $49.000 por un paquete que otras llevan en ≈ $21.000); si se quisieran, basta añadirlas a la variable.
  */
-const POR_DEFECTO = 'tcc,interRapidisimo,serviEntrega,coordinadora,jtexpress';
+const POR_DEFECTO = 'tcc,interRapidisimo,serviEntrega,coordinadora';
 
 /** Transportadoras que Envia no deja anular por API. */
 const SIN_CANCELACION = new Set(['interRapidisimo']);
