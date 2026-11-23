@@ -10,6 +10,7 @@ import { crearPedido } from '@/lib/orders/orchestrator';
 import { toPublicOrder, type PaymentMethodId } from '@/lib/orders/types';
 import type { PaymentContext } from '@/lib/payments';
 import { ipDe, limitarCheckout } from '@/lib/ratelimit';
+import { exigirRecaptcha } from '@/lib/recaptcha';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
     }
 
     const body = await cuerpo(request);
+    const rechazo = await exigirRecaptcha(body.recaptchaToken, 'checkout', ipDe(request));
+    if (rechazo) return rechazo;
 
     const metodo = texto(body.method, 'el método de pago', { max: 10 }).toUpperCase() as PaymentMethodId;
     if (!METODOS.includes(metodo)) return fail('Método de pago no válido.', 422);

@@ -2730,3 +2730,6 @@ a.pml-cupon:hover { background: color-mix(in oklab, var(--accent) 12%, transpare
 @media (max-width: 560px) { .option-card .logo-fila { max-width: 100%; margin-left: 0; } .logo-chip-cuadrado { width: 46px; height: 46px; } }
 
 .product-agotado{position:absolute;bottom:10px;left:10px;z-index:3;background:#1f1f1f;color:#fff;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+
+/* reCAPTCHA v3: la insignia se oculta y cada formulario muestra el aviso (components/AvisoRecaptcha.tsx). */
+.grecaptcha-badge{visibility:hidden !important}

@@ -14,7 +14,8 @@
 
 import { betterAuth } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
-import { magicLink } from 'better-auth/plugins';
+import { captcha, magicLink } from 'better-auth/plugins';
+import { recaptchaActivo, recaptchaMinScore } from '@/lib/recaptcha';
 import { env } from '@/lib/env';
 import { redis } from '@/lib/redis';
 import { limitar } from '@/lib/ratelimit';
@@ -121,6 +122,10 @@ function crear() {
       },
     },
     plugins: [
+      // reCAPTCHA v3 en la entrada del panel (lib/recaptcha.ts). Sin llaves configuradas no se activa.
+      ...(recaptchaActivo()
+        ? [captcha({ provider: 'google-recaptcha', secretKey: process.env.RECAPTCHA_SECRET_KEY as string, minScore: recaptchaMinScore(), expectedAction: 'admin_login', endpoints: ['/sign-in/magic-link', '/sign-in/social'] })]
+        : []),
       magicLink({
         expiresIn: 60 * 10, // el enlace vale 10 minutos
         allowedAttempts: 1, // y se usa una sola vez

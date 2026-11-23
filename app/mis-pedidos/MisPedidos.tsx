@@ -8,6 +8,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { tokenRecaptcha } from '@/lib/recaptcha-cliente';
+import AvisoRecaptcha from '@/components/AvisoRecaptcha';
 
 export default function MisPedidos() {
   const router = useRouter();
@@ -26,7 +28,7 @@ export default function MisPedidos() {
       const respuesta = await fetch('/api/orders/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(modo === 'ticket' ? { ticket: valor } : { email: valor }),
+        body: JSON.stringify({ recaptchaToken: await tokenRecaptcha('mis_pedidos'), ...(modo === 'ticket' ? { ticket: valor } : { email: valor }) }),
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo buscar.');
@@ -77,6 +79,7 @@ export default function MisPedidos() {
         {modo === 'correo' && !aviso && (
           <p style={{ fontSize: 13, color: 'var(--fg-dim)' }}>Por tu privacidad no mostramos pedidos en pantalla: te enviamos la lista al correo con el que compraste.</p>
         )}
+        <AvisoRecaptcha />
         {error && <p role="alert" style={{ fontSize: 13, color: '#ef4444' }}>{error}</p>}
         {aviso && <p role="status" style={{ fontSize: 14, color: 'var(--accent)', lineHeight: 1.6 }}>{aviso}</p>}
       </div>

@@ -10,6 +10,7 @@ import { ValidationError, cuerpo, email as validarEmail, fail, fallo, ok } from 
 import { correoListaPedidos, enviarSinFallar } from '@/lib/orders/correos';
 import { orders } from '@/lib/orders/store';
 import { ipDe, limitar, limitarBusquedaPedidos } from '@/lib/ratelimit';
+import { exigirRecaptcha } from '@/lib/recaptcha';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,8 @@ export async function POST(request: Request) {
       return fail('Demasiadas búsquedas seguidas. Espera unos minutos e intenta de nuevo.', 429);
     }
     const body = await cuerpo(request);
+    const rechazo = await exigirRecaptcha(body.recaptchaToken, 'mis_pedidos', ipDe(request));
+    if (rechazo) return rechazo;
 
     if (typeof body.ticket === 'string' && body.ticket.trim()) {
       const limpio = body.ticket.trim().toUpperCase().replace(/\s+/g, '');

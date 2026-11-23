@@ -3,6 +3,13 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
+import { tokenRecaptcha } from '@/lib/recaptcha-cliente';
+import AvisoRecaptcha from '@/components/AvisoRecaptcha';
+
+const cabeceraCaptcha = async () => {
+  const token = await tokenRecaptcha('admin_login');
+  return { headers: { 'x-captcha-response': token } };
+};
 
 const MENSAJES: Record<string, string> = {
   no_autorizado: 'Ese correo no tiene acceso al panel.',
@@ -25,7 +32,7 @@ function Formulario({ google }: { google: boolean }) {
   const conGoogle = async () => {
     setOcupado(true);
     setError(null);
-    const r = await authClient.signIn.social({ provider: 'google', callbackURL: destino, errorCallbackURL: '/admin/login' });
+    const r = await authClient.signIn.social({ provider: 'google', callbackURL: destino, errorCallbackURL: '/admin/login' }, await cabeceraCaptcha());
     if (r.error) {
       setError('No se pudo iniciar con Google.');
       setOcupado(false);
@@ -36,9 +43,9 @@ function Formulario({ google }: { google: boolean }) {
     e.preventDefault();
     setOcupado(true);
     setError(null);
-    const r = await authClient.signIn.magicLink({ email: email.trim(), callbackURL: destino, errorCallbackURL: '/admin/login' });
+    const r = await authClient.signIn.magicLink({ email: email.trim(), callbackURL: destino, errorCallbackURL: '/admin/login' }, await cabeceraCaptcha());
     setOcupado(false);
-    if (r.error) setError(r.error.status === 429 ? 'Demasiados intentos. Espera un minuto.' : 'No se pudo enviar el enlace.');
+    if (r.error) setError(r.error.status === 429 ? 'Demasiados intentos. Espera un minuto.' : (r.error.status === 403 || r.error.code === 'MISSING_RESPONSE' || r.error.code === 'VERIFICATION_FAILED') ? 'No pudimos verificar que eres una persona. Recarga la página e intenta de nuevo.' : 'No se pudo enviar el enlace.');
     else setEnviado(true);
   };
 
@@ -57,6 +64,7 @@ function Formulario({ google }: { google: boolean }) {
           </>
         )}
 
+        <AvisoRecaptcha />
         {enviado ? (
           <p role="status" style={{ fontSize: 14, lineHeight: 1.6 }}>
             Si ese correo tiene acceso, te llegará un enlace para entrar. Vale 10 minutos y se usa una sola vez. Revisa también el correo no deseado.

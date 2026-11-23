@@ -13,6 +13,8 @@ import PrecioPromo from '@/components/PrecioPromo';
 import CuponBox from '@/components/CuponBox';
 import { LogoEnvio, LogoPago } from '@/components/LogosCheckout';
 import { useCupon } from '@/hooks/useCupon';
+import { tokenRecaptcha } from '@/lib/recaptcha-cliente';
+import AvisoRecaptcha from '@/components/AvisoRecaptcha';
 
 const STEPS = ['Envío', 'Pago'];
 
@@ -311,10 +313,12 @@ export default function CheckoutPage() {
           ? { departamento: DIRECCION_RECOGIDA.departamento, ciudad: DIRECCION_RECOGIDA.ciudad, direccion: DIRECCION_RECOGIDA.direccion, barrio: '', codigoPostal: '' }
           : { ciudad: ciudadEfectiva };
 
+      const recaptchaToken = await tokenRecaptcha('checkout');
       const respuesta = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          recaptchaToken,
           ...datosEnvio,
           ...direccionFinal,
           method: metodo,
@@ -629,6 +633,7 @@ export default function CheckoutPage() {
                   )}
                 </button>
               </div>
+              <AvisoRecaptcha />
             </div>
 
             <OrderSummary items={items} subtotal={subtotal} envio={envio} total={total} quote={quote} descuentoCupon={descuentoCupon} cuponCode={cupon.code} recargoCod={recargoCod} />
