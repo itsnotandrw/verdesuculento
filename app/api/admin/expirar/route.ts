@@ -23,7 +23,7 @@ import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { autorizarAdmin, fail, fallo, ok } from '@/lib/api';
 import { env } from '@/lib/env';
-import { conciliarWompiPendientes, expirarPendientes } from '@/lib/orders/orchestrator';
+import { conciliarWompiPendientes, expirarPendientes, sincronizarSeguimientos } from '@/lib/orders/orchestrator';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +31,8 @@ async function correr() {
   try {
     const conciliados = await conciliarWompiPendientes();
     const resultado = await expirarPendientes();
-    return ok({ ...resultado, conciliados, corridoEn: new Date().toISOString() });
+    const seguimiento = await sincronizarSeguimientos().catch(() => ({ revisados: 0, actualizados: 0 }));
+    return ok({ ...resultado, conciliados, seguimiento, corridoEn: new Date().toISOString() });
   } catch (error) {
     return fallo(error, 'expirar pedidos');
   }

@@ -30,6 +30,8 @@ interface Quote {
   note?: string;
   /** Texto que reemplaza al valor cuando el costo aún no se conoce (entrega el mismo día). */
   costLabel?: string;
+  /** Marca de la opción más barata / más rápida. */
+  etiqueta?: string;
 }
 
 interface Metodo {
@@ -517,8 +519,9 @@ export default function CheckoutPage() {
                         />
                         <LogoEnvio codigo={q.carrierCode} nombre={q.carrier} />
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: 14, fontWeight: 500 }}>
-                            {q.service} · {q.carrier}
+                          <div style={{ fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <span>{q.service} · {q.carrier}</span>
+                            {q.etiqueta && <span className="badge-inline">{q.etiqueta}</span>}
                           </div>
                           <div className="mono" style={{ fontSize: 11.5, color: 'var(--fg-dim)', marginTop: 3 }}>
                             {q.etaLabel}

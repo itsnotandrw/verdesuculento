@@ -44,7 +44,8 @@ export async function GET(
       carrier: pedido.shipment.carrier,
       status: pedido.shipment.status,
       statusLabel: etiquetaEnvio(pedido.shipment.status),
-      reference: pedido.reference,
+      // A propósito SIN la referencia del pedido: es la llave de acceso a /pedido/<referencia>, y un número de guía no
+      // debe bastar para obtenerla.
       events: [...events].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)),
     });
   } catch (error) {

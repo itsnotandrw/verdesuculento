@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3, Bell, ExternalLink, Home, LayoutTemplate, LogOut, Menu, Moon, MousePointerClick, Percent, Search,
-  Settings, ShoppingBag, Sun, Tags, X,
+  Settings, ShoppingBag, Sun, Tags, Truck, X,
 } from 'lucide-react';
 import type { ToastKind } from './toast';
 import { CONTACTO } from '@/data/contacto';
@@ -21,6 +21,7 @@ const NAV = [
   { href: '/admin/pagina', label: 'Mi página', icon: LayoutTemplate },
   { href: '/admin/imagenes', label: 'Imágenes interactivas', icon: MousePointerClick },
   { href: '/admin/pedidos', label: 'Ventas', icon: ShoppingBag, badge: true },
+  { href: '/admin/envios', label: 'Envíos', icon: Truck },
   { href: '/admin/metricas', label: 'Métricas', icon: BarChart3 },
   { href: '/admin/cuenta', label: 'Preferencias', icon: Settings },
 ] as const;

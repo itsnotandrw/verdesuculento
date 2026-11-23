@@ -1,4 +1,8 @@
 import type {
+  CancelShipmentInput,
+  CancelShipmentResult,
+  PickupInput,
+  PickupResult,
   CodCoverage,
   CreateShipmentInput,
   CreatedShipment,
@@ -32,6 +36,12 @@ export interface ShippingProvider {
 
   /** Genera la guía. Solo se llama con el dinero asegurado. */
   createShipment(input: CreateShipmentInput): Promise<CreatedShipment>;
+
+  /** Anula una guía que aún no fue recogida. Opcional: no todos los proveedores lo permiten. */
+  cancelShipment?(input: CancelShipmentInput): Promise<CancelShipmentResult>;
+
+  /** Agenda la recogida de uno o varios paquetes de una misma transportadora. Opcional y puede tener costo. */
+  schedulePickup?(input: PickupInput): Promise<PickupResult>;
 
   /** Historial de estados de una guía. */
   track(trackingNumber: string): Promise<TrackingEvent[]>;

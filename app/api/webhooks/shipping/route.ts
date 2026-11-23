@@ -42,5 +42,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return ok({ status: 'listo', provider: shippingProvider().id });
+  return ok({ status: 'listo' });
 }

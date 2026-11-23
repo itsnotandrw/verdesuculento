@@ -84,6 +84,8 @@ export const env = {
       /** El esquema lo exige, pero con el DANE presente Envia no lo usa. */
       postalCode: str('SHIPPING_ORIGIN_POSTAL_CODE', ''),
       direccion: str('SHIPPING_ORIGIN_ADDRESS', 'Calle 6 # 13-08'),
+      /** Barrio de la bodega (lo lee el mensajero de la recogida). */
+      barrio: str('SHIPPING_ORIGIN_DISTRICT', 'El Altico'),
     },
 
     /** Contra entrega: se ofrece solo si el proveedor confirma cobertura. */
@@ -124,6 +126,8 @@ export const env = {
       token: str('ENVIA_TOKEN'),
       baseUrl: str('ENVIA_BASE_URL', 'https://api-test.envia.com'),
       webhookSecret: str('SHIPPING_WEBHOOK_SECRET'),
+      /** Transportadoras que se cotizan (códigos de Envía, separados por coma). Cada una que no cubra la ruta se ignora sin afectar al resto. */
+      carriers: str('ENVIA_CARRIERS', 'tcc,interRapidisimo,serviEntrega,coordinadora,jtexpress'),
     },
   },
 

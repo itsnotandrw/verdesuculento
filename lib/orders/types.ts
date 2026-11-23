@@ -110,6 +110,8 @@ export interface OrderShipment {
   cost: number;
   trackingNumber: string;
   labelUrl?: string;
+  /** Recogida a domicilio agendada con la transportadora. */
+  pickup?: { number: string; date: string; timeFrom: string; timeTo: string; fee?: number; requestedAt: string; requestedBy: string };
   /** Monto a recaudar si es contra entrega. */
   codAmount?: number;
   /** Si el recaudo ya fue girado por el agregador. */
@@ -188,6 +190,8 @@ export interface Order {
 
   payment: OrderPayment;
   shipment?: OrderShipment;
+  /** Guías que se anularon antes de generar otra (queda el rastro: nunca se borra una guía sin dejar constancia). */
+  guiasAnuladas?: Array<{ trackingNumber: string; carrier: string; cancelledAt: string; cancelledBy: string; balanceReturned?: boolean }>;
   tracking: TrackingEvent[];
   timeline: OrderEvent[];
 

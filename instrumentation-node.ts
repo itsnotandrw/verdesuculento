@@ -42,8 +42,8 @@ export async function registrarError(
 }
 
 /**
- * Conciliación automática cada 5 minutos: aprueba los pagos Wompi cuyo webhook se perdió y expira los pedidos
- * vencidos. No depende del cron externo (que sigue valiendo como respaldo). El candado en Redis evita que dos
+ * Conciliación automática cada 5 minutos: aprueba los pagos Wompi cuyo webhook se perdió, expira los pedidos
+ * vencidos y actualiza el seguimiento de los envíos en camino. No depende del cron externo (que sigue valiendo como respaldo). El candado en Redis evita que dos
  * instancias lo corran a la vez; sin Redis no se programa nada.
  */
 function programarConciliacion(): void {
@@ -55,10 +55,13 @@ function programarConciliacion(): void {
       const liberar = await tomarCandado('conciliacion', 240);
       if (!liberar) return;
       try {
-        const { conciliarWompiPendientes, expirarPendientes } = await import('./lib/orders/orchestrator');
+        const { conciliarWompiPendientes, expirarPendientes, sincronizarSeguimientos } = await import('./lib/orders/orchestrator');
         const c = await conciliarWompiPendientes();
         const e = await expirarPendientes();
         if (c.aprobados || e.expirados || e.rescatados) console.log('[conciliacion]', JSON.stringify({ ...c, ...e }));
+        // Envíos en camino: estado directo de la transportadora (no depende del webhook).
+        const sg = await sincronizarSeguimientos();
+        if (sg.actualizados) console.log('[seguimiento]', JSON.stringify(sg));
       } finally {
         await liberar();
       }

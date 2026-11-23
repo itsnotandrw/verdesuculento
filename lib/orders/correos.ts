@@ -78,6 +78,20 @@ export async function correoComprobante(o: Order): Promise<void> {
   await enviarCorreo(o.customer.email, `Comprobante de pago · ticket ${o.reference}`, html, texto);
 }
 
+export async function correoEnvio(o: Order): Promise<void> {
+  const g = o.shipment;
+  if (!g) return;
+  const html = marco('Tu pedido ya tiene guía',
+    `<p>Hola ${esc(o.customer.nombre)}, ya generamos la guía de tu pedido. Cuando la transportadora lo recoja verás cada avance en el enlace.</p>${ticketHtml(o)}
+     <table style="font-size:14px;margin-bottom:8px"><tr><td style="color:#5f6368;padding-right:14px">Transportadora</td><td>${esc(g.carrier)}</td></tr>
+     <tr><td style="color:#5f6368;padding-right:14px">Número de guía</td><td><b>${esc(g.trackingNumber)}</b></td></tr>
+     <tr><td style="color:#5f6368;padding-right:14px">Entrega estimada</td><td>${esc(o.selectedQuote.etaLabel)}</td></tr></table>
+     ${botonHtml(o, 'Seguir mi pedido')}
+     <p style="font-size:12px;color:#5f6368">Tus plantas viajan vivas: si la transportadora te llama o toca, recíbelas el mismo día para que lleguen en su mejor estado.</p>`);
+  const texto = `Tu pedido tiene guía. ${g.carrier} · ${g.trackingNumber}. Ticket ${o.reference}. Seguimiento: ${enlace(o)}`;
+  await enviarCorreo(o.customer.email, `Tu pedido ya tiene guía · ${g.carrier} ${g.trackingNumber}`, html, texto);
+}
+
 export async function correoListaPedidos(correo: string, pedidos: Order[]): Promise<void> {
   const filas = pedidos.map((o) => `<tr><td style="padding:6px 0"><a href="${enlace(o)}" style="color:#0b4f2c;font-weight:600">${esc(o.reference)}</a></td><td>${new Date(o.createdAt).toLocaleDateString('es-CO')}</td><td style="text-align:right">${cop(o.total)}</td></tr>`).join('');
   const html = marco('Tus pedidos', `<p>Estos son los pedidos hechos con este correo. Pulsa el ticket para ver el estado de cada uno.</p><table style="width:100%;font-size:14px;border-collapse:collapse">${filas}</table>`);

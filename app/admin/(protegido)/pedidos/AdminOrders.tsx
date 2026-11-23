@@ -68,6 +68,9 @@ interface Pedido {
     labelUrl?: string;
     cost?: number;
     actualCost?: number;
+    proveedor?: string;
+    puedeModificar?: boolean;
+    pickup?: { number: string; date: string; timeFrom: string; timeTo: string; fee?: number };
   } | null;
   lineas: Linea[];
   timeline: Evento[];
@@ -288,6 +291,13 @@ export default function AdminOrders() {
                         <>
                           <Dato etiqueta="Guía" valor={`${pedido.envio.trackingNumber} · ${pedido.envio.carrier}`} mono />
                           <Dato etiqueta="Estado del envío" valor={pedido.envio.statusLabel} />
+                          {pedido.envio.pickup && (
+                            <Dato
+                              etiqueta="Recogida agendada"
+                              valor={`#${pedido.envio.pickup.number} · ${pedido.envio.pickup.date} · ${pedido.envio.pickup.timeFrom}–${pedido.envio.pickup.timeTo}`}
+                              mono
+                            />
+                          )}
                         </>
                       )}
                     </div>
@@ -384,6 +394,44 @@ export default function AdminOrders() {
                       {pedido.pagoEstado === 'approved' && !pedido.envio && (
                         <button className="btn btn-primary btn-sm" disabled={trabajando} onClick={() => accionar(pedido, 'reintentar-guia')}>
                           {pedido.esRecogerEnTienda ? 'Marcar listo para recoger' : pedido.metodo === 'COD' ? 'Confirmado: generar guía' : 'Generar guía'}
+                        </button>
+                      )}
+
+                      {pedido.envio?.labelUrl && (
+                        <a className="btn btn-primary btn-sm" href={pedido.envio.labelUrl} target="_blank" rel="noopener noreferrer">
+                          Imprimir guía (PDF)
+                        </a>
+                      )}
+
+                      {pedido.envio?.puedeModificar && !pedido.envio.pickup && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          disabled={trabajando}
+                          onClick={() => {
+                            const manana = new Date(Date.now() + 86_400_000);
+                            const porDefecto = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(manana);
+                            const fecha = prompt(
+                              `Agendar recogida a domicilio con ${pedido.envio?.carrier}.\n\nFecha (AAAA-MM-DD). La franja es de 9:00 a. m. a 5:00 p. m.\nSe agenda UNA recogida para todos los paquetes pendientes de esta transportadora y la transportadora la cobra aparte (se descuenta del saldo de Envía).`,
+                              porDefecto
+                            );
+                            if (fecha) accionar(pedido, 'agendar-recogida', { fecha: fecha.trim(), desde: 9, hasta: 17, confirmo: true });
+                          }}
+                        >
+                          Agendar recogida
+                        </button>
+                      )}
+
+                      {pedido.envio?.puedeModificar && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          disabled={trabajando}
+                          onClick={() => {
+                            if (confirm(`¿Anular la guía ${pedido.envio?.trackingNumber} de ${pedido.envio?.carrier}? Solo se puede si la transportadora aún no recogió el paquete. Después podrás generar una guía nueva.`)) {
+                              accionar(pedido, 'anular-guia', { confirmo: true });
+                            }
+                          }}
+                        >
+                          Anular guía
                         </button>
                       )}
 

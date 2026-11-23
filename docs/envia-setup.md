@@ -12,10 +12,14 @@ descubrió probando, no lo que dice la documentación.
 | Resolución de municipios (`/locate`) | ✅ |
 | Generar guía (`/ship/generate/`) | ✅ Probado en sandbox de punta a punta |
 | Tracking | ✅ Probado en sandbox |
-| Webhooks | ⚠️ Headers y body confirmados; algoritmo del HMAC sin confirmar (ver abajo) |
-| Contra entrega | ⚠️ Confirmado que existe; falta probar el flujo |
-| Cancelar guía | ❌ No implementado — ver "Qué falta" |
-| Recoger a domicilio | ❌ No implementado, API confirmada y lista — ver "Qué falta" |
+| Webhooks | ⚠️ Firma según la guía oficial (con y sin nombre de evento, hex/base64, segundos/ms); el **secreto** no sale por API. El seguimiento NO depende de él: se consulta directo cada 25 min |
+| Contra entrega | ⚠️ Existe y está probado en sandbox; apagado en producción |
+| Cancelar guía | ✅ Implementado (TCC, Servientrega, Coordinadora; **Inter no permite anular por API**) |
+| Recoger a domicilio | ✅ Implementado: una recogida por transportadora con todos los paquetes pendientes (tiene tarifa) |
+| Todas las transportadoras | ✅ El checkout muestra a todas las que cotizan (ya no hay filtro de Pareto) y se configuran con `ENVIA_CARRIERS` |
+| Panel de envíos | ✅ `/admin/envios`: ambiente, cobertura y precios de TODAS las transportadoras de Envía |
+
+Lista para la prueba real: **docs/prueba-real-envios.md**.
 
 ## Lo que hacía que solo cotizara una transportadora
 

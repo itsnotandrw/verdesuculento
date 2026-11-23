@@ -56,6 +56,8 @@ export interface ShippingQuote {
   note?: string;
   /** Si existe, se muestra en lugar del valor (p. ej. "Se confirma por WhatsApp" cuando el costo aún no se conoce). */
   costLabel?: string;
+  /** Marca de la opción más barata / más rápida de todas las que se ofrecen. */
+  etiqueta?: 'Más barata' | 'Más rápida';
 }
 
 export interface CodCoverage {
@@ -98,6 +100,39 @@ export interface CreatedShipment {
   providerBalance?: number;
 }
 
+export interface CancelShipmentInput {
+  trackingNumber: string;
+  /** Código de la transportadora en el proveedor (p. ej. 'tcc'). */
+  carrierCode: string;
+}
+
+export interface CancelShipmentResult {
+  /** Si el proveedor devolvió el valor de la guía al saldo. */
+  balanceReturned?: boolean;
+  message?: string;
+}
+
+export interface PickupInput {
+  carrierCode: string;
+  trackingNumbers: string[];
+  /** AAAA-MM-DD */
+  date: string;
+  /** Horas (0-23) de la franja en la que el mensajero puede pasar. */
+  timeFrom: number;
+  timeTo: number;
+  totalWeightKg: number;
+  instructions?: string;
+}
+
+export interface PickupResult {
+  pickupNumber: string;
+  date: string;
+  timeFrom: string;
+  timeTo: string;
+  /** Tarifa de la recogida, si el proveedor la informa. */
+  fee?: number;
+}
+
 export interface ShippingWebhookEvent {
   /** Id del evento en el proveedor: la clave de idempotencia. */
   eventId: string;
@@ -118,6 +153,16 @@ export class ShippingNotConfiguredError extends Error {
         `Revisa .env.local (ver .env.example).`
     );
     this.name = 'ShippingNotConfiguredError';
+  }
+}
+
+/** La transportadora no permite anular la guía por API (hay que pedírselo a ella directamente). */
+export class CancelNotSupportedError extends Error {
+  constructor(transportadora: string) {
+    super(
+      `${transportadora} no permite anular la guía desde aquí. Escríbele directamente a la transportadora con el número de guía para cancelarla.`
+    );
+    this.name = 'CancelNotSupportedError';
   }
 }
 

@@ -24,12 +24,18 @@
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
+import { CONTACTO } from '@/data/contacto';
 import { env } from '@/lib/env';
 import { roundToHundred } from '@/lib/money';
 import type { ShippingProvider } from '../provider';
 import {
+  CancelNotSupportedError,
   ShippingNotConfiguredError,
   SinTarifasError,
+  type CancelShipmentInput,
+  type CancelShipmentResult,
+  type PickupInput,
+  type PickupResult,
   type CodCoverage,
   type CreateShipmentInput,
   type CreatedShipment,
@@ -181,17 +187,30 @@ async function conReintento<T>(fn: () => Promise<T>, intentos = 1): Promise<T> {
 }
 
 /**
- * Transportadoras de Envia en Colombia con las que tiene sentido cotizar.
+ * Transportadoras de Envia que se cotizan. Salen de `ENVIA_CARRIERS` (códigos de Envia separados por coma) para poder
+ * sumar o quitar una sin desplegar. Cada transportadora se consulta por separado y la que no cubra la ruta (o falle)
+ * simplemente no aparece: nunca tumba al resto.
  *
- * La lista sale de `GET queries.envia.com/carrier?country_code=CO`, quitando
- * las de mensajería urbana inmediata (cabify, 99minutos, lastMile, welivery) y
- * las internacionales caras (dhl, fedex). Estas cinco son las que mueven
- * paquetes nacionales.
+ * Por defecto las nacionales de paquetería: TCC, Inter Rapidísimo, Servientrega, Coordinadora y J&T Express. Quedan
+ * fuera a propósito el carrier propio `envia` (servicios type 3: tractomula, rechazan cajas) y la mensajería urbana
+ * inmediata (cabify, 99minutos, lastMile, welivery: solo ciudades puntuales y muy cara para plantas); si se quisieran,
+ * basta añadirlas a la variable.
  */
-// Se excluye el carrier propio `envia`: sus servicios son type 3 (tractomula,
-// mula, sencillo) y rechazan cajas con "shipment type: box not supported".
-// Es transporte de carga, no paquetería.
-const TRANSPORTADORAS = ['tcc', 'interRapidisimo', 'serviEntrega', 'coordinadora'];
+const POR_DEFECTO = 'tcc,interRapidisimo,serviEntrega,coordinadora,jtexpress';
+
+/** Transportadoras que Envia no deja anular por API. */
+const SIN_CANCELACION = new Set(['interRapidisimo']);
+
+/** Código postal de la bodega (Soacha). Solo lo exige agendar recogida; configurable con SHIPPING_ORIGIN_POSTAL_CODE. */
+const CODIGO_POSTAL_ORIGEN = '250051';
+
+function transportadoras(): string[] {
+  const lista = (env.shipping.envia.carriers || POR_DEFECTO)
+    .split(',')
+    .map((c) => c.trim())
+    .filter((c) => /^[A-Za-z0-9]{2,30}$/.test(c) && c !== 'envia');
+  return lista.length ? [...new Set(lista)] : POR_DEFECTO.split(',');
+}
 
 /**
  * Envia.com describe origen y destino con el mismo objeto.
@@ -226,8 +245,9 @@ function ubicacion(
   return {
     name: nombre,
     company: 'Vivero Verde Suculento',
-    email: contacto?.email ?? 'fabianlds2019@gmail.com',
-    phone: contacto?.telefono ?? '3000000000',
+    // Sin contacto propio (el origen): el del vivero. Antes salía un teléfono de relleno que la transportadora no podía llamar.
+    email: contacto?.email ?? CONTACTO.email,
+    phone: contacto?.telefono ?? CONTACTO.telefonoTel.replace(/^\+57/, ''),
     street: datos.calle,
     number: datos.numero ?? 'S/N',
     district: datos.barrio ?? '',
@@ -250,7 +270,7 @@ function ubicacion(
 async function origenResuelto() {
   const o = env.shipping.origin;
   const geo = await resolverUbicacion(o.ciudad, o.departamento);
-  return ubicacion({ calle: o.direccion, geo }, 'Vivero Verde Suculento');
+  return ubicacion({ calle: o.direccion, barrio: o.barrio, geo }, 'Vivero Verde Suculento');
 }
 
 function paquete(request: QuoteRequest) {
@@ -289,6 +309,14 @@ const NOMBRE_CARRIER: Record<string, string> = {
   serviEntrega: 'Servientrega',
   interRapidisimo: 'Inter Rapidísimo',
   coordinadora: 'Coordinadora',
+  jtexpress: 'J&T Express',
+  mensajerosUrbanos: 'Mensajeros Urbanos',
+  noventa9Minutos: '99 Minutos',
+  lastMile: 'Lastmile',
+  cabify: 'Cabify',
+  welivery: 'Welivery',
+  dhl: 'DHL',
+  fedex: 'FedEx',
 };
 
 /**
@@ -357,32 +385,40 @@ function etiquetaPlazo(min: number, max: number): string {
 }
 
 /**
- * Se queda solo con las opciones que valen la pena mostrar.
+ * Elige qué opciones ve el cliente: TODAS las transportadoras que cotizaron, cada una con su mejor precio.
  *
- * Envia devuelve hasta siete por ruta, con duplicados al mismo precio y
- * servicios "industriales" que cuestan el triple sin llegar antes. Una lista
- * así no ayuda a decidir: la paraliza.
- *
- * Sobre la lista ordenada por precio, se conserva una opción solo si llega
- * **estrictamente antes** que todas las más baratas. Es la frontera de Pareto:
- * lo que queda son las que ganan en precio, en tiempo, o en el equilibrio — y
- * lo que se descarta es siempre peor en ambas cosas que alguna que sí quedó.
+ * Antes se aplicaba una «frontera de Pareto» que ocultaba cualquier transportadora más cara que otra igual de rápida;
+ * el cliente del vivero quiere ver a todas con sus precios, así que ahora se muestra la opción más barata de cada una y,
+ * además, el servicio más rápido de esa misma transportadora si llega antes y no cuesta más de 1,6 veces. Envia devuelve
+ * hasta siete servicios por ruta, con duplicados al mismo precio y servicios «industriales» que no ayudan a decidir:
+ * eso sí se sigue descartando. Se marca la más barata y la más rápida del conjunto.
  */
-function frontera(opciones: ShippingQuote[]): ShippingQuote[] {
-  const elegidas: ShippingQuote[] = [];
-  let mejorPlazo = Infinity;
+function seleccionar(opciones: ShippingQuote[]): ShippingQuote[] {
+  const porTransportadora = new Map<string, ShippingQuote[]>();
+  for (const o of opciones) porTransportadora.set(o.carrierCode, [...(porTransportadora.get(o.carrierCode) ?? []), o]);
 
-  for (const opcion of opciones) {
-    if (opcion.etaMaxDays < mejorPlazo) {
-      elegidas.push(opcion);
-      mejorPlazo = opcion.etaMaxDays;
-    }
+  const elegidas: ShippingQuote[] = [];
+  for (const lista of porTransportadora.values()) {
+    const ordenadas = [...lista].sort((a, b) => a.cost - b.cost || a.etaMaxDays - b.etaMaxDays);
+    const barata = ordenadas[0];
+    elegidas.push(barata);
+    const rapida = ordenadas
+      .slice(1)
+      .filter((o) => o.etaMaxDays < barata.etaMaxDays && o.listCost <= barata.listCost * 1.6)
+      .sort((a, b) => a.etaMaxDays - b.etaMaxDays || a.cost - b.cost)[0];
+    if (rapida) elegidas.push(rapida);
   }
 
-  // La más barata siempre va, aunque sea la más lenta: es la que más gente elige.
-  if (elegidas.length === 0 && opciones.length > 0) elegidas.push(opciones[0]);
-
-  return elegidas.slice(0, 4);
+  const resultado = elegidas.sort((a, b) => a.cost - b.cost || a.etaMaxDays - b.etaMaxDays).slice(0, 8);
+  if (resultado.length > 1) {
+    const masRapida = [...resultado].sort((a, b) => a.etaMaxDays - b.etaMaxDays || a.cost - b.cost)[0];
+    resultado[0] = { ...resultado[0], etiqueta: 'Más barata' };
+    if (masRapida.id !== resultado[0].id) {
+      const i = resultado.findIndex((o) => o.id === masRapida.id);
+      resultado[i] = { ...masRapida, etiqueta: 'Más rápida' };
+    }
+  }
+  return resultado;
 }
 
 // ----------------------------------------------------------------------------- recaudo (contra entrega)
@@ -466,7 +502,7 @@ async function consultarEnvia(request: QuoteRequest, recaudo: number, exigir: bo
   // forma intermitente bajo carga. Con recaudo no se reintenta: que un servicio no recaude es una respuesta normal.
   const consultarTodas = () =>
     Promise.all(
-      TRANSPORTADORAS.map(async (carrier) => {
+      transportadoras().map(async (carrier) => {
         try {
           const tarifas = await conReintento(
             async () => {
@@ -496,7 +532,7 @@ async function consultarEnvia(request: QuoteRequest, recaudo: number, exigir: bo
 
   let tarifas = (await consultarTodas()).flat();
 
-  // Que las CUATRO fallen a la vez es poco frecuente pero se ha visto pasar (verificado en vivo): antes de decirle al
+  // Que TODAS fallen a la vez es poco frecuente pero se ha visto pasar (verificado en vivo): antes de decirle al
   // comprador que no hay opciones se intenta la ronda completa una vez más.
   if (tarifas.length === 0 && exigir) {
     await new Promise((r) => setTimeout(r, 400));
@@ -589,7 +625,7 @@ export const enviaProvider: ShippingProvider = {
 
     if (!request.cashOnDelivery) {
       // Un servicio de recaudo nunca se ofrece como envío normal: sin monto a recaudar no tiene sentido.
-      return frontera(candidatas.filter((o) => !/_cod$/i.test(o.serviceCode)));
+      return seleccionar(candidatas.filter((o) => !/_cod$/i.test(o.serviceCode)));
     }
 
     // Si la consulta con recaudo falla, simplemente no hay contra entrega: no se tumba la cotización.
@@ -622,7 +658,7 @@ export const enviaProvider: ShippingProvider = {
         };
       });
 
-    return frontera(capaces);
+    return seleccionar(capaces);
   },
 
   /**
@@ -732,6 +768,62 @@ export const enviaProvider: ShippingProvider = {
     };
   },
 
+  /**
+   * Anula una guía (POST /ship/cancel/). Solo se puede mientras la transportadora no haya recogido ni escaneado el
+   * paquete. Inter Rapidísimo no trae la acción `cancel` en Envia (confirmado con carrier-action/152): hay que pedírselo
+   * a ella directamente, y se avisa antes de gastar una llamada que sabemos que falla.
+   */
+  async cancelShipment({ trackingNumber, carrierCode }: CancelShipmentInput): Promise<CancelShipmentResult> {
+    credenciales();
+    if (SIN_CANCELACION.has(carrierCode)) throw new CancelNotSupportedError(NOMBRE_CARRIER[carrierCode] ?? carrierCode);
+
+    const resultado = await llamar<unknown>('/ship/cancel/', { carrier: carrierCode, trackingNumber });
+    const dato = (Array.isArray(resultado) ? resultado[0] : resultado) as { balanceReturned?: boolean } | undefined;
+    return {
+      balanceReturned: dato?.balanceReturned,
+      message: dato?.balanceReturned ? 'Guía anulada y valor devuelto al saldo.' : 'Guía anulada.',
+    };
+  },
+
+  /**
+   * Agenda la recogida a domicilio (POST /ship/pickup/) de varias guías de la MISMA transportadora en una sola
+   * solicitud. Tiene tarifa propia (se descuenta del saldo) y exige saldo suficiente. El código postal del origen es
+   * obligatorio aquí (3-10 caracteres), a diferencia de cotizar.
+   */
+  async schedulePickup(input: PickupInput): Promise<PickupResult> {
+    credenciales();
+    const origen = await origenResuelto();
+    const [respuesta] = await llamar<
+      Array<{ pickupNumber?: string; pickupDate?: string; pickupTimeFrom?: string; pickupTimeTo?: string; pickupFee?: number }>
+    >('/ship/pickup/', {
+      origin: { ...origen, postalCode: env.shipping.origin.postalCode || CODIGO_POSTAL_ORIGEN },
+      shipment: {
+        type: 1,
+        carrier: input.carrierCode,
+        pickup: {
+          weightUnit: 'KG',
+          totalWeight: Math.max(0.01, Math.round(input.totalWeightKg * 100) / 100),
+          totalPackages: input.trackingNumbers.length,
+          date: input.date,
+          timeFrom: input.timeFrom,
+          timeTo: input.timeTo,
+          carrier: input.carrierCode,
+          trackingNumbers: input.trackingNumbers,
+          ...(input.instructions ? { instructions: input.instructions.slice(0, 200) } : {}),
+        },
+      },
+    });
+
+    if (!respuesta?.pickupNumber) throw new Error('[envia] la recogida no devolvió número de confirmación.');
+    return {
+      pickupNumber: respuesta.pickupNumber,
+      date: respuesta.pickupDate ?? input.date,
+      timeFrom: respuesta.pickupTimeFrom ?? `${String(input.timeFrom).padStart(2, '0')}:00`,
+      timeTo: respuesta.pickupTimeTo ?? `${String(input.timeTo).padStart(2, '0')}:00`,
+      fee: typeof respuesta.pickupFee === 'number' ? respuesta.pickupFee : undefined,
+    };
+  },
+
   async track(trackingNumber: string): Promise<TrackingEvent[]> {
     // POST /ship/generaltrack/ (minúsculas, no /generalTracking/{numero} como
     // GET) con un array de guías en el body — probado en sandbox. Acepta
@@ -771,29 +863,14 @@ export const enviaProvider: ShippingProvider = {
   },
 
   /**
-   * Esquema confirmado contra docs.envia.com/reference/webhooks:
-   *
-   *   Headers:  X-Webhook-Signature: v1=<hex>
-   *             X-Webhook-Timestamp: <unix seconds>
-   *             X-Webhook-Id:        identificador único del evento
-   *   Body:     { type: "tracking.simple", created_at, data: { shipment_id,
-   *               tracking_number, status, carrier_name } }
-   *
-   * Lo que NO está confirmado: el algoritmo exacto del HMAC. La documentación
-   * dice "HMAC-SHA256" pero no dice sobre qué se calcula —¿el body crudo
-   * solo, o `${timestamp}.${body}` como Stripe/GitHub, que es lo que sugiere
-   * el prefijo "v1="— ni de dónde sale el secreto (crear el webhook con
-   * POST /webhooks no devuelve ninguno; probablemente vive en el dashboard,
-   * no en la API, como el saldo de la cuenta).
-   *
-   * Se implementa la variante `timestamp.body` por ser el patrón más común
-   * en webhooks versionados así, pero es una hipótesis, no un hecho
-   * verificado. Para confirmarla de verdad: registrar un webhook apuntando a
-   * un túnel (cloudflared/ngrok), generar un evento real, y comparar la
-   * firma recibida contra este cálculo. Hasta entonces, un secreto mal
-   * configurado hace que TODOS los webhooks se descarten —fallo seguro, el
-   * tracking se degrada a lo que ya se ve consultando /ship/generaltrack/
-   * manualmente— nunca que se acepte uno falso.
+   * Webhooks de Envia (docs.envia.com/docs/webhooks): headers X-Webhook-Signature (`v1=<firma>`), X-Webhook-Timestamp,
+   * X-Webhook-Id y X-Webhook-Event. La guía oficial indica `firma = HMAC-SHA256(timestamp + "." + evento + "." + cuerpo, secreto)`
+   * pero no aclara si el cuerpo es el texto crudo, si la salida va en hex o base64, ni la unidad del timestamp (la guía
+   * dice milisegundos y su ejemplo parece segundos). Por eso se aceptan, en tiempo constante, las variantes plausibles
+   * —con y sin el nombre del evento, hex y base64— y SIEMPRE se exige que el timestamp esté firmado: una variante que no lo
+   * incluya dejaría reenviar un cuerpo viejo con un timestamp nuevo. Un secreto o algoritmo que no coincida descarta el
+   * evento (fallo seguro: el seguimiento sigue disponible consultando /ship/generaltrack/ desde el panel).
+   * El secreto no sale de la API (crear el webhook no lo devuelve): se pide a Envia y va en SHIPPING_WEBHOOK_SECRET.
    */
   parseWebhook(payload, headers, rawBody): ShippingWebhookEvent | null {
     const secreto = env.shipping.envia.webhookSecret;
@@ -802,31 +879,34 @@ export const enviaProvider: ShippingProvider = {
       return null;
     }
 
-    const firmaRecibida = (headers['x-webhook-signature'] ?? '').replace(/^v1=/, '');
-    const timestamp = headers['x-webhook-timestamp'] ?? '';
+    const firmaRecibida = (headers['x-webhook-signature'] ?? '').replace(/^v1=/, '').trim();
+    const timestamp = (headers['x-webhook-timestamp'] ?? '').trim();
+    const evento = (headers['x-webhook-event'] ?? '').trim();
 
     if (!firmaRecibida || !timestamp) {
       console.error('[envia] webhook sin X-Webhook-Signature o X-Webhook-Timestamp. Descartado.');
       return null;
     }
 
-    const firmaCalculada = createHmac('sha256', secreto).update(`${timestamp}.${rawBody}`).digest('hex');
-
-    const a = Buffer.from(firmaRecibida, 'utf-8');
-    const b = Buffer.from(firmaCalculada, 'utf-8');
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      console.error('[envia] firma de webhook inválida. Descartado (ver comentario sobre el algoritmo sin confirmar).');
+    const candidatas = [`${timestamp}.${evento}.${rawBody}`, `${timestamp}.${rawBody}`];
+    const recibida = Buffer.from(firmaRecibida, 'utf-8');
+    const valida = candidatas.some((texto) =>
+      (['hex', 'base64'] as const).some((codificacion) => {
+        const calculada = Buffer.from(createHmac('sha256', secreto).update(texto).digest(codificacion), 'utf-8');
+        return calculada.length === recibida.length && timingSafeEqual(calculada, recibida);
+      })
+    );
+    if (!valida) {
+      console.error('[envia] firma de webhook inválida. Descartado.');
       return null;
     }
 
-    // Anti-replay: una firma capturada y reenviada más tarde (por ejemplo, por
-    // alguien que la vio en un log o en una petición interceptada) sigue
-    // siendo válida criptográficamente para siempre si no se le pone fecha de
-    // vencimiento — la firma por sí sola no dice CUÁNDO se generó. Se rechaza
-    // cualquier evento con más de 5 minutos de antigüedad, aunque la firma sea
-    // perfecta.
-    const segundosTranscurridos = Math.abs(Date.now() / 1000 - Number(timestamp));
-    if (!Number.isFinite(segundosTranscurridos) || segundosTranscurridos > 300) {
+    // Anti-replay: se rechaza cualquier evento con más de 5 minutos de antigüedad, aunque la firma sea perfecta.
+    // El timestamp puede venir en segundos o en milisegundos.
+    const crudo = Number(timestamp);
+    const segundos = crudo > 1e12 ? crudo / 1000 : crudo;
+    const diferencia = Math.abs(Date.now() / 1000 - segundos);
+    if (!Number.isFinite(diferencia) || diferencia > 300) {
       console.error(`[envia] webhook con timestamp fuera de rango (${timestamp}). Descartado por posible replay.`);
       return null;
     }
@@ -854,3 +934,92 @@ export const enviaProvider: ShippingProvider = {
     };
   },
 };
+
+// ----------------------------------------------------------------------------- diagnóstico y administración
+
+/** Host de consultas/webhooks de Envia según el ambiente de la llave (la API de envíos y la de consultas son hosts distintos). */
+function hostConsultas(): string {
+  const { baseUrl } = credenciales();
+  return /api-test|test\./i.test(baseUrl) ? 'https://queries-test.envia.com' : 'https://queries.envia.com';
+}
+
+async function consultas<T>(ruta: string, metodo: 'GET' | 'POST', body?: unknown): Promise<T> {
+  const { token } = credenciales();
+  const respuesta = await fetch(`${hostConsultas()}${ruta}`, {
+    method: metodo,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: 'no-store',
+    signal: AbortSignal.timeout(TIMEOUT_CRITICO_MS),
+  });
+  if (!respuesta.ok) throw new Error(`[envia] ${ruta} → ${respuesta.status} ${(await respuesta.text().catch(() => '')).slice(0, 200)}`);
+  const json = (await respuesta.json()) as { data?: T };
+  return (json.data ?? json) as T;
+}
+
+export interface ResultadoDiagnostico {
+  carrier: string;
+  nombre: string;
+  ok: boolean;
+  ms: number;
+  opciones: Array<{ servicio: string; precio: number; plazo: string }>;
+  error?: string;
+  /** ¿Está en la lista que usa el checkout? */
+  enCheckout: boolean;
+}
+
+/**
+ * Cotiza con TODAS las transportadoras de Envia en Colombia (no solo las del checkout) para una ruta, con un paquete
+ * típico. Sirve para ver en producción cuáles cubren de verdad y a qué precio, y decidir qué sumar a `ENVIA_CARRIERS`.
+ */
+export async function diagnosticoTransportadoras(destino: { departamento: string; ciudad: string }): Promise<ResultadoDiagnostico[]> {
+  const catalogo = await consultas<Array<{ name: string }>>('/carrier?country_code=CO', 'GET');
+  const codigos = [...new Set(catalogo.map((c) => c.name))].filter((c) => c !== 'envia');
+  const activas = new Set(transportadoras());
+
+  const [origen, geo] = await Promise.all([origenResuelto(), resolverUbicacion(destino.ciudad, destino.departamento)]);
+  const bultos = paquete({
+    destination: { departamento: destino.departamento, ciudad: destino.ciudad },
+    parcel: { weightGrams: 2000, lengthCm: 40, widthCm: 20, heightCm: 12, declaredValue: 60_000 },
+    merchandiseValue: 60_000,
+  });
+
+  return Promise.all(
+    codigos.map(async (carrier): Promise<ResultadoDiagnostico> => {
+      const t0 = Date.now();
+      const base = { carrier, nombre: NOMBRE_CARRIER[carrier] ?? carrier, enCheckout: activas.has(carrier) };
+      try {
+        const tarifas = await llamar<TarifaEnvia[]>(
+          '/ship/rate/',
+          {
+            origin: origen,
+            destination: ubicacion({ calle: 'Sin dirección', geo }, 'Cliente'),
+            packages: bultos,
+            shipment: { carrier, type: 1 },
+            settings: { currency: 'COP' },
+          },
+          12_000
+        );
+        if (!tarifas?.length) throw new Error('sin tarifas para esta ruta');
+        return {
+          ...base,
+          ok: true,
+          ms: Date.now() - t0,
+          opciones: tarifas.map((t) => ({ servicio: t.service ?? '', precio: roundToHundred(t.totalPrice ?? t.basePrice ?? 0), plazo: t.deliveryEstimate ?? '' })),
+        };
+      } catch (error) {
+        return { ...base, ok: false, ms: Date.now() - t0, opciones: [], error: (error as Error).message.replace(/^\[envia\]\s*/, '').slice(0, 160) };
+      }
+    })
+  );
+}
+
+/** Webhooks registrados en la cuenta de Envia. */
+export async function listarWebhooksEnvia(): Promise<unknown> {
+  return consultas<unknown>('/webhooks', 'GET');
+}
+
+/** Registra el webhook de seguimiento (tipo 3 = tracking.simple, el que va firmado). */
+export async function registrarWebhookEnvia(url: string): Promise<unknown> {
+  return consultas<unknown>('/webhooks', 'POST', { type_id: 3, url, active: 1 });
+}

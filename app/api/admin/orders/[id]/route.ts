@@ -6,11 +6,14 @@
  * queda en el pedido, porque cuando algo se despacha sin haberse pagado hay
  * que poder reconstruir qué pasó.
  *
- * Acciones: aprobar | rechazar | reintentar-pago | reintentar-guia | conciliar
+ * Acciones: aprobar | rechazar | reintentar-pago | reintentar-guia | conciliar | anular-guia | agendar-recogida
  */
 
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok, texto } from '@/lib/api';
 import {
+  agendarRecogida,
+  anularGuia,
+  OrderError,
   aprobarPago,
   conciliarRecaudo,
   crearGuia,
@@ -20,10 +23,11 @@ import {
 } from '@/lib/orders/orchestrator';
 import { orders, registrar } from '@/lib/orders/store';
 import { etiquetaEstadoPedido } from '@/lib/orders/types';
+import { CancelNotSupportedError } from '@/lib/shipping/types';
 
 export const dynamic = 'force-dynamic';
 
-const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido', 'resolver-alerta'] as const;
+const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido', 'resolver-alerta', 'anular-guia', 'agendar-recogida'] as const;
 type Accion = (typeof ACCIONES)[number];
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -91,6 +95,24 @@ export async function POST(request: Request, { params }: { params: { id: string 
         });
         break;
 
+      case 'anular-guia':
+        // Acción con efecto en dinero y en la transportadora: se exige confirmación explícita, como en «aprobar».
+        if (body.confirmo !== true) return fail('Falta confirmar la anulación de la guía (confirmo: true).', 422);
+        resultado = await anularGuia(pedido.id, quien);
+        break;
+
+      case 'agendar-recogida': {
+        // Tiene tarifa: se exige confirmación explícita. Agrupa todos los paquetes pendientes de la misma transportadora.
+        if (body.confirmo !== true) return fail('Falta confirmar el cobro de la recogida (confirmo: true).', 422);
+        const fecha = texto(body.fecha, 'la fecha', { max: 10 });
+        const desde = Number(body.desde ?? 9);
+        const hasta = Number(body.hasta ?? 17);
+        if (!Number.isInteger(desde) || !Number.isInteger(hasta)) return fail('La franja de recogida no es válida.', 422);
+        const recogida = await agendarRecogida(pedido.id, quien, { fecha, desde, hasta });
+        resultado = recogida.order;
+        break;
+      }
+
       case 'marcar-recogido':
         if (pedido.shipment?.provider !== 'pickup') {
           return fail('Este pedido no es de recoger en tienda.', 409);
@@ -114,6 +136,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
     });
   } catch (error) {
     if (error instanceof ValidationError) return fail(error.message, 422);
+    // Errores de negocio con mensaje para la persona que opera el panel (guía ya recogida, transportadora que no anula…).
+    if (error instanceof OrderError) return fail(error.message, 409);
+    if (error instanceof CancelNotSupportedError) return fail(error.message, 409);
     return fallo(error, 'POST /api/admin/orders/[id]');
   }
 }

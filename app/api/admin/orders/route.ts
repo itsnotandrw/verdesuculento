@@ -63,6 +63,10 @@ function resumen(order: Order) {
           codAmount: order.shipment.codAmount,
           codSettledAt: order.shipment.codSettledAt,
           labelUrl: order.shipment.labelUrl,
+          proveedor: order.shipment.provider,
+          pickup: order.shipment.pickup,
+          // Solo una guía recién generada de una transportadora real se puede anular o recoger.
+          puedeModificar: order.shipment.status === 'created' && order.shipment.provider !== 'pickup' && order.shipment.provider !== 'local',
           cost: order.shipment.cost,
           // Solo se manda si de verdad difiere de lo cotizado — evita que el
           // panel muestre un número "distinto" cuando en realidad coincide.

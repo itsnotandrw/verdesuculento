@@ -34,9 +34,10 @@ import { env } from '@/lib/env';
 import { paymentProviderById, paymentProviderFor, type PaymentContext } from '@/lib/payments';
 import type { PaymentIntent } from '@/lib/payments/types';
 import { armarPaquete, logisticaDe, resolverCotizacion, shippingProvider } from '@/lib/shipping';
+import { pesoFacturableKg } from '@/lib/shipping/zonas';
 import type { ShippingQuote } from '@/lib/shipping/types';
 import { almacenamiento, orders, pedidosVencidos, registrar } from './store';
-import { correoComprobante, correoPedidoRecibido, enviarSinFallar } from './correos';
+import { correoComprobante, correoEnvio, correoPedidoRecibido, enviarSinFallar } from './correos';
 import {
   derivarEstado,
   type CreateOrderInput,
@@ -59,6 +60,8 @@ export class OrderError extends Error {
       | 'estado_invalido'
       | 'almacenamiento_no_apto'
       | 'sin_stock'
+      | 'guia_no_modificable'
+      | 'recogida_invalida'
   ) {
     super(message);
     this.name = 'OrderError';
@@ -467,7 +470,7 @@ async function crearGuiaConCandado(orderId: string, cashOnDelivery?: number): Pr
     const diferenciaCosto =
       guia.actualCost != null ? Math.round(guia.actualCost - guia.cost) : 0;
 
-    return orders.update(orderId, (order) => {
+    const conGuia = await orders.update(orderId, (order) => {
       // Segunda verificación dentro de la escritura serializada: dos webhooks
       // simultáneos podrían haber pasado juntos la comprobación de arriba.
       if (order.shipment) return order;
@@ -516,6 +519,11 @@ async function crearGuiaConCandado(orderId: string, cashOnDelivery?: number): Pr
 
       return order;
     });
+    // Aviso al cliente con su número de guía (solo si esta llamada fue la que creó la guía).
+    if (conGuia?.shipment?.trackingNumber === guia.trackingNumber && conGuia.shipment.provider !== 'pickup' && conGuia.shipment.provider !== 'local') {
+      enviarSinFallar(correoEnvio(conGuia), 'guía generada');
+    }
+    return conGuia;
   } catch (error) {
     // El pago ya está confirmado: que falle la transportadora no puede tumbar
     // el pedido. Queda pagado y sin guía, visible en el panel para reintentar.
@@ -762,6 +770,57 @@ export async function onShippingWebhook(evento: {
 }
 
 /**
+ * Seguimiento por consulta directa: cada ciclo pregunta a la transportadora por los envíos que siguen en camino y
+ * aplica los estados nuevos con el mismo camino (e idempotencia) que el webhook. Así el cliente ve avanzar su pedido
+ * aunque el webhook no esté configurado o falle; el webhook solo lo vuelve más rápido.
+ *
+ * Es barato a propósito: máximo 20 guías por ciclo, las consultadas hace más tiempo primero, y solo envíos de una
+ * transportadora real que no estén entregados, devueltos ni anulados.
+ */
+const ultimaConsulta = new Map<string, number>();
+const CADA_MS = 25 * 60_000;
+
+export async function sincronizarSeguimientos(max = 20): Promise<{ revisados: number; actualizados: number }> {
+  const proveedor = shippingProvider();
+  if (proveedor.id === 'tarifa-propia') return { revisados: 0, actualizados: 0 };
+
+  const ahora = Date.now();
+  const todos = await orders.list({ limite: 500 });
+  const enCurso = todos
+    .filter((o) => esGuiaDeTransportadora(o) && !['delivered', 'returned'].includes(o.shipment!.status))
+    .filter((o) => ahora - (ultimaConsulta.get(o.shipment!.trackingNumber) ?? 0) >= CADA_MS)
+    .sort((a, b) => (ultimaConsulta.get(a.shipment!.trackingNumber) ?? 0) - (ultimaConsulta.get(b.shipment!.trackingNumber) ?? 0))
+    .slice(0, max);
+
+  let actualizados = 0;
+  for (const pedido of enCurso) {
+    const guia = pedido.shipment!.trackingNumber;
+    ultimaConsulta.set(guia, ahora);
+    try {
+      const eventos = await proveedor.track(guia);
+      const conocidos = new Set(pedido.tracking.map((t) => `${t.occurredAt}|${t.description}`));
+      const nuevos = eventos
+        .filter((e) => !conocidos.has(`${e.occurredAt}|${e.description}`))
+        .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+      for (const e of nuevos) {
+        const r = await onShippingWebhook({
+          eventId: `sondeo:${guia}:${e.occurredAt}:${e.description}`.slice(0, 200),
+          trackingNumber: guia,
+          status: e.status,
+          description: e.description,
+          occurredAt: e.occurredAt,
+          location: e.location,
+        });
+        if (r.procesado) actualizados++;
+      }
+    } catch (error) {
+      console.warn(`[seguimiento] no se pudo consultar la guía ${guia}:`, error instanceof Error ? error.message.slice(0, 160) : error);
+    }
+  }
+  return { revisados: enCurso.length, actualizados };
+}
+
+/**
  * Marca como girado el recaudo de un contra entrega.
  *
  * El agregador gira entre 4 y 11 días hábiles después de entregar, así que la
@@ -806,6 +865,126 @@ export async function marcarRecogido(orderId: string, quien: string): Promise<Or
 
     return order;
   });
+}
+
+// ------------------------------------------------- anular guía y agendar recogida
+
+/** Código de la transportadora en el proveedor, sacado del id de la cotización congelada en el pedido (`envia:<carrier>:<servicio>`). */
+function codigoTransportadora(pedido: Order): string {
+  const partes = pedido.selectedQuote.id.split(':');
+  return partes.length >= 3 ? partes[1] : pedido.selectedQuote.carrier;
+}
+
+/** ¿La guía es de una transportadora real (no recoger en tienda ni entrega el mismo día)? */
+const esGuiaDeTransportadora = (p: Order) => Boolean(p.shipment) && p.shipment!.provider !== 'pickup' && p.shipment!.provider !== 'local';
+
+/**
+ * Anula la guía de un pedido que aún no fue recogido por la transportadora. Deja el rastro en `guiasAnuladas` y en la
+ * bitácora, y el pedido vuelve a "pagado sin guía" para poder generar otra (p. ej. tras corregir la dirección).
+ * Si la transportadora no permite anular por API (Inter Rapidísimo), lanza CancelNotSupportedError con las instrucciones.
+ */
+export async function anularGuia(orderId: string, quien: string): Promise<Order | null> {
+  const pedido = await orders.byId(orderId);
+  if (!pedido) throw new OrderError('Pedido no encontrado.', 'pedido_no_encontrado');
+  if (!esGuiaDeTransportadora(pedido)) throw new OrderError('Este pedido no tiene una guía de transportadora que anular.', 'guia_no_modificable');
+  const guia = pedido.shipment!;
+  if (guia.status !== 'created') {
+    throw new OrderError('La transportadora ya recogió o movió el paquete: la guía no se puede anular desde aquí.', 'guia_no_modificable');
+  }
+
+  const proveedor = shippingProvider();
+  if (!proveedor.cancelShipment) throw new OrderError('El proveedor de envíos activo no permite anular guías.', 'guia_no_modificable');
+
+  const resultado = await proveedor.cancelShipment({ trackingNumber: guia.trackingNumber, carrierCode: codigoTransportadora(pedido) });
+
+  return orders.update(orderId, (order) => {
+    if (!order.shipment || order.shipment.trackingNumber !== guia.trackingNumber) return order;
+    order.guiasAnuladas = [
+      ...(order.guiasAnuladas ?? []),
+      { trackingNumber: guia.trackingNumber, carrier: guia.carrier, cancelledAt: new Date().toISOString(), cancelledBy: quien, balanceReturned: resultado.balanceReturned },
+    ];
+    order.shipment = undefined;
+    order.tracking = [];
+    order.status = derivarEstado(order.payment, order.shipment);
+    registrar(order, {
+      type: 'guia_anulada',
+      actor: 'admin',
+      message: `${quien} anuló la guía ${guia.trackingNumber} (${guia.carrier}). ${resultado.message ?? ''}`.trim(),
+    });
+    return order;
+  });
+}
+
+/**
+ * Agenda UNA recogida a domicilio por transportadora para todos los paquetes con guía que aún no tienen recogida: cada
+ * solicitud tiene tarifa, así que se agrupan los pedidos de la misma transportadora en lugar de pedir una por pedido.
+ * Devuelve el pedido pedido y cuántos paquetes entraron.
+ */
+export async function agendarRecogida(
+  orderId: string,
+  quien: string,
+  ventana: { fecha: string; desde: number; hasta: number }
+): Promise<{ order: Order | null; paquetes: number; numero: string }> {
+  const pedido = await orders.byId(orderId);
+  if (!pedido) throw new OrderError('Pedido no encontrado.', 'pedido_no_encontrado');
+  if (!esGuiaDeTransportadora(pedido) || pedido.shipment!.status !== 'created') {
+    throw new OrderError('Solo se puede agendar la recogida de una guía recién generada (la transportadora aún no la tiene).', 'recogida_invalida');
+  }
+  if (pedido.shipment!.pickup) throw new OrderError('Este paquete ya tiene una recogida agendada.', 'recogida_invalida');
+
+  // Fecha: hoy o dentro de los próximos 14 días, no domingo; franja entre las 7 y las 19 h.
+  const hoy = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()) + 'T00:00:00');
+  const dia = new Date(ventana.fecha + 'T00:00:00');
+  const dias = Math.round((dia.getTime() - hoy.getTime()) / 86_400_000);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ventana.fecha) || Number.isNaN(dia.getTime()) || dias < 0 || dias > 14) {
+    throw new OrderError('La fecha de recogida debe ser desde hoy y dentro de los próximos 14 días.', 'recogida_invalida');
+  }
+  if (dia.getDay() === 0) throw new OrderError('Las transportadoras no recogen los domingos.', 'recogida_invalida');
+  if (!(ventana.desde >= 7 && ventana.hasta <= 19 && ventana.hasta - ventana.desde >= 2)) {
+    throw new OrderError('La franja de recogida debe estar entre las 7:00 y las 19:00 y durar al menos 2 horas.', 'recogida_invalida');
+  }
+
+  const proveedor = shippingProvider();
+  if (!proveedor.schedulePickup) throw new OrderError('El proveedor de envíos activo no agenda recogidas.', 'recogida_invalida');
+
+  const carrierCode = codigoTransportadora(pedido);
+  const todos = await orders.list({ limite: 500 });
+  const grupo = todos.filter(
+    (o) => esGuiaDeTransportadora(o) && o.shipment!.status === 'created' && !o.shipment!.pickup && codigoTransportadora(o) === carrierCode
+  );
+  if (!grupo.some((o) => o.id === pedido.id)) grupo.push(pedido);
+
+  const pesoKg = grupo.reduce((suma, o) => {
+    const p = armarPaquete(o.lines, o.subtotal);
+    return suma + Math.max(1, pesoFacturableKg(p.weightGrams, p.lengthCm, p.widthCm, p.heightCm));
+  }, 0);
+
+  const recogida = await proveedor.schedulePickup({
+    carrierCode,
+    trackingNumbers: grupo.map((o) => o.shipment!.trackingNumber),
+    date: ventana.fecha,
+    timeFrom: ventana.desde,
+    timeTo: ventana.hasta,
+    totalWeightKg: pesoKg,
+    instructions: `Plantas vivas: manipular con cuidado. ${grupo.length} paquete(s).`,
+  });
+
+  const registro = { number: recogida.pickupNumber, date: recogida.date, timeFrom: recogida.timeFrom, timeTo: recogida.timeTo, fee: recogida.fee, requestedAt: new Date().toISOString(), requestedBy: quien };
+  let resultado: Order | null = null;
+  for (const o of grupo) {
+    const actualizado = await orders.update(o.id, (order) => {
+      if (!order.shipment) return order;
+      order.shipment.pickup = registro;
+      registrar(order, {
+        type: 'recogida_agendada',
+        actor: 'admin',
+        message: `${quien} agendó la recogida #${recogida.pickupNumber} con ${order.shipment.carrier} para el ${recogida.date} (${recogida.timeFrom}–${recogida.timeTo}).${recogida.fee != null ? ` Tarifa: $${Math.round(recogida.fee).toLocaleString('es-CO')}.` : ''}`,
+      });
+      return order;
+    });
+    if (o.id === pedido.id) resultado = actualizado;
+  }
+  return { order: resultado, paquetes: grupo.length, numero: recogida.pickupNumber };
 }
 
 // -------------------------------------------------------------- expiración
