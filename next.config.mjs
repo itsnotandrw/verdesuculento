@@ -73,7 +73,8 @@ const nextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "connect-src 'self' https://www.google.com https://www.gstatic.com",
-              'frame-src https://www.google.com https://maps.google.com',
+              // Facebook: los reels del Diario (components/FacebookVideoEmbed.tsx) son iframes de facebook.com/plugins/video.php.
+              'frame-src https://www.google.com https://maps.google.com https://www.facebook.com https://web.facebook.com',
               "frame-ancestors 'self'",
               "object-src 'none'",
               "base-uri 'self'",
