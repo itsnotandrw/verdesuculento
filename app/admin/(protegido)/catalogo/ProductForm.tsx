@@ -18,7 +18,7 @@ import { CATEGORIES } from '@/data/catalog';
 import type { Product, ProductColor, ProductSpecs } from '@/types';
 import { urlImagen } from '@/lib/image-loader';
 import AltitudClima from './AltitudClima';
-import { altitudSugerida, type RangoAltitud } from '@/lib/clima';
+import { altitudSugerida, sinAltitud, type RangoAltitud } from '@/lib/clima';
 import { subirImagen } from '@/lib/subir-imagen';
 
 const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: '', altura: '', dificultad: '' };
@@ -99,7 +99,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
     setGuardando(true);
     setError(null);
     try {
-      if (!altitudConfirmada) throw new Error('Define la altitud recomendada (msnm) de la planta: es obligatoria.');
+      if (!sinAltitud(category) && !altitudConfirmada) throw new Error('Define la altitud recomendada (msnm) de la planta: es obligatoria.');
       const payload = {
         id,
         name,
@@ -110,7 +110,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
         activo,
         // Vacío = sin control de inventario (se vende sin límite). Con número, el sitio descuenta al vender.
         stock: stock.trim() === '' ? null : Number(stock),
-        altitud,
+        altitud: sinAltitud(category) ? undefined : altitud,
         description,
         specs,
         sizes: sizes.map((s) => s.trim()).filter(Boolean),
@@ -220,7 +220,13 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
           </p>
         </div>
 
-        <AltitudClima valor={altitud} confirmada={altitudConfirmada} onChange={setAltitud} />
+        {sinAltitud(category) ? (
+          <p style={{ fontSize: 13, color: 'var(--fg-mute)', padding: 14, border: '1px solid var(--border)', borderRadius: 12 }}>
+            Los agroinsumos no llevan altitud: se recomiendan siempre como complemento, en cualquier zona de cultivo.
+          </p>
+        ) : (
+          <AltitudClima valor={altitud} confirmada={altitudConfirmada} onChange={setAltitud} />
+        )}
 
         <div>
           <label className="checkout-label" htmlFor="p-description">Descripción</label>

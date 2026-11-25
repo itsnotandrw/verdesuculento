@@ -6,7 +6,7 @@
 
 import { ValidationError, entero, texto } from '@/lib/api';
 import { CATEGORIES } from '@/data/catalog';
-import { textoClima } from '@/lib/clima';
+import { sinAltitud, textoClima } from '@/lib/clima';
 import type { Product, ProductSpecs } from '@/types';
 
 function textoArray(valor: unknown, campo: string, max: number): string[] {
@@ -69,16 +69,22 @@ export function parseProducto(body: Record<string, unknown>, idExistente?: strin
     };
   }
 
-  // La altitud recomendada es OBLIGATORIA: es el único dato de clima y manda en todo el sitio.
-  const al = body.altitud as Record<string, unknown> | null | undefined;
-  if (!al || typeof al !== 'object' || al.min == null || al.max == null || al.min === '' || al.max === '') {
-    throw new ValidationError('Define la altitud recomendada (msnm) de la planta: es obligatoria y manda en el clima de todo el sitio.');
+  // La altitud recomendada es OBLIGATORIA para las plantas (único dato de clima, manda en todo el sitio). Los agroinsumos
+  // no la llevan: se recomiendan siempre como complemento.
+  let altitud: Product['altitud'];
+  if (sinAltitud(categoria)) {
+    specs.clima = 'Todos los climas';
+  } else {
+    const al = body.altitud as Record<string, unknown> | null | undefined;
+    if (!al || typeof al !== 'object' || al.min == null || al.max == null || al.min === '' || al.max === '') {
+      throw new ValidationError('Define la altitud recomendada (msnm) de la planta: es obligatoria y manda en el clima de todo el sitio.');
+    }
+    const altMin = entero(al.min, 'la altitud mínima (msnm)', 0, 5000);
+    const altMax = entero(al.max, 'la altitud máxima (msnm)', 0, 5000);
+    if (altMin > altMax) throw new ValidationError('La altitud mínima no puede ser mayor que la máxima.');
+    altitud = { min: altMin, max: altMax };
+    specs.clima = textoClima(altitud);
   }
-  const altMin = entero(al.min, 'la altitud mínima (msnm)', 0, 5000);
-  const altMax = entero(al.max, 'la altitud máxima (msnm)', 0, 5000);
-  if (altMin > altMax) throw new ValidationError('La altitud mínima no puede ser mayor que la máxima.');
-  const altitud: NonNullable<Product['altitud']> = { min: altMin, max: altMax };
-  specs.clima = textoClima(altitud);
 
   const badge = texto(body.badge, 'la insignia', { max: 40, requerido: false });
   const accent = texto(body.accent, 'el acento', { max: 40, requerido: false });
@@ -98,6 +104,6 @@ export function parseProducto(body: Record<string, unknown>, idExistente?: strin
     images,
     activo: body.activo !== false,
     ...(logistica ? { logistica } : {}),
-    altitud,
+    ...(altitud ? { altitud } : {}),
   };
 }

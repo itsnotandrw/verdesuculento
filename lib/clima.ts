@@ -32,6 +32,9 @@ const POR_CATEGORIA: Record<string, Clima[]> = {
 
 type ConClima = Pick<Product, 'category' | 'altitud'>;
 
+/** Agroinsumos (bioinsumos, sustratos…) no son plantas: no tienen altitud ni clima y se recomiendan en toda zona como complemento. */
+export const sinAltitud = (categoria: string) => categoria === 'agroinsumos';
+
 export const climasDeAltitud = (a: RangoAltitud): Clima[] => {
   const out: Clima[] = [];
   if (a.min < ALTITUD_FRONTERA) out.push('calido');
@@ -44,12 +47,14 @@ export const climaDeMsnm = (msnm: number): Clima => (msnm < ALTITUD_FRONTERA ? '
 
 /** Climas de la planta: salen de su altitud; sin altitud (publicación antigua), de su categoría. */
 export function climasDe(p: ConClima): Clima[] {
+  if (sinAltitud(p.category)) return [];
   if (p.altitud) return climasDeAltitud(p.altitud);
   return POR_CATEGORIA[p.category] ?? [];
 }
 
 /** ¿Esta planta se da a esa altitud? Con altitud se compara el rango exacto; sin ella, por grupo de clima. */
 export function aptoParaMsnm(p: ConClima, msnm: number): boolean {
+  if (sinAltitud(p.category)) return true;
   if (p.altitud) return msnm >= p.altitud.min && msnm <= p.altitud.max;
   return climasDe(p).includes(climaDeMsnm(msnm));
 }

@@ -367,7 +367,7 @@ export default function ZoneSelector() {
                       <h3 className="zv-t">Qué sembrar en {sel.name}</h3>
                       <p className="zv-s">A {sel.msnm.toLocaleString('es-CO')} msnm estas categorías se dan mejor. Toca una para ver las plantas aquí mismo.</p>
                       <div className="zv-cats">
-                        {info.categorias.map((id, i) => {
+                        {[...info.categorias, ...CATEGORIES.map((x) => x.id).filter((x) => !info.categorias.includes(x))].map((id, i) => {
                           const c = CATEGORIES.find((x) => x.id === id);
                           if (!c) return null;
                           const n = delaCat(id).length;
@@ -376,6 +376,7 @@ export default function ZoneSelector() {
                               <span className="zv-cat-foto" style={{ backgroundImage: CATEGORY_PHOTOS[id] ? `url(${CATEGORY_PHOTOS[id]})` : undefined }} />
                               <span className="zv-cat-body">
                                 {i === 0 && <span className="zv-cat-tag">Lo mejor para tu zona</span>}
+                                {id === 'agroinsumos' && <span className="zv-cat-tag">Complemento para tu cultivo</span>}
                                 <span className="zv-cat-n">{c.name}</span>
                                 <span className="zv-cat-b">{c.blurb}</span>
                                 <span className="zv-cat-c">{n ? `${n} ${n === 1 ? 'planta' : 'plantas'} para tu zona` : `${counts[id] ?? c.count} productos`} · Previsualizar →</span>
