@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   aptos.sort((a, b) => Number(Boolean(b.altitud)) - Number(Boolean(a.altitud)));
 
   return NextResponse.json(
-    { msnm, total: aptos.length, plantas: aptos.slice(0, 150).map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.images[0] ?? null, category: p.category, resumen: p.description.replace(/\s+/g, ' ').trim().slice(0, 170), exacta: Boolean(p.altitud) })) },
+    { msnm, total: aptos.length, plantas: aptos.slice(0, 400).map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.images[0] ?? null, category: p.category, resumen: p.description.replace(/\s+/g, ' ').trim().slice(0, 170), exacta: Boolean(p.altitud) })) },
     { headers: { 'Cache-Control': 'public, max-age=60' } },
   );
 }

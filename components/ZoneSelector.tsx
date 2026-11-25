@@ -56,6 +56,7 @@ export default function ZoneSelector() {
   const [sel, setSel] = useState<Municipio | null>(null);
   const [plantas, setPlantas] = useState<{ id: string; name: string; price: number; image: string | null; category: string; resumen: string; exacta: boolean }[]>([]);
   // Paso 3: lo que se está previsualizando dentro de la ventana (una categoría o una planta), sin salir del sitio.
+  const [cargadas, setCargadas] = useState(false);
   const [vista, setVista] = useState<{ tipo: 'cat'; id: string } | { tipo: 'prod'; id: string; desde: string } | null>(null);
   const [todos, setTodos] = useState<Municipio[]>(MUNICIPIOS);
   const [activo, setActivo] = useState(0);
@@ -127,12 +128,13 @@ export default function ZoneSelector() {
 
   // Paso 3 («Ver mis plantas»): plantas concretas que se dan a la altitud del municipio elegido.
   useEffect(() => {
-    if (paso !== 2 || !sel) { setPlantas([]); return; }
+    if (paso !== 2 || !sel) { setPlantas([]); setCargadas(false); return; }
     let vivo = true;
+    setCargadas(false);
     fetch(`/api/zona/plantas?msnm=${sel.msnm}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (vivo) setPlantas(d?.plantas ?? []); })
-      .catch(() => vivo && setPlantas([]));
+      .then((d) => { if (vivo) { setPlantas(d?.plantas ?? []); setCargadas(true); } })
+      .catch(() => { if (vivo) { setPlantas([]); setCargadas(true); } });
     return () => { vivo = false; };
   }, [paso, sel]);
 
@@ -365,26 +367,37 @@ export default function ZoneSelector() {
                   return (
                     <div className="zv">
                       <h3 className="zv-t">Qué sembrar en {sel.name}</h3>
-                      <p className="zv-s">A {sel.msnm.toLocaleString('es-CO')} msnm estas categorías se dan mejor. Toca una para ver las plantas aquí mismo.</p>
-                      <div className="zv-cats">
-                        {[...info.categorias, ...CATEGORIES.map((x) => x.id).filter((x) => !info.categorias.includes(x))].map((id, i) => {
-                          const c = CATEGORIES.find((x) => x.id === id);
-                          if (!c) return null;
-                          const n = delaCat(id).length;
-                          return (
-                            <button type="button" key={id} className="zv-cat" onClick={() => setVista({ tipo: 'cat', id })}>
-                              <span className="zv-cat-foto" style={{ backgroundImage: CATEGORY_PHOTOS[id] ? `url(${CATEGORY_PHOTOS[id]})` : undefined }} />
-                              <span className="zv-cat-body">
-                                {i === 0 && <span className="zv-cat-tag">Lo mejor para tu zona</span>}
-                                {id === 'agroinsumos' && <span className="zv-cat-tag">Complemento para tu cultivo</span>}
-                                <span className="zv-cat-n">{c.name}</span>
-                                <span className="zv-cat-b">{c.blurb}</span>
-                                <span className="zv-cat-c">{n ? `${n} ${n === 1 ? 'planta' : 'plantas'} para tu zona` : `${counts[id] ?? c.count} productos`} · Previsualizar →</span>
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <p className="zv-s">A {sel.msnm.toLocaleString('es-CO')} msnm estas son las categorías con plantas que se dan en tu zona, según la altitud recomendada de cada una. Toca una para verlas aquí mismo.</p>
+                      {!cargadas ? (
+                        <p className="zv-s">Buscando las plantas de tu zona…</p>
+                      ) : (
+                        <div className="zv-cats">
+                          {(() => {
+                            // Las categorías salen de las plantas que de verdad se dan a esta altitud (la altitud de cada publicación en el
+                            // admin), no de una tabla fija por piso térmico. Los agroinsumos van siempre al final como complemento.
+                            const conPlantas = CATEGORIES.filter((x) => x.id !== 'agroinsumos' && delaCat(x.id).length > 0).sort((x, y) => delaCat(y.id).length - delaCat(x.id).length);
+                            const agro = CATEGORIES.find((x) => x.id === 'agroinsumos');
+                            const lista = [...conPlantas, ...(agro ? [agro] : [])];
+                            if (conPlantas.length === 0) return <p className="zv-s">Aún no hay plantas confirmadas para {sel.msnm.toLocaleString('es-CO')} msnm. Escríbenos y te asesoramos.</p>;
+                            return lista.map((c, i) => {
+                              const id = c.id;
+                              const n = delaCat(id).length;
+                              return (
+                                <button type="button" key={id} className="zv-cat" onClick={() => setVista({ tipo: 'cat', id })}>
+                                  <span className="zv-cat-foto" style={{ backgroundImage: CATEGORY_PHOTOS[id] ? `url(${CATEGORY_PHOTOS[id]})` : undefined }} />
+                                  <span className="zv-cat-body">
+                                    {i === 0 && id !== 'agroinsumos' && <span className="zv-cat-tag">Lo mejor para tu zona</span>}
+                                    {id === 'agroinsumos' && <span className="zv-cat-tag">Complemento para tu cultivo</span>}
+                                    <span className="zv-cat-n">{c.name}</span>
+                                    <span className="zv-cat-b">{c.blurb}</span>
+                                    <span className="zv-cat-c">{`${n} ${id === 'agroinsumos' ? (n === 1 ? 'producto' : 'productos') : (n === 1 ? 'planta' : 'plantas')}${id === 'agroinsumos' ? '' : ' para tu zona'}`} · Previsualizar →</span>
+                                  </span>
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
