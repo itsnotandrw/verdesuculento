@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { AlertTriangle, ExternalLink, ImagePlus, Plus, Trash2 } from 'lucide-react';
 import { estadoDe, type PromoConfig, type Promotion } from '@/lib/promotions';
 import { toast } from '@/components/admin/toast';
+import { subirImagen } from '@/lib/subir-imagen';
 
 const aLocal = (iso?: string) => {
   if (!iso) return '';
@@ -48,11 +49,8 @@ export default function PaginaAdmin() {
   const subir = async (i: number, file: File) => {
     setSubiendo(banners[i].id);
     try {
-      const form = new FormData(); form.append('file', file);
-      const r = await fetch('/api/admin/media', { method: 'POST', body: form });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error ?? 'No se pudo subir la imagen.');
-      set(i, { image: d.url }); toast('Imagen subida');
+      const url = await subirImagen(file);
+      set(i, { image: url }); toast('Imagen subida');
     } catch (e) { toast(e instanceof Error ? e.message : 'Error al subir', 'bad'); } finally { setSubiendo(null); }
   };
 

@@ -19,6 +19,7 @@ import type { Product, ProductColor, ProductSpecs } from '@/types';
 import { urlImagen } from '@/lib/image-loader';
 import AltitudClima from './AltitudClima';
 import { altitudSugerida, type RangoAltitud } from '@/lib/clima';
+import { subirImagen } from '@/lib/subir-imagen';
 
 const SPECS_VACIAS: ProductSpecs = { clima: '', sol: '', riego: '', produccion: '', altura: '', dificultad: '' };
 
@@ -57,6 +58,26 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
   const [alto, setAlto] = useState(inicial?.logistica ? String(inicial.logistica.heightCm) : '');
   const [images, setImages] = useState<string[]>(inicial?.images ?? []);
   const [nuevaImagen, setNuevaImagen] = useState('');
+  const [subiendoFotos, setSubiendoFotos] = useState<string | null>(null);
+  const [errorFotos, setErrorFotos] = useState<string | null>(null);
+
+  const subirFotos = async (archivos: FileList | null) => {
+    if (!archivos?.length) return;
+    setErrorFotos(null);
+    const lista = Array.from(archivos);
+    const fallidas: string[] = [];
+    for (let i = 0; i < lista.length; i++) {
+      setSubiendoFotos(`Subiendo foto ${i + 1} de ${lista.length}…`);
+      try {
+        const url = await subirImagen(lista[i]);
+        setImages((prev) => [...prev, url]);
+      } catch (e) {
+        fallidas.push(`${lista[i].name}: ${e instanceof Error ? e.message : 'no se pudo subir'}`);
+      }
+    }
+    setSubiendoFotos(null);
+    if (fallidas.length) setErrorFotos(fallidas.join(' · '));
+  };
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -282,7 +303,7 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
         {/* --- Fotos: reordenar/quitar las existentes, pegar URL nueva --- */}
         <div>
           <div className="checkout-label" style={{ marginBottom: 8 }}>
-            Fotos ({images.length}) — reordenar o quitar las existentes; para una foto nueva, pega la URL de donde ya está alojada
+            Fotos ({images.length}) — la primera es la principal; reordena con las flechas o quita las que no quieras
           </div>
           {images.map((img, i) => (
             <div key={img + i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
@@ -294,12 +315,27 @@ export default function ProductForm({ modo, inicial, stockInicial }: Props) {
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}>×</button>
             </div>
           ))}
+          <div style={{ marginBottom: 10 }}>
+            <label className="btn btn-primary btn-sm" style={{ cursor: subiendoFotos ? 'wait' : 'pointer', opacity: subiendoFotos ? 0.7 : 1 }}>
+              {subiendoFotos ?? '+ Subir fotos desde tu equipo'}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                disabled={Boolean(subiendoFotos)}
+                onChange={(e) => { subirFotos(e.target.files); e.target.value = ''; }}
+              />
+            </label>
+            <span style={{ fontSize: 12, color: 'var(--fg-mute)', marginLeft: 10 }}>JPG, PNG o WebP; se ajustan solas al tamaño del sitio. Recuerda pulsar «Guardar cambios».</span>
+            {errorFotos && <p role="alert" style={{ fontSize: 12.5, color: '#ef4444', marginTop: 8 }}>{errorFotos}</p>}
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               className="checkout-input"
               value={nuevaImagen}
               onChange={(e) => setNuevaImagen(e.target.value)}
-              placeholder="https://… o /images/productos/…"
+              placeholder="…o pega la dirección de una foto: https://…"
             />
             <button
               type="button"

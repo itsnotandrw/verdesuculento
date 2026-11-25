@@ -15,6 +15,7 @@ import type { Look, LookSpot, PromoConfig } from '@/lib/promotions';
 import { toast } from '@/components/admin/toast';
 import type { Product } from '@/types';
 import { urlImagen } from '@/lib/image-loader';
+import { subirImagen } from '@/lib/subir-imagen';
 
 const uid = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
 const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n * 10) / 10));
@@ -81,11 +82,8 @@ export default function LookEditor() {
   const subir = async (file: File) => {
     setSubiendo(true);
     try {
-      const form = new FormData(); form.append('file', file);
-      const r = await fetch('/api/admin/media', { method: 'POST', body: form });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error ?? 'No se pudo subir la imagen.');
-      setLook({ src: d.url }); toast('Imagen subida');
+      const url = await subirImagen(file);
+      setLook({ src: url }); toast('Imagen subida');
     } catch (e) { toast(e instanceof Error ? e.message : 'Error al subir', 'bad'); } finally { setSubiendo(false); }
   };
 
