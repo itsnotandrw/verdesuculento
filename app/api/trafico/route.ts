@@ -25,8 +25,9 @@ export async function POST(request: Request) {
     } else if (b.tipo === 'pv') {
       const ruta = rutaValida(b.ruta);
       if (ruta) {
-        const host = new URL(request.url).hostname;
-        await registrar({ tipo: 'pv', ruta, nueva: b.nueva === true, fuente: b.nueva === true ? fuenteDe(b.ref, b.utm, host) : undefined, ua, ip });
+        // Detrás del proxy, request.url trae el host interno: el dominio público llega en las cabeceras.
+        const host = (request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? '').split(',')[0].trim().split(':')[0];
+        await registrar({ tipo: 'pv', ruta, nueva: b.nueva === true, fuente: b.nueva === true ? fuenteDe(b.ref, b.utm, host, b.ads === true) : undefined, ua, ip });
       }
     }
   } catch {

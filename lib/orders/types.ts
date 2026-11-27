@@ -199,6 +199,8 @@ export interface Order {
   processedEventIds: string[];
   /** Algo raro que una persona debe revisar (pago anulado, monto distinto…). Se ve en rojo en el panel. */
   alerta?: string;
+  /** Pedido de ensayo: no cuenta en métricas ni para el cupón de primera compra, y es el único que se puede eliminar. */
+  esPrueba?: boolean;
 }
 
 export interface CreateOrderInput {

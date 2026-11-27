@@ -18,7 +18,7 @@ export function trackEvento(evento: 'carrito') {
 
 /**
  * Cuenta cada página que ve el visitante (sin cookies ni datos personales). La primera página de la pestaña cuenta como
- * visita nueva y lleva de dónde llegó (referente o utm_source). El panel /admin no se mide.
+ * visita nueva y lleva de dónde llegó (anuncio de Google, referente o utm_source). El panel /admin no se mide.
  */
 export default function Trafico() {
   const ruta = usePathname() ?? '/';
@@ -29,8 +29,11 @@ export default function Trafico() {
     try {
       if (!sessionStorage.getItem('verde-visita')) { sessionStorage.setItem('verde-visita', '1'); nueva = true; }
     } catch { nueva = false; }
-    const utm = nueva ? new URLSearchParams(location.search).get('utm_source') ?? undefined : undefined;
-    enviar({ tipo: 'pv', ruta, nueva, ref: nueva ? document.referrer : undefined, utm });
+    const q = new URLSearchParams(location.search);
+    const utm = nueva ? q.get('utm_source') ?? undefined : undefined;
+    // Clic en un anuncio de Google: trae gclid/gbraid/wbraid/gad_source (o utm de pago a Google). Solo se envía el sí/no.
+    const ads = nueva && (['gclid', 'gbraid', 'wbraid', 'gad_source'].some((k) => q.has(k)) || (/google/i.test(utm ?? '') && /cpc|ppc|paid/i.test(q.get('utm_medium') ?? '')));
+    enviar({ tipo: 'pv', ruta, nueva, ref: nueva ? document.referrer : undefined, utm, ads: ads || undefined });
   }, [ruta]);
 
   return null;

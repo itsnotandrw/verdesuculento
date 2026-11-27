@@ -58,6 +58,7 @@ interface Pedido {
   verificadoPor?: string;
   nota?: string;
   alerta?: string | null;
+  esPrueba: boolean;
   envio: {
     carrier: string;
     service: string;
@@ -106,7 +107,15 @@ const FILTROS: { id: string; label: string; estados: string[] | null }[] = [
   { id: 'camino', label: 'En camino', estados: ['shipped'] },
   { id: 'entregados', label: 'Entregados', estados: ['delivered'] },
   { id: 'cerrados', label: 'Cancelados / vencidos', estados: ['cancelled', 'expired'] },
+  { id: 'pruebas', label: 'Pruebas', estados: null },
 ];
+
+/** Los pedidos de prueba solo salen en su propia pestaña; las demás muestran pedidos reales. */
+function delFiltro(lista: Pedido[], id: string): Pedido[] {
+  if (id === 'pruebas') return lista.filter((p) => p.esPrueba);
+  const estados = FILTROS.find((f) => f.id === id)?.estados;
+  return lista.filter((p) => !p.esPrueba && (!estados || estados.includes(p.status)));
+}
 
 export default function AdminOrders() {
   const router = useRouter();
@@ -222,7 +231,7 @@ export default function AdminOrders() {
 
         <div role="tablist" aria-label="Estado de los pedidos" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
           {FILTROS.map((f) => {
-            const n = f.estados ? pedidos.filter((p) => f.estados!.includes(p.status)).length : pedidos.length;
+            const n = delFiltro(pedidos, f.id).length;
             const activo = filtro === f.id;
             return (
               <button key={f.id} role="tab" aria-selected={activo} className="chip" onClick={() => setFiltro(f.id)}
@@ -238,7 +247,7 @@ export default function AdminOrders() {
         )}
 
         <div style={{ display: 'grid', gap: 12 }}>
-          {pedidos.filter((p) => { const e = FILTROS.find((f) => f.id === filtro)?.estados; return !e || e.includes(p.status); }).map((pedido) => {
+          {delFiltro(pedidos, filtro).map((pedido) => {
             const expandido = abierto === pedido.id;
             const trabajando = ocupado === pedido.id;
 
@@ -258,6 +267,7 @@ export default function AdminOrders() {
                   <span className="mono" style={{ fontSize: 13, fontWeight: 600, flexShrink: 0 }}>{pedido.reference}</span>
                   <span className="status-pill" data-tone={TONO[pedido.status] ?? 'wait'}>{pedido.statusLabel}</span>
                   {pedido.alerta && <span className="status-pill" data-tone="bad">Revisar</span>}
+                  {pedido.esPrueba && <span className="status-pill" data-tone="wait">Prueba</span>}
                   <span className="ped-info" style={{ fontSize: 13, color: 'var(--fg-dim)', minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pedido.cliente} · {pedido.destino}
                   </span>
@@ -450,6 +460,27 @@ export default function AdminOrders() {
                       <a className="btn btn-ghost btn-sm" href={`/pedido/${pedido.reference}`} target="_blank" rel="noreferrer">
                         Ver como el cliente
                       </a>
+
+                      <button className="btn btn-ghost btn-sm" disabled={trabajando} onClick={() => accionar(pedido, pedido.esPrueba ? 'quitar-prueba' : 'marcar-prueba')}>
+                        {pedido.esPrueba ? 'No es prueba' : 'Marcar como prueba'}
+                      </button>
+
+                      {pedido.esPrueba && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                          disabled={trabajando}
+                          onClick={() => {
+                            const guia = pedido.envio?.puedeModificar ? `\n\nOJO: tiene la guía ${pedido.envio.trackingNumber} sin recoger. Anúlala antes para que no la cobren.` : '';
+                            const pago = pedido.pagoEstado === 'approved' ? '\n\nFigura como PAGADO: elimínalo solo si ese dinero no es de un cliente.' : '';
+                            if (confirm(`¿Eliminar el pedido de prueba ${pedido.reference} (${formatCOP(pedido.total)})?${pago}${guia}\n\nDeja de aparecer en el panel y para el cliente.`)) {
+                              accionar(pedido, 'eliminar', { confirmo: true });
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      )}
                     </div>
 
                     {pedido.timeline.length > 0 && (

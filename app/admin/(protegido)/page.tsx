@@ -22,12 +22,13 @@ const corto = (d: Date) => d.toLocaleDateString('es-CO', { weekday: 'short' }).r
 const fechaCorta = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : '');
 
 export default async function AdminResumenPage() {
-  const [lista, productos, promos, redisOk] = await Promise.all([
+  const [todos, productos, promos, redisOk] = await Promise.all([
     orders.list({ limite: 500 }),
     getAllProducts(true),
     getPromoConfig(),
     redisDisponible(),
   ]);
+  const lista = todos.filter((o) => !o.esPrueba);
   const ahora = new Date();
   const hoy0 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
   const inicio = new Date(hoy0.getTime() - 6 * DIA_MS);

@@ -6,7 +6,8 @@
  * queda en el pedido, porque cuando algo se despacha sin haberse pagado hay
  * que poder reconstruir qué pasó.
  *
- * Acciones: aprobar | rechazar | reintentar-pago | reintentar-guia | conciliar | anular-guia | agendar-recogida
+ * Acciones: aprobar | rechazar | reintentar-pago | reintentar-guia | conciliar | anular-guia | agendar-recogida |
+ *           marcar-prueba | quitar-prueba | eliminar (solo pedidos marcados como prueba)
  */
 
 import { ValidationError, autorizarAdmin, cuerpo, fail, fallo, ok, texto } from '@/lib/api';
@@ -17,6 +18,8 @@ import {
   aprobarPago,
   conciliarRecaudo,
   crearGuia,
+  eliminarPedido,
+  marcarPrueba,
   marcarRecogido,
   rechazarPago,
   reintentarPago,
@@ -27,7 +30,7 @@ import { CancelNotSupportedError } from '@/lib/shipping/types';
 
 export const dynamic = 'force-dynamic';
 
-const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido', 'resolver-alerta', 'anular-guia', 'agendar-recogida'] as const;
+const ACCIONES = ['aprobar', 'rechazar', 'reintentar-pago', 'reintentar-guia', 'conciliar', 'marcar-recogido', 'resolver-alerta', 'anular-guia', 'agendar-recogida', 'marcar-prueba', 'quitar-prueba', 'eliminar'] as const;
 type Accion = (typeof ACCIONES)[number];
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -48,7 +51,18 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const quien = texto(body.quien, 'quién', { max: 60, requerido: false }) || 'operador';
     let resultado;
 
+    if (accion === 'eliminar') {
+      if (body.confirmo !== true) return fail('Falta confirmar la eliminación (confirmo: true).', 422);
+      const borrado = await eliminarPedido(pedido.id, quien);
+      return ok({ id: borrado.id, reference: borrado.reference, eliminado: true });
+    }
+
     switch (accion) {
+      case 'marcar-prueba':
+      case 'quitar-prueba':
+        resultado = await marcarPrueba(pedido.id, accion === 'marcar-prueba', quien);
+        break;
+
       case 'aprobar':
         // Doble confirmación explícita: quien aprueba tiene que declarar que
         // vio el abono, no solo que le llegó un pantallazo.

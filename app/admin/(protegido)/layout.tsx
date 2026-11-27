@@ -23,7 +23,8 @@ export default async function AdminProtegidoLayout({ children }: { children: Rea
   let pendientesVentas = 0;
   const avisos: Aviso[] = [];
   try {
-    const [lista, promos] = await Promise.all([orders.list({ limite: 300 }), getPromoConfig()]);
+    const [todos, promos] = await Promise.all([orders.list({ limite: 300 }), getPromoConfig()]);
+    const lista = todos.filter((o) => !o.esPrueba);
     const porVerificar = lista.filter((o) => o.status === 'payment_in_review').length;
     const porEnviar = lista.filter((o) => o.status === 'paid').length;
     const conAlerta = lista.filter((o) => o.alerta).length;

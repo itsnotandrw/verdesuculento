@@ -17,7 +17,7 @@ const DIA = 86400000;
 
 export default async function MetricasPage() {
   const [lista, productos, trafico] = await Promise.all([orders.list({ limite: 1000 }), getAllProducts(true), leerTrafico(30)]);
-  const pagados = lista.filter((o) => o.payment.status === 'approved');
+  const pagados = lista.filter((o) => o.payment.status === 'approved' && !o.esPrueba);
   const hoy0 = new Date(new Date().setHours(0, 0, 0, 0));
   const inicio = new Date(hoy0.getTime() - 29 * DIA);
   const rango = pagados.filter((o) => new Date(o.createdAt) >= inicio);
@@ -44,7 +44,13 @@ export default async function MetricasPage() {
   const nombreDe = new Map(productos.map((p) => [p.id, p.name]));
   const masVistos = rutas.filter((r) => r.nombre.startsWith('/producto/')).slice(0, 8).map((r) => ({ nombre: nombreDe.get(r.nombre.replace('/producto/', '')) ?? r.nombre, n: r.n }));
   const paginasTop = rutas.filter((r) => !r.nombre.startsWith('/producto/')).slice(0, 8);
-  const fuentes = sumarPorPrefijo(trafico, 'r:').slice(0, 8);
+  // Datos anteriores a la separación: el dominio publicitario cuenta como Google Ads y el propio dominio como directo.
+  const porFuente = new Map<string, number>();
+  for (const f of sumarPorPrefijo(trafico, 'r:')) {
+    const nombre = /doubleclick\.net|googleadservices|googlesyndication/.test(f.nombre) ? 'Google Ads' : /(^|\.)viveroverdesuculento\.co$/.test(f.nombre) ? 'Directo' : f.nombre;
+    porFuente.set(nombre, (porFuente.get(nombre) ?? 0) + f.n);
+  }
+  const fuentes = [...porFuente].map(([nombre, n]) => ({ nombre, n })).sort((a, b) => b.n - a.n).slice(0, 8);
   const dispositivos = sumarPorPrefijo(trafico, 'd:');
   const etiquetaDisp: Record<string, string> = { movil: 'Celular', escritorio: 'Computador', tablet: 'Tableta' };
   const conversion = sesiones ? Math.round((rango.length / sesiones) * 1000) / 10 : 0;
@@ -124,6 +130,7 @@ export default async function MetricasPage() {
         <section className="adm-card pad">
           <h2 className="adm-h2" style={{ marginBottom: 12 }}>De dónde llegan</h2>
           {filasTop(fuentes, 'var(--a-info)')}
+          <p className="adm-hint" style={{ marginTop: 8 }}>«Google Ads» se distingue desde la actualización del 27 de noviembre; lo anterior pudo quedar como Directo o Google.</p>
           <h2 className="adm-h2" style={{ margin: '20px 0 12px' }}>Con qué entran</h2>
           {filasTop(dispositivos.map((d) => ({ nombre: etiquetaDisp[d.nombre] ?? d.nombre, n: d.n })), 'var(--a-accent)')}
         </section>

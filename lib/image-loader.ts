@@ -14,6 +14,9 @@ const SUBIDA_ADMIN = /^\/api\/media\/([a-f0-9]{18})$/;
 /** URL de la imagen en el tamaño que hace falta (para etiquetas <img> normales, el admin y los buscadores). */
 export function urlImagen(src: string | null | undefined, ancho = 768): string {
   if (!src) return '';
+  // Logo y banner fijo: versiones livianas generadas con scripts/aligerar-inicio.mjs
+  if (src === '/logo-icon.png') return `/logo-icon-w${ancho <= 96 ? 96 : 192}.webp`;
+  if (src === '/promos/black-friday-30.jpeg') return `/promos/black-friday-30-w${ancho <= 768 ? 768 : 1280}.webp`;
   const foto = FOTO_PRODUCTO.exec(src);
   if (foto) {
     const w = ANCHOS_PRODUCTO.find((a) => a >= ancho) ?? ANCHOS_PRODUCTO[ANCHOS_PRODUCTO.length - 1];

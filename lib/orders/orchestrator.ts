@@ -62,6 +62,7 @@ export class OrderError extends Error {
       | 'sin_stock'
       | 'guia_no_modificable'
       | 'recogida_invalida'
+      | 'no_es_prueba'
   ) {
     super(message);
     this.name = 'OrderError';
@@ -147,7 +148,7 @@ export async function crearPedido(
     // Los cupones son solo para la primera compra: quien ya tiene un pedido vigente o pagado con este correo no puede usarlos.
     const correoCliente = input.customer.email.trim().toLowerCase();
     const previos = await orders.list({ limite: 500 });
-    if (previos.some((o) => o.customer.email.trim().toLowerCase() === correoCliente && o.status !== 'cancelled' && o.status !== 'expired')) {
+    if (previos.some((o) => !o.esPrueba && o.customer.email.trim().toLowerCase() === correoCliente && o.status !== 'cancelled' && o.status !== 'expired')) {
       throw new OrderError('Los cupones son solo para la primera compra. Quita el cupón para continuar.', 'cupon_invalido');
     }
     couponDiscount = resultado.descuento;
@@ -950,7 +951,7 @@ export async function agendarRecogida(
   const carrierCode = codigoTransportadora(pedido);
   const todos = await orders.list({ limite: 500 });
   const grupo = todos.filter(
-    (o) => esGuiaDeTransportadora(o) && o.shipment!.status === 'created' && !o.shipment!.pickup && codigoTransportadora(o) === carrierCode
+    (o) => !o.esPrueba && esGuiaDeTransportadora(o) && o.shipment!.status === 'created' && !o.shipment!.pickup && codigoTransportadora(o) === carrierCode
   );
   if (!grupo.some((o) => o.id === pedido.id)) grupo.push(pedido);
 
@@ -985,6 +986,33 @@ export async function agendarRecogida(
     if (o.id === pedido.id) resultado = actualizado;
   }
   return { order: resultado, paquetes: grupo.length, numero: recogida.pickupNumber };
+}
+
+// ----------------------------------------------------------- pedidos de prueba
+
+export async function marcarPrueba(orderId: string, esPrueba: boolean, quien: string): Promise<Order | null> {
+  return orders.update(orderId, (order) => {
+    if (Boolean(order.esPrueba) === esPrueba) return order;
+    order.esPrueba = esPrueba || undefined;
+    registrar(order, { type: 'pedido_prueba', actor: 'admin', message: `${quien} ${esPrueba ? 'marcó el pedido como prueba' : 'quitó la marca de prueba'}.` });
+    return order;
+  });
+}
+
+/**
+ * Elimina un pedido de prueba. Exige la marca previa (dos pasos: un pedido real no se borra de un solo clic). Devuelve
+ * las unidades apartadas (un pedido expirado ya las devolvió) y el uso del cupón.
+ */
+export async function eliminarPedido(orderId: string, quien: string): Promise<Order> {
+  const pedido = await orders.byId(orderId);
+  if (!pedido) throw new OrderError('Pedido no encontrado.', 'pedido_no_encontrado');
+  if (!pedido.esPrueba) throw new OrderError('Solo se pueden eliminar pedidos marcados como prueba.', 'no_es_prueba');
+  // Si dos personas pulsan a la vez, solo quien lo borra devuelve inventario y cupón.
+  if (!(await orders.remove(orderId))) throw new OrderError('Ese pedido ya se había eliminado.', 'pedido_no_encontrado');
+  if (pedido.payment.status !== 'expired') await liberarInventario(pedido.lines.map((l) => ({ productId: l.productId, qty: l.qty })));
+  if (pedido.coupon) await liberarUsoCupon(pedido.coupon.id);
+  console.info(`[pedidos] ${quien} eliminó el pedido de prueba ${pedido.reference}.`);
+  return pedido;
 }
 
 // -------------------------------------------------------------- expiración

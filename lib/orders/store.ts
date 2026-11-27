@@ -37,6 +37,8 @@ export interface OrderRepository {
   /** Aplica una mutación sobre el pedido de forma atómica. */
   update(id: string, mutar: (order: Order) => Order | void): Promise<Order | null>;
   list(opciones?: { limite?: number }): Promise<Order[]>;
+  /** Saca el pedido y sus índices. Redis guarda una copia 90 días por si fue un error. */
+  remove(id: string): Promise<boolean>;
 }
 
 /**

@@ -158,6 +158,15 @@ export const archivoRepository: OrderRepository = {
     });
   },
 
+  async remove(id) {
+    return enCola(async () => {
+      const st = await cargar();
+      const habia = st.pedidos.delete(id);
+      if (habia) await persistir(st);
+      return habia;
+    });
+  },
+
   async list(opciones = {}) {
     const st = await cargar();
     const todos = [...st.pedidos.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));

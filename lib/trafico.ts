@@ -39,6 +39,7 @@ export function dispositivoDe(ua: string): 'movil' | 'tablet' | 'escritorio' {
 }
 
 const FUENTES: [RegExp, string][] = [
+  [/doubleclick\.net|googleadservices|googlesyndication/i, 'Google Ads'],
   [/google\./i, 'Google'], [/bing\.|duckduckgo|yahoo\./i, 'Otros buscadores'],
   [/instagram|^l\.instagram/i, 'Instagram'], [/facebook|fb\.com|fb\.me|^l\.facebook/i, 'Facebook'],
   [/tiktok/i, 'TikTok'], [/whatsapp|wa\.me/i, 'WhatsApp'], [/youtube|youtu\.be/i, 'YouTube'],
@@ -46,7 +47,8 @@ const FUENTES: [RegExp, string][] = [
 ];
 
 /** Fuente de una visita nueva: utm_source, o el dominio de donde vino; vacío = directo. */
-export function fuenteDe(referrer: unknown, utm: unknown, hostPropio: string): string {
+export function fuenteDe(referrer: unknown, utm: unknown, hostPropio: string, deAnuncio = false): string {
+  if (deAnuncio) return 'Google Ads';
   const u = typeof utm === 'string' ? utm.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 30) : '';
   if (u) {
     const conocida = FUENTES.find(([re]) => re.test(u));

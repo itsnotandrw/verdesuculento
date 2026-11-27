@@ -13,6 +13,7 @@
  *   guia:{tracking}    → id          (índice del número de guía)
  *   pedidos            lista de ids, más reciente primero
  *   bloqueo:{id}       cerrojo de escritura
+ *   pedido-eliminado:{id}  copia de un pedido borrado desde el panel (90 días)
  */
 
 import { randomUUID } from 'crypto';
@@ -125,6 +126,20 @@ export const kvRepository: OrderRepository = {
         ...comandosIndice(resultado),
       ]);
       return resultado;
+    });
+  },
+
+  async remove(id) {
+    return conBloqueo(id, async () => {
+      const actual = await leer(id);
+      if (!actual) return false;
+      const indices = comandosIndice(actual).map((c) => String(c[1]));
+      await tuberia([
+        ['SET', `pedido-eliminado:${id}`, JSON.stringify(actual), 'EX', 90 * 86400],
+        ['LREM', LISTA, 0, id],
+        ['DEL', clavePedido(id), ...indices],
+      ]);
+      return true;
     });
   },
 

@@ -53,6 +53,7 @@ function resumen(order: Order) {
     verificadoPor: order.payment.verifiedBy,
     nota: order.payment.notes,
     alerta: order.alerta ?? null,
+    esPrueba: Boolean(order.esPrueba),
     envio: order.shipment
       ? {
           carrier: order.shipment.carrier,
@@ -105,14 +106,15 @@ export async function GET(request: Request) {
         b.createdAt.localeCompare(a.createdAt)
     );
 
-    const porVerificar = lista.filter((o) => o.status === 'payment_in_review').length;
-    const pagadosSinGuia = lista.filter((o) => o.payment.status === 'approved' && !o.shipment).length;
-    const recaudosPendientes = lista.filter(
+    const reales = lista.filter((o) => !o.esPrueba);
+    const porVerificar = reales.filter((o) => o.status === 'payment_in_review').length;
+    const pagadosSinGuia = reales.filter((o) => o.payment.status === 'approved' && !o.shipment).length;
+    const recaudosPendientes = reales.filter(
       (o) => o.payment.method === 'COD' && o.shipment?.status === 'delivered' && !o.shipment.codSettledAt
     ).length;
 
     return ok({
-      resumen: { total: lista.length, porVerificar, pagadosSinGuia, recaudosPendientes, conAlerta: lista.filter((o) => o.alerta).length },
+      resumen: { total: reales.length, porVerificar, pagadosSinGuia, recaudosPendientes, conAlerta: reales.filter((o) => o.alerta).length },
       // Diagnóstico: si el almacenamiento no es apto, el checkout está
       // rechazando pedidos y el operador tiene que enterarse aquí, no por un
       // cliente molesto.
