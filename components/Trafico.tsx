@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { paginaAds } from '@/lib/google-ads';
 
 function enviar(cuerpo: Record<string, unknown>) {
   try {
@@ -25,6 +26,7 @@ export default function Trafico() {
 
   useEffect(() => {
     if (ruta.startsWith('/admin')) return;
+    paginaAds();
     let nueva = false;
     try {
       if (!sessionStorage.getItem('verde-visita')) { sessionStorage.setItem('verde-visita', '1'); nueva = true; }

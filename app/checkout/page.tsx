@@ -16,6 +16,7 @@ import { useCupon } from '@/hooks/useCupon';
 import { tokenRecaptcha } from '@/lib/recaptcha-cliente';
 import AvisoRecaptcha from '@/components/AvisoRecaptcha';
 import BotonCatalogo from '@/components/BotonCatalogo';
+import { anotarPedidoPorMedir, conversionAds } from '@/lib/google-ads';
 
 const STEPS = ['Envío', 'Pago'];
 
@@ -116,6 +117,16 @@ export default function CheckoutPage() {
   const recargoCod = metodo === 'COD' && quote && quote.id in codOpciones ? codOpciones[quote.id] : 0;
   const envio = (quote?.cost ?? 0) + recargoCod;
   const total = subtotal - descuentoCupon + envio;
+
+  // Google Ads: «inició el pago», una vez por visita y solo con productos en el carrito.
+  useEffect(() => {
+    if (subtotal <= 0) return;
+    try {
+      if (sessionStorage.getItem('verde-pago-medido')) return;
+      sessionStorage.setItem('verde-pago-medido', '1');
+    } catch { /* sin almacenamiento: se mide igual */ }
+    conversionAds('pago', subtotal);
+  }, [subtotal]);
 
   // El desplegable guarda el municipio elegido, o el centinela "Otro
   // municipio…" si el cliente no lo encontró en la lista. La ciudad real a
@@ -342,6 +353,7 @@ export default function CheckoutPage() {
       // El carrito se limpia solo cuando el pedido ya existe en el servidor: si
       // algo falla, el cliente no pierde lo que había armado.
       clear();
+      anotarPedidoPorMedir(datos.order.reference);
       // Wompi: se manda al cliente a la página segura de pago; el pedido ya existe y esperará el aviso de Wompi.
       const instrucciones = datos.intent?.instructions as { kind?: string; url?: string } | undefined;
       if (instrucciones?.kind === 'redirect' && instrucciones.url) {

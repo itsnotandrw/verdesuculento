@@ -5,6 +5,7 @@ import type { CartItem, Product, ProductColor } from '@/types';
 import { usePromo } from '@/context/PromoContext';
 import type { PrecioProducto } from '@/lib/promo-precios';
 import { trackEvento } from '@/components/Trafico';
+import { conversionAds } from '@/lib/google-ads';
 import { estaAgotado } from '@/hooks/useAgotados';
 
 interface AddOptions {
@@ -94,6 +95,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const add = useCallback((product: Product, opts: AddOptions = {}) => {
     if (estaAgotado(product.id)) return; // agotado: no se agrega
     trackEvento('carrito');
+    conversionAds('carrito', product.price * (opts.qty ?? 1));
     const color = opts.color ?? product.colors[0];
     const size = opts.size ?? product.sizes[0];
     const variantKey = `${product.id}-${color.hex}-${size}`;

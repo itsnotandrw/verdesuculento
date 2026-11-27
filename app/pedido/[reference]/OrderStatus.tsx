@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatCOP } from '@/data/catalog';
 import { DIRECCION_RECOGIDA } from '@/lib/shipping/constants';
 import BotonCatalogo from '@/components/BotonCatalogo';
+import { medirCompra } from '@/lib/google-ads';
 
 interface PublicOrder {
   reference: string;
@@ -99,6 +100,11 @@ export default function OrderStatus({
   const enRevision = pedido.paymentStatus === 'in_review';
   const esRecogerEnTienda = pedido.carrier === 'Recoger en tienda';
   const codPorConfirmar = pedido.paymentMethod === 'COD' && pedido.paymentStatus === 'approved' && pedido.shipmentStatus === 'not_created' && !esRecogerEnTienda;
+
+  // Google Ads: la compra se cuenta cuando el pago queda aprobado (una sola vez, en el navegador que hizo el pedido).
+  useEffect(() => {
+    if (pedido.paymentStatus === 'approved') medirCompra(pedido.reference, pedido.total);
+  }, [pedido.paymentStatus, pedido.reference, pedido.total]);
 
   // Al volver de Wompi llega ?id=<transacción>: se verifica de inmediato con Wompi (sin esperar al aviso automático)
   useEffect(() => {

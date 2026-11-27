@@ -68,13 +68,14 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              `script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+              `script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://www.google.com https://www.gstatic.com",
+              // Google Ads (lib/google-ads.ts): etiqueta y envío de conversiones.
+              "connect-src 'self' https://www.google.com https://www.gstatic.com https://google.com https://www.google.com.co https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://pagead2.googlesyndication.com",
               // Facebook: los reels del Diario (components/FacebookVideoEmbed.tsx) son iframes de facebook.com/plugins/video.php.
-              'frame-src https://www.google.com https://maps.google.com https://www.facebook.com https://web.facebook.com',
+              'frame-src https://www.google.com https://maps.google.com https://www.facebook.com https://web.facebook.com https://www.googletagmanager.com https://td.doubleclick.net',
               "frame-ancestors 'self'",
               "object-src 'none'",
               "base-uri 'self'",
