@@ -2738,3 +2738,9 @@ a.pml-cupon:hover { background: color-mix(in oklab, var(--accent) 12%, transpare
 
 /* reCAPTCHA v3: la insignia se oculta y cada formulario muestra el aviso (components/AvisoRecaptcha.tsx). */
 .grecaptcha-badge{visibility:hidden !important}
+
+/* Aviso de cookies: tarjeta pequeña abajo; en celular va arriba para no tapar el botón de añadir ni la navegación. */
+.aviso-cookies { position: fixed; left: 16px; bottom: 16px; z-index: 150; max-width: 380px; display: grid; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--bg-elev); border: 1px solid var(--border); box-shadow: 0 12px 32px rgba(0,0,0,.18); font-size: 13px; line-height: 1.5; }
+.aviso-cookies a { text-decoration: underline; color: var(--accent); }
+.aviso-cookies div { display: flex; gap: 8px; }
+@media (max-width: 800px) { .aviso-cookies { left: 10px; right: 10px; max-width: none; bottom: auto; top: 76px; } }

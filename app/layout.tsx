@@ -7,6 +7,7 @@ import MobileNav from '@/components/MobileNav';
 import FloatingActions from '@/components/FloatingActions';
 import ChromeGate from '@/components/ChromeGate';
 import Trafico from '@/components/Trafico';
+import AvisoCookies from '@/components/AvisoCookies';
 import { negocioJsonLd } from '@/lib/seo';
 import { env } from '@/lib/env';
 import { CategoryCountsProvider } from '@/context/CategoryCountsContext';
@@ -109,6 +110,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Footer />
             <MobileNav />
             <FloatingActions />
+            <AvisoCookies />
           </ChromeGate>
           </OffersProvider>
           </CategoryCountsProvider>

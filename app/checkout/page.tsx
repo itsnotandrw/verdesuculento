@@ -106,6 +106,8 @@ export default function CheckoutPage() {
 
   const [enviando, setEnviando] = useState(false);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
+  const [autorizaDatos, setAutorizaDatos] = useState(false);
+  const [faltaAutorizar, setFaltaAutorizar] = useState(false);
 
   const quote = quotes.find((q) => q.id === quoteId) ?? null;
   const cupon = useCupon();
@@ -310,6 +312,7 @@ export default function CheckoutPage() {
 
   const confirmarPedido = async () => {
     if (!quoteId || !metodo) return;
+    if (!autorizaDatos) { setFaltaAutorizar(true); return; }
     setEnviando(true);
     setErrorPedido(null);
 
@@ -333,6 +336,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           recaptchaToken,
+          autorizaDatos: true,
           ...datosEnvio,
           ...direccionFinal,
           method: metodo,
@@ -638,7 +642,22 @@ export default function CheckoutPage() {
                 <p style={{ marginTop: 20, fontSize: 13, color: '#ef4444', lineHeight: 1.5 }}>{errorPedido}</p>
               )}
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 28, fontSize: 13, lineHeight: 1.55, color: 'var(--fg-dim)' }}>
+                <input
+                  type="checkbox"
+                  checked={autorizaDatos}
+                  onChange={(e) => { setAutorizaDatos(e.target.checked); setFaltaAutorizar(false); }}
+                  aria-invalid={faltaAutorizar}
+                  style={{ marginTop: 3, width: 17, height: 17, flexShrink: 0, accentColor: 'var(--accent)' }}
+                />
+                <span>
+                  Autorizo el tratamiento de mis datos para procesar y entregar mi pedido, según la{' '}
+                  <a href="/privacidad" target="_blank" rel="noopener" style={{ textDecoration: 'underline', color: 'var(--accent)' }}>política de tratamiento de datos</a>.
+                </span>
+              </label>
+              {faltaAutorizar && <p role="alert" style={{ fontSize: 12.5, color: '#ef4444', marginTop: 8 }}>Marca la casilla para poder confirmar tu pedido.</p>}
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
                 <button className="btn btn-ghost" onClick={() => setStep(0)} disabled={enviando}>← Volver</button>
                 <button className="btn btn-primary" onClick={confirmarPedido} disabled={enviando || !metodo}>
                   {enviando ? (

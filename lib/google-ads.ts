@@ -23,8 +23,31 @@ const RUTA_COMPRA = '/compra-confirmada';
 
 type Ventana = Window & { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 
+// ---------- decisión del visitante sobre las cookies de anuncios (aviso de cookies y /privacidad)
+const CLAVE_COOKIES = 'verde-cookies';
+export type PreferenciaAds = 'si' | 'no' | null;
+let enMemoria: PreferenciaAds = null; // respaldo si el navegador no deja guardar
+
+export function leerPreferenciaCookies(): PreferenciaAds {
+  try { const v = localStorage.getItem(CLAVE_COOKIES); return v === 'si' || v === 'no' ? v : enMemoria; } catch { return enMemoria; }
+}
+
+export function guardarPreferenciaCookies(valor: 'si' | 'no') {
+  enMemoria = valor;
+  try { localStorage.setItem(CLAVE_COOKIES, valor); } catch { /* queda en memoria */ }
+  const estado = valor === 'si' ? 'granted' : 'denied';
+  (window as Ventana).gtag?.('consent', 'update', { ad_storage: estado, ad_user_data: estado, ad_personalization: estado, analytics_storage: estado });
+  if (valor === 'no') {
+    // Se borran las cookies publicitarias que ya se hubieran creado en este dominio.
+    for (const nombre of document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((n) => n.startsWith('_gcl'))) {
+      for (const dominio of ['', `; domain=.${location.hostname.replace(/^www\./, '')}`]) document.cookie = `${nombre}=; path=/; max-age=0${dominio}`;
+    }
+  } else paginaAds();
+}
+
 const activa = () =>
   typeof window !== 'undefined' &&
+  leerPreferenciaCookies() !== 'no' &&
   !location.pathname.startsWith('/admin') &&
   !location.pathname.startsWith('/pedido') &&
   (/^(www\.)?viveroverdesuculento\.co$/.test(location.hostname) || process.env.NEXT_PUBLIC_GADS_LOCAL === '1');

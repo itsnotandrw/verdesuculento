@@ -36,6 +36,7 @@ export default function Footer() {
               <li><a href={`${CONTACTO.whatsappUrl}?text=${encodeURIComponent('Hola, quisiera información para compras al por mayor.')}`} target="_blank" rel="noopener noreferrer">Mayoristas</a></li>
               <li><Link href="/nosotros">Nosotros</Link></li>
               <li><Link href="/diario">Diario</Link></li>
+              <li><Link href="/privacidad">Política de datos y cookies</Link></li>
             </ul>
           </div>
 

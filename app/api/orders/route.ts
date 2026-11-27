@@ -7,6 +7,7 @@
 
 import { ValidationError, cuerpo, email, fail, fallo, lineasCarrito, ok, telefono, texto } from '@/lib/api';
 import { crearPedido } from '@/lib/orders/orchestrator';
+import { orders, registrar } from '@/lib/orders/store';
 import { toPublicOrder, type PaymentMethodId } from '@/lib/orders/types';
 import type { PaymentContext } from '@/lib/payments';
 import { ipDe, limitarCheckout } from '@/lib/ratelimit';
@@ -60,6 +61,13 @@ export async function POST(request: Request) {
       },
       contexto
     );
+
+    if (body.autorizaDatos === true) {
+      // Constancia de la autorización de datos; si no se puede anotar, el pedido sigue su curso.
+      await orders
+        .update(order.id, (o) => { registrar(o, { type: 'autorizacion_datos', actor: 'cliente', message: 'Autorizó el tratamiento de datos según la política publicada en /privacidad.' }); return o; })
+        .catch(() => undefined);
+    }
 
     return ok({ order: toPublicOrder(order), intent }, 201);
   } catch (error) {

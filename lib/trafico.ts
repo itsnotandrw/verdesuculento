@@ -21,7 +21,7 @@ export const fechaBogota = (d: Date = new Date()) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 
 /** Rutas que se cuentan (lista cerrada: evita que rutas inventadas llenen la base). */
-const RUTA = /^\/(producto\/[A-Za-z0-9_-]{1,40}|catalogo(\/[a-z0-9-]{1,40})?|ofertas(\/[a-z0-9-]{1,60})?|diario(\/[a-z0-9-]{1,80})?|nosotros|asesoria|carrito|checkout|pedido|mis-pedidos|buscar)?$/;
+const RUTA = /^\/(producto\/[A-Za-z0-9_-]{1,40}|catalogo(\/[a-z0-9-]{1,40})?|ofertas(\/[a-z0-9-]{1,60})?|diario(\/[a-z0-9-]{1,80})?|nosotros|asesoria|carrito|checkout|pedido|mis-pedidos|buscar|privacidad)?$/;
 
 export function rutaValida(ruta: unknown): string | null {
   if (typeof ruta !== 'string') return null;
