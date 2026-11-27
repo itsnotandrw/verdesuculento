@@ -7,12 +7,10 @@
  */
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { tokenRecaptcha } from '@/lib/recaptcha-cliente';
 import AvisoRecaptcha from '@/components/AvisoRecaptcha';
 
 export default function MisPedidos() {
-  const router = useRouter();
   const [modo, setModo] = useState<'ticket' | 'correo'>('ticket');
   const [valor, setValor] = useState('');
   const [buscando, setBuscando] = useState(false);
@@ -32,7 +30,8 @@ export default function MisPedidos() {
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error ?? 'No se pudo buscar.');
-      if (datos.reference) router.push(`/pedido/${datos.reference}`);
+      // Carga completa: la etiqueta de anuncios no debe seguir activa en la página del pedido.
+      if (datos.reference) window.location.assign(`/pedido/${datos.reference}`);
       else setAviso(datos.mensaje ?? 'Listo. Revisa tu correo.');
     } catch (er) {
       setError(er instanceof Error ? er.message : 'No se pudo buscar.');

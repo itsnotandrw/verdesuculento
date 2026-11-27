@@ -360,7 +360,8 @@ export default function CheckoutPage() {
         window.location.href = instrucciones.url;
         return;
       }
-      router.push(`/pedido/${datos.order.reference}`);
+      // Carga completa a propósito: la etiqueta de anuncios no debe seguir activa en la página del pedido.
+      window.location.assign(`/pedido/${datos.order.reference}`);
     } catch (error) {
       setErrorPedido(error instanceof Error ? error.message : 'No pudimos crear el pedido.');
       setEnviando(false);

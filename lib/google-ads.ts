@@ -4,8 +4,9 @@
  * Etiqueta de Google Ads: mide qué anuncios terminan en «agregar al carrito», «iniciar pago» y «compra».
  * Los identificadores son públicos (viajan en la página); salen de Google Ads → Objetivos → Conversiones.
  *
- * Privacidad: la referencia de un pedido es la llave para verlo, así que NUNCA se envía a Google — en las páginas de
- * pedido se manda una dirección y un título genéricos, y la compra se identifica con un resumen (hash) de la referencia.
+ * Privacidad: la referencia de un pedido es la llave para verlo, así que no debe llegar a Google. La etiqueta lee la
+ * dirección real por su cuenta, por eso en /pedido NO se carga; solo para contar una compra se cambia un momento la
+ * dirección visible por una genérica, y la compra se identifica con un resumen (hash) de la referencia.
  * Solo funciona en el dominio público (o en desarrollo con NEXT_PUBLIC_GADS_LOCAL=1) y nunca en el panel.
  */
 
@@ -18,17 +19,22 @@ const ETIQUETAS = {
 /** Pedidos creados en este navegador que aún no se han contado como compra. */
 const CLAVE_PEDIDOS = 'verde-compras-por-medir';
 
+const RUTA_COMPRA = '/compra-confirmada';
+
 type Ventana = Window & { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 
 const activa = () =>
   typeof window !== 'undefined' &&
   !location.pathname.startsWith('/admin') &&
+  !location.pathname.startsWith('/pedido') &&
   (/^(www\.)?viveroverdesuculento\.co$/.test(location.hostname) || process.env.NEXT_PUBLIC_GADS_LOCAL === '1');
 
 function datosPagina() {
-  return location.pathname.startsWith('/pedido')
-    ? { page_location: `${location.origin}/pedido`, page_title: 'Tu pedido', page_referrer: location.origin }
-    : { page_location: location.href, page_title: document.title, page_referrer: document.referrer.includes('/pedido') ? location.origin : document.referrer };
+  return {
+    page_location: location.href,
+    page_title: location.pathname === RUTA_COMPRA ? 'Compra confirmada' : document.title,
+    page_referrer: document.referrer.includes('/pedido') ? location.origin : document.referrer,
+  };
 }
 
 function gtag(): ((...args: unknown[]) => void) | null {
@@ -54,12 +60,12 @@ export function paginaAds() {
   try { gtag()?.('set', datosPagina()); } catch { /* medir nunca rompe nada */ }
 }
 
-export function conversionAds(tipo: keyof typeof ETIQUETAS, valor: number, transaccion?: string) {
+export function conversionAds(tipo: keyof typeof ETIQUETAS, valor: number, transaccion?: string, alEnviar?: () => void) {
   try {
     const g = gtag();
     if (!g) return;
     g('set', datosPagina());
-    g('event', 'conversion', { send_to: `${ID}/${ETIQUETAS[tipo]}`, value: Math.round(valor), currency: 'COP', ...(transaccion ? { transaction_id: transaccion } : {}) });
+    g('event', 'conversion', { send_to: `${ID}/${ETIQUETAS[tipo]}`, value: Math.round(valor), currency: 'COP', ...(transaccion ? { transaction_id: transaccion } : {}), ...(alEnviar ? { event_callback: alEnviar } : {}) });
   } catch { /* medir nunca rompe nada */ }
 }
 
@@ -79,6 +85,13 @@ export async function medirCompra(referencia: string, total: number) {
     localStorage.setItem(CLAVE_PEDIDOS, JSON.stringify(pendientes().filter((r) => r !== referencia)));
     const resumen = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(referencia));
     const id = Array.from(new Uint8Array(resumen).slice(0, 12), (b) => b.toString(16).padStart(2, '0')).join('');
-    conversionAds('compra', total, id);
+    // Se llama al método original: así Next no navega ni la etiqueta lo registra como página nueva.
+    const real = location.pathname + location.search;
+    const mostrar = (ruta: string) => History.prototype.replaceState.call(history, history.state, '', ruta);
+    let restaurada = false;
+    const restaurar = () => { if (!restaurada) { restaurada = true; mostrar(real); } };
+    mostrar(RUTA_COMPRA);
+    conversionAds('compra', total, id, () => setTimeout(restaurar, 1500));
+    setTimeout(restaurar, 6000); // respaldo si un bloqueador impide el envío
   } catch { /* medir nunca rompe nada */ }
 }
